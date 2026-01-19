@@ -1,0 +1,124 @@
+# Appendix A — Assignment Grading Rubrics
+AI-Enabled Informatics for Engineers (Spring 2026)
+
+This appendix defines grading criteria for all graded assignments (A1–A5).
+Rubrics emphasize decision quality, informatics reasoning, and reproducibility.
+
+---
+
+## A1 — SQL + Decision Questions (Week 2)
+
+**Purpose:** Translate decisions into data questions and answer them with SQL.
+
+### What to Submit
+- PDF or DOCX with:
+  - 5 decision questions
+  - 5 SQL queries
+  - Output tables or screenshots
+  - 1–3 sentence interpretation per query
+- OR Colab notebook link with outputs visible
+
+### Grading (100 pts)
+
+| Category | Points | Expectations |
+|--------|------|-------------|
+| Decision framing | 30 | Questions specify *who decides* and *what action changes* |
+| SQL correctness | 30 | Queries run; correct joins/filters/aggregations |
+| Interpretation | 25 | Explicit link from output → decision |
+| Clarity | 15 | Clean formatting, labels, readable structure |
+
+### Credible Help Resources
+- SQLZoo: https://sqlzoo.net/
+- Kaggle Intro to SQL: https://www.kaggle.com/learn/intro-to-sql
+- Kaggle datasets: https://www.kaggle.com/datasets
+
+---
+
+## A2 — Decision-Aligned Evaluation Memo (Week 4)
+
+**Purpose:** Evaluate systems using costs and consequences, not accuracy alone.
+
+### What to Submit
+- 1–2 page PDF memo
+- Sections: Decision, Stakeholder, Error Types, Cost Model, Metrics, Plan
+- One diagram or table mapping errors → costs
+
+### Grading (100 pts)
+
+| Category | Points | Expectations |
+|--------|------|-------------|
+| Decision–cost alignment | 40 | Explicit cost model tied to decision |
+| Evaluation logic | 30 | Metrics beyond accuracy |
+| Clarity | 20 | Well-structured, concise |
+| Evidence | 10 | At least one credible citation |
+
+### Credible Help Resources
+- NIST AI RMF: https://www.nist.gov/itl/ai-risk-management-framework
+
+---
+
+## A3 — MVP Build (Week 6)
+
+**Purpose:** Demonstrate an end-to-end decision-support system.
+
+### What to Submit
+- Runnable notebook (Colab or .ipynb)
+- ½–1 page operator playbook
+
+### Grading (100 pts)
+
+| Category | Points | Expectations |
+|--------|------|-------------|
+| End-to-end functionality | 40 | Runs cleanly, reproducible |
+| Decision relevance | 30 | Clear action/threshold |
+| Explanation | 20 | Playbook + failure modes |
+| Code quality | 10 | Clean, readable |
+
+### Credible Help Resources
+- OpenAI Cookbook: https://cookbook.openai.com/
+- LangChain Docs: https://docs.langchain.com/
+
+---
+
+## A4 — Evaluation Harness (Week 10)
+
+**Purpose:** Measure quality and diagnose failures.
+
+### What to Submit
+- Evaluation notebook or script
+- 1-page failure analysis write-up
+
+### Grading (100 pts)
+
+| Category | Points | Expectations |
+|--------|------|-------------|
+| Metric relevance | 35 | Metrics tied to decision risk |
+| Failure analysis | 35 | ≥2 concrete failure cases |
+| Clarity | 20 | Clear tables/charts |
+| Reproducibility | 10 | Runnable with instructions |
+
+### Credible Help Resources
+- OpenAI RAG explainer: https://help.openai.com/en/articles/8868588-retrieval-augmented-generation-rag-and-semantic-search-for-gpts
+- Chroma Docs: https://docs.trychroma.com/docs/overview/introduction
+
+---
+
+## A5 — Causal Mini-Study (Week 12)
+
+**Purpose:** Reason about interventions, not just predictions.
+
+### What to Submit
+- Notebook or PDF
+- Sections: causal question, assumptions, estimate, interpretation
+
+### Grading (100 pts)
+
+| Category | Points | Expectations |
+|--------|------|-------------|
+| Causal framing | 40 | Clear treatment/outcome/confounders |
+| Assumptions | 30 | Explicit validity threats |
+| Decision interpretation | 20 | Actionable insight |
+| Clarity | 10 | Clean structure |
+
+### Credible Help Resources
+- DoWhy: https://www.pywhy.org/dowhy/
