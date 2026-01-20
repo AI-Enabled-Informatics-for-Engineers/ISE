@@ -1,0 +1,13 @@
+Deliverable (diagram + 1–2 pages)
+- Pipeline diagram (ingest → transform → store → serve)
+- Schema definition
+- Data quality checks
+- Evaluation plan aligned to decision cost
+
+Resources
+- Prefect docs: https://docs.prefect.io/
+- NIST AI RMF: https://www.nist.gov/itl/ai-risk-management-framework
+
+Rubric
+Appendix B in GitHub rubrics folder:
+https://github.com/AI-Enabled-Informatics-for-Engineers/ISE/tree/main/rubrics
