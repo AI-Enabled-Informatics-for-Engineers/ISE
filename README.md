@@ -16,13 +16,10 @@ GitHub = learning + doing
 Canvas = submitting + discussing + tracking
 
 Critical Links (Bookmark These)
-1) Course GitHub Organization (public hub)
-https://github.com/AI-Enabled-Informatics-for-Engineers
-
-2) Course Repository (everything you need lives here)
+1) Course Repository (everything you need lives here)
 https://github.com/AI-Enabled-Informatics-for-Engineers/ISE
 
-3) Rutgers Canvas Course Site (submissions + grades + discussions)
+2) Rutgers Canvas Course Site (submissions + grades + discussions)
 https://rutgers.instructure.com/courses/385339
 
 Getting Started (What to do first)
