@@ -1,0 +1,18 @@
+Assignment 3 (A3)
+
+Goal
+Build a working MVP that supports a decision.
+
+Choose one track
+Predictive track:
+- Baseline model + threshold rationale + operator playbook
+RAG track:
+- Minimal retrieval prototype + 3 examples + 2 failure cases
+
+Helpful references
+- OpenAI Cookbook: https://cookbook.openai.com/
+- LangChain docs: https://docs.langchain.com/
+
+Rubric
+Appendix A in GitHub rubrics folder:
+https://github.com/AI-Enabled-Informatics-for-Engineers/ISE/tree/main/rubrics
