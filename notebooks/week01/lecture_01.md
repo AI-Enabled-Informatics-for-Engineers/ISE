@@ -60,8 +60,8 @@ It is about designing the **entire system** that supports a decision — includi
 
 > Throughout this course, you are building **informatics systems**, not isolated AI components.
 
-Data → Information → Decision → Action pipeline  
-![Decision Pipeline](ISE/assets/informatics_pipeline.webp)
+Data→Info→Decision→Action pipeline (https://peterjamesthomas.com/2015/12/24/data-management-as-part-of-the-data-to-action-journey)
+![Decision Pipeline](../../assets/informatics_pipeline.webp)
 
 ---
 
@@ -140,8 +140,8 @@ Resilience:
 
 📘 https://research-and-innovation.ec.europa.eu/research-area/industrial-research-and-innovation/industry-50_en
 
-*(Suggested figure to add later: Industry 5.0 pillars)*  
-`assets/industry5_pillars.png`
+Industry 5.0 Pillars (https://www.researchgate.net/figure/Figure-2-Three-Pillars-of-Industry-50_fig2_370059249)
+![Industry 5.0](../../assets/industry_5_pillars.jpeg)
 
 ---
 
