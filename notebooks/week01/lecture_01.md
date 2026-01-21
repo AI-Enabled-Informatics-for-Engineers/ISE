@@ -60,8 +60,8 @@ It is about designing the **entire system** that supports a decision — includi
 
 > Throughout this course, you are building **informatics systems**, not isolated AI components.
 
-*(Suggested figure to add later: Data → Information → Decision → Action pipeline)*  
-`assets/informatics_pipeline.svg`
+Data → Information → Decision → Action pipeline  
+![Decision Pipeline](assets/informatics_pipeline.webp)
 
 ---
 
