@@ -17,9 +17,6 @@ By the end of the semester, you will build a **working AI-enabled informatics sy
 
 ## Quick Links (Start Here)
 
-- ▶️ **Run the Week 1 notebook**  
-  [`01_informatics_setup_and_decision_framing.ipynb`](../notebooks/week01/01_informatics_setup_and_decision_framing.ipynb)
-
 - 📘 **Chip Huyen — Chapter 1 summary (public)**  
   https://github.com/chiphuyen/aie-book/blob/main/chapter-summaries.md#chapter-1-introduction-to-building-ai-applications-with-foundation-models
 
@@ -198,8 +195,8 @@ AI engineering focuses on:
 📘 Public summary:  
 https://github.com/chiphuyen/aie-book/blob/main/chapter-summaries.md#chapter-1-introduction-to-building-ai-applications-with-foundation-models
 
-*(Suggested figure: AI engineering components)*  
-`assets/aie_ch1_components.png`
+AI Decision-making (https://imarticus.org/)
+![AI Decision-making](../../assets/AI_Decision_Making.webp)
 
 ---
 
