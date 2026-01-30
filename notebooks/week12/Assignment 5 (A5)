@@ -1,0 +1,15 @@
+Goal
+Answer a causal question tied to your domain/project.
+
+Deliverable must include:
+- Causal question (treatment/outcome)
+- Confounders and assumptions
+- A simple estimate attempt
+- What decision changes if the effect is real?
+
+Tool
+- DoWhy: https://www.pywhy.org/dowhy/
+
+Rubric
+Appendix A in GitHub rubrics folder:
+https://github.com/AI-Enabled-Informatics-for-Engineers/ISE/tree/main/rubrics

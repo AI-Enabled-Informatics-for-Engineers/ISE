@@ -1,0 +1,17 @@
+Goal
+Build an evaluation harness + document failure modes.
+
+RAG track must include:
+- Retrieval quality checks + grounding/citations + hallucination mitigation
+Predictive track must include:
+- Calibration + cost thresholds + monitoring metrics + failure cases
+
+References
+- OpenAI Cookbook: https://cookbook.openai.com/
+- RAG explainer: https://help.openai.com/en/articles/8868588-retrieval-augmented-generation-rag-and-semantic-search-for-gpts
+- Chroma: https://docs.trychroma.com/docs/overview/introduction
+- FAISS: https://github.com/facebookresearch/faiss
+
+Rubric
+Appendix A in GitHub rubrics folder:
+https://github.com/AI-Enabled-Informatics-for-Engineers/ISE/tree/main/rubrics
