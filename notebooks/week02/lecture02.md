@@ -1,257 +1,268 @@
-# Lecture 02 — Foundation Models, Schemas, and SQL for Decision Quality  
+# Lecture 02 — Foundation Models, Transformers, and Decision-Oriented Data Systems
+
 **Course:** AI-Enabled Informatics for Engineers  
 **Week:** 2  
-**Primary Text:** Chip Huyen, *AI Engineering* (2024/2025), Chapter 2 (and/or the public chapter summary)  
-**Format:** GitHub-first · notebook-adjacent · discussion-driven
-
-This lecture moves from *framing* (Week 1) to *execution discipline*: how you represent information (schemas), query it (SQL), and connect it to decisions — **before** you add AI.
-
-A recurring theme of this course: **bad structure produces bad decisions**, even with great models.  
-If your schema is unclear, your joins are wrong, your definitions drift, or your metrics are inconsistent, the model will only amplify confusion.
-
-By the end of Week 2, you should be able to:  
-- describe what a foundation model is in engineering terms (capabilities + failure modes)  
-- explain how **schema choices** change what you can know and decide  
-- use SQL to compute decision-relevant aggregates and slices  
-- connect “query results” to “actionable decision logic” in a notebook workflow
+**Primary Text:** Chip Huyen, *AI Engineering* (2024/2025), Chapter 2  
+**Format:** GitHub-first · notebook-adjacent · discussion-driven  
 
 ---
 
-## Quick Links (Start Here)
+## Purpose of This Lecture
 
-### 📘 Chip Huyen — Chapter summaries (public)
-https://github.com/chiphuyen/aie-book/blob/main/chapter-summaries.md
+Lecture 01 established the course framing: informatics as the engineering discipline that turns data into decisions and actions.
 
-### ✅ Required materials (live links)
-- **SQLZoo (interactive):** https://sqlzoo.net/  
-- **Kaggle: Intro to SQL:** https://www.kaggle.com/learn/intro-to-sql  
+This lecture focuses on a narrower but critical question:
 
-### 💻 Coding lab (Colab)
-- **Notebook:** `notebooks/week02/02_sql_for_decisions.ipynb`  
-- **Open in Colab:** https://colab.research.google.com/github/AI-Enabled-Informatics-for-Engineers/ISE/blob/main/notebooks/week02/02_sql_for_decisions.ipynb
+**What exactly are foundation models, why do they work, and how should engineers reason about them as system components rather than magical endpoints?**
 
-### 🧵 Canvas discussion prompt (Week 2)
-**How do schema choices create or destroy decision quality?**
+The goal is not to teach model internals for their own sake, but to build *engineering judgment* about:
+- when a model is appropriate,
+- which kind of model is appropriate,
+- and how models interact with data, schemas, and decisions.
 
 ---
 
-## Today’s Roadmap
+## Required Reading Context
 
-In this lecture, we will:
+This lecture corresponds primarily to **Chapter 2** of Chip Huyen’s *AI Engineering*.
 
-1. Define foundation models in *engineering* terms  
-2. Identify common failure modes (hallucination, brittleness, drift, cost volatility)  
-3. Show why **schemas** are decision infrastructure  
-4. Use SQL to compute decision-relevant facts  
-5. Connect SQL outputs to a decision workflow (thresholds, policies, actions)  
-6. Review Week 2 deliverables and next milestones
+Public chapter summary (recommended pre-read):  
+https://github.com/chiphuyen/aie-book/blob/main/chapter-summaries.md#chapter-2-foundation-models
 
----
+Full text via Rutgers (O’Reilly):  
+https://learning.oreilly.com/library/view/ai-engineering/9781098166298/
 
-## Foundation Models: The Engineering Definition
-
-A **foundation model** is a large, general-purpose model trained on broad data at scale, then adapted to many tasks via prompting, fine-tuning, or retrieval.
-
-Engineering implications:
-- You usually **don’t train** the model.
-- You **compose** it into a system: retrieval + prompts + evaluation + monitoring + UX + governance.
-- The model behaves like a powerful but imperfect component:
-  - can summarize, classify, extract, reason (sometimes)
-  - can also fabricate, misinterpret, and drift
-
-### What they’re good at (in practice)
-- text understanding + generation  
-- extraction and transformation (with guardrails)  
-- “good enough” first drafts  
-- semantic search when paired with embeddings + retrieval
-
-### What they’re risky at
-- “facts” without sources  
-- math and precise logic under ambiguity  
-- policy decisions without explicit constraints  
-- unmonitored production workflows
+You should read Chapter 2 as an *engineering taxonomy*, not as a vendor guide.
 
 ---
 
-## Why Week 2 is SQL, Not Prompts
+## Foundation Models: An Engineering Definition
 
-Because **decisions need ground truth**.
+A foundation model is not defined by its architecture alone.
 
-SQL gives you:
-- explicit definitions  
-- reproducible queries  
-- auditable metrics  
-- a shared language between engineers, analysts, and decision-makers
+From an engineering standpoint, a foundation model is a model that:
 
-Before we let an LLM talk, we want the system to *know*:
-- what a “customer” is  
-- what counts as “late”  
-- how we define “risk”  
-- which time window matters  
-- what “success” means
+- is pre-trained on broad, heterogeneous data,
+- learns general representations,
+- can be adapted to many downstream tasks with minimal additional training.
 
-SQL is your first tool for building those definitions into the system.
+What matters operationally is not how the model was trained, but **how it is used**.
 
----
+Foundation models function as:
+- representation engines,
+- probabilistic reasoning layers,
+- adaptable interfaces between data and decisions.
 
-## Schemas are Decision Infrastructure
-
-A schema is not just “tables.”  
-It encodes what your organization believes is true.
-
-### A schema defines:
-- **entities** (users, devices, incidents, shipments, patients)  
-- **relationships** (one-to-many, many-to-many)  
-- **time** (event timestamps, reporting periods)  
-- **granularity** (daily totals vs event-level logs)  
-- **meaning** (status codes, categories, labels)
-
-### The key claim:
-**Schema choices change decision quality.**
-
-If you store only “final outcome,” you can’t analyze causes.  
-If you store events without timestamps, you can’t detect drift.  
-If you store free text without structure, you can’t reliably aggregate.
+They are not decision systems.  
+They are components *inside* decision systems.
 
 ---
 
-## Mini-Example: Same Problem, Different Schema, Different Decision
+## Why Transformers Matter (Without the Math)
 
-**Decision:** “Do we need to add staff to reduce late deliveries?”
+Transformers are the architectural foundation that enabled modern foundation models.
 
-### Schema A: Only stores delivery outcome
-- `order_id`, `delivered_on_time` (true/false)
+You do **not** need to derive attention equations to reason about them effectively.
 
-You can compute:
-- percent late overall
+What matters for engineers:
 
-You cannot compute:
-- which routes are late
-- whether lateness is seasonal
-- whether specific carriers are failing
-- what the leading indicators were
+- Transformers process entire sequences at once, not step-by-step.
+- They use attention to weight relevance dynamically.
+- They scale well with both data and compute.
 
-### Schema B: Stores event timeline
-- `order_events(order_id, event_type, timestamp, location_id, carrier_id)`
+This makes them unusually good at:
+- language understanding,
+- contextual reasoning,
+- cross-task generalization.
 
-Now you can compute:
-- lateness by carrier and route  
-- bottleneck stages (pickup, sort, last-mile)  
-- early-warning signals (scan delays)  
-- targeted interventions (carrier contract change vs staffing)
+A clear, non-technical visualization is here (required viewing):  
+https://jalammar.github.io/illustrated-transformer/
 
-Same “AI model,” completely different usefulness.
+> Key takeaway: transformers trade **efficiency and determinism** for **flexibility and expressiveness**.
+
+That tradeoff shows up everywhere else in the system.
 
 ---
 
-## SQL for Decisions: Patterns You Must Master
+## Model Size, Parameters, and Tradeoffs (Core Chapter 2 Material)
 
-In this notebook, you will practice the SQL building blocks that translate into *decision metrics*:
+One of the most important points in Chapter 2 is that **model selection is an engineering decision**, not a leaderboard contest.
 
-### 1) Filters (WHERE)
-Define the population that matters:
-- last 30 days
-- a specific region
-- critical incidents only
+Models vary along multiple axes:
 
-### 2) Aggregations (GROUP BY)
-Transform events into decision facts:
-- counts
-- rates
-- averages
-- percentiles (where supported)
+- parameter count,
+- context window size,
+- latency,
+- cost per token,
+- fine-tuning capability,
+- openness (open vs closed),
+- update cadence and version stability.
 
-### 3) Joins
-Create context:
-- incidents + systems
-- orders + customers
-- patients + diagnoses + outcomes
+Larger models tend to:
+- reason better in open-ended contexts,
+- generalize across tasks,
+- but cost more, respond more slowly, and drift more frequently.
 
-### 4) Windows / Time
-Decisions are time-sensitive:
-- week-over-week change
-- rolling 7-day average
-- before/after interventions
+Smaller models tend to:
+- be cheaper and faster,
+- behave more predictably,
+- require stronger structure to be useful.
+
+A practical cost/performance discussion is here:  
+https://newsletter.semianalysis.com/p/scaling-laws-o1-pro-architecture-reasoning-training-infrastructure-orion-and-claude-3-5-opus-failures?utm_source=chatgpt.com
+
+**Engineering principle:**  
+> If a system requires a very large model to work at all, the system design is usually the real problem.
 
 ---
 
-## Notebook Walkthrough
+## Adaptation Paths: Prompting, Fine-Tuning, and Retrieval
 
-▶️ Run:
+Chapter 2 emphasizes that *how* you adapt a model often matters more than *which* model you pick.
+
+Three dominant adaptation strategies:
+
+### Prompting
+- Fastest to deploy
+- Least stable
+- Highly sensitive to wording and context
+
+### Fine-tuning
+- More stable behavior
+- Higher upfront cost
+- Harder to update and govern
+
+### Retrieval-Augmented Generation (RAG)
+- Grounds models in external data
+- Improves correctness and traceability
+- Introduces new failure modes (retrieval quality, stale data)
+
+This course will emphasize **retrieval and structure** over prompt cleverness.
+
+---
+
+## The Role of Schemas in AI Systems
+
+Schemas are one of the most important — and most neglected — tools in AI engineering.
+
+A schema is not just a database artifact.
+It is a **contract** between:
+- data,
+- models,
+- humans,
+- and downstream systems.
+
+Schemas:
+- constrain ambiguity,
+- enable validation,
+- allow partial automation,
+- make evaluation possible.
+
+Without schemas:
+- outputs drift,
+- errors hide in text,
+- decisions become untraceable.
+
+Schemas are how probabilistic models become **operationally safe**.
+
+---
+
+## SQL as Decision Logic, Not Legacy
+
+SQL plays a central role in informatics systems because it:
+
+- forces explicit assumptions,
+- exposes aggregation choices,
+- makes decision logic inspectable.
+
+In this course, SQL is used to:
+- define decision-relevant information,
+- validate model outputs,
+- create grounding layers before AI is applied.
+
+Week 2 notebook:  
 `notebooks/week02/02_sql_for_decisions.ipynb`
 
-In the lab, you will:
-- load a dataset (or connect to a public one)
-- design/inspect a schema
-- write queries that produce decision-relevant metrics
-- translate query outputs into a recommended action
+Open in Colab:  
+https://colab.research.google.com/github/AI-Enabled-Informatics-for-Engineers/ISE/blob/main/notebooks/week02/02_sql_for_decisions.ipynb
 
 ---
 
-## Design Rule: Query → Metric → Decision → Action
+## Example: A Minimal Informatics Loop
 
-A correct Week 2 submission should have this chain:
+A simple but complete loop:
 
-1. **Query** (reproducible SQL)  
-2. **Metric** (defined clearly)  
-3. **Decision rule** (thresholds / policy)  
-4. **Action** (what changes in the real world)
+1. Raw data ingestion
+2. Schema-enforced storage
+3. SQL aggregation
+4. Interpretation
+5. Decision threshold
+6. Action
 
-Example (generic):
-- Query: late deliveries by carrier for last 30 days  
-- Metric: % late per carrier  
-- Decision rule: if late rate > 8% for 2 consecutive weeks → escalation  
-- Action: add inspection, renegotiate SLA, route change, staffing shift
+AI can assist at steps 3–5, but it does not eliminate any of them.
+
+This is why informatics remains the controlling discipline.
 
 ---
 
-## Canvas Discussion Prompt (Week 2)
+## Discussion Focus (TA Sessions)
+
+Discussion prompt (Canvas):
 
 **How do schema choices create or destroy decision quality?**
 
-Answer with:
-1. One concrete schema choice (e.g., event-level vs summary-level, timestamps, normalization)  
-2. What decision it enables or blocks  
-3. How it changes evaluation or accountability  
-4. One mitigation if you can’t change the schema (workaround)
+Students should be prepared to:
+- modify schema assumptions,
+- observe changes in outputs,
+- explain downstream decision impact.
+
+This is not a philosophical discussion.  
+It is a design discussion.
 
 ---
 
-## Week 2 Deliverables (Canvas)
+## Week 2 Deliverables
 
-1) **SQL practice completed**
-- SQLZoo sections (as assigned)
-- Kaggle Intro to SQL modules (as assigned)
-
-2) **Notebook submission**
-- `02_sql_for_decisions.ipynb` completed with:
-  - working SQL queries
-  - clear metric definitions
-  - a decision rule and an action recommendation
-
-3) **Discussion post**
-- schema choice → decision quality explanation
+- **Assignment 1 (6 points):** SQL + decision framing
+- **Discussion (1 point):**
+  - 60% written Canvas post
+  - 40% live TA participation
+- **Project Milestone M1 (4 points):**
+  - domain
+  - decision
+  - dataset plan
+  - success criteria
 
 ---
 
-## Looking Ahead (Week 3 Preview)
+## Why This Lecture Matters for the Project
 
-Next week we’ll introduce:
-- retrieval (RAG) as “schema for unstructured text”
-- prompting as “interface design”
-- evaluation as “decision correctness, not vibes”
+Your project is not “build a model.”
 
-Your project Milestone M1 is coming soon:
-- domain + decision + dataset plan + success criteria
+Your project is:
+> **design a system that improves a real decision.**
+
+Model choice, schema design, and data grounding decisions made now will determine whether your project scales cleanly or collapses under its own complexity.
 
 ---
 
-## Contact & Support
+## Closing Perspective
 
-**TA Sessions**
-- Twice weekly (check Canvas announcements)
+Foundation models are powerful.
 
-**TA**
-- Keyi Wang  
-- kw653@scarletmail.rutgers.edu  
-- Office hours by request (email)
+They are also:
+- expensive,
+- probabilistic,
+- and easy to misuse.
+
+Informatics — not modeling — is what keeps AI systems aligned with reality, cost, and human judgment.
+
+---
+
+## Support
+
+**TA:** Keyi Wang  
+📧 kw653@scarletmail.rutgers.edu  
+
+TA sessions are the best place to test assumptions and catch design mistakes early.
+
