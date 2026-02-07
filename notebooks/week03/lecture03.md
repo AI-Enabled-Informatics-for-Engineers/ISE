@@ -1,380 +1,395 @@
-Lecture 03 — Dataset Engineering, Reliability, and the Informatics Backbone
+Lecture 03 — Data, Datasets, and Synthetic Reality
 
 Course: AI-Enabled Informatics for Engineers
 Week: 3
-Primary Text: Chip Huyen, AI Engineering (2024/2025), Chapter 8 — Dataset Engineering
+Primary Text: Chip Huyen, AI Engineering (2024/2025), Chapter 8
 Format: GitHub-first · demo-driven · informatics-anchored
 
 Why This Lecture Matters
 
-Up to this point, we’ve explored:
+Modern AI systems rarely fail because of model architecture alone.
+They fail because of data:
 
-Lecture 01: Informatics as data → information → decision → action
+missing data
 
-Lecture 02: Foundation models, schemas, and decision-aligned SQL
+biased data
 
-Today we move into the real engineering substrate:
+stale data
 
-Datasets are the reliability layer of AI systems.
+misaligned data
 
-Not models.
-Not prompts.
-Not clever architectures.
+or no data at all for the decision we actually care about
 
-Datasets.
+This week shifts our focus from:
 
-And Chapter 8 makes a bold but correct claim:
+models → information pipelines
 
-Most real-world AI failures are dataset failures in disguise.
+That shift is the heart of informatics.
 
-This lecture connects dataset engineering → informatics reliability → decision quality.
+The Informatics Lens on Data
 
-1. Informatics Revisited: Reliability Lives in the Data Layer
+Recall the course backbone:
 
-Recall the informatics pipeline:
+data → information → decision → action
 
-data → information → decisions → action
 
+Chapter 8 lives almost entirely in the data → information boundary.
 
-Dataset engineering determines whether:
+Key insight:
 
-information is trustworthy
+AI engineering is often data engineering in disguise.
 
-decisions are stable
+Real-world implication:
 
-actions are safe in the real world
+The best model with the wrong data → useless
 
-Without dataset discipline:
+A simple model with the right data → transformative
 
-evaluation lies
+Three Properties of Useful Training Data
 
-models drift
+(Huyen, Ch. 8 synthesis)
 
-automation becomes dangerous
+Every dataset can be evaluated along three axes:
 
-This is why Chapter 8 sits at the heart of AI engineering.
+1. Quantity
 
-2. What Chapter 8 Actually Teaches (Condensed Precisely)
+How much data exists?
 
-Chapter 8 reframes datasets from:
+Tokens
 
-static training files
+Rows
 
-to:
+Images
 
-living production infrastructure
+Events
 
-Key shifts:
+Scaling laws show performance often rises with more data—
+but only to a point.
 
-2.1 Datasets Are Dynamic Systems
+2. Quality
 
-Real data changes:
+Is the data correct, clean, and meaningful?
 
-distributions drift
+Low-quality data introduces:
 
-schemas evolve
+hallucination risk
 
-sensors fail
+bias propagation
 
-humans behave differently
+brittle predictions
 
-Static training assumptions collapse in deployment.
+Small high-quality datasets often outperform massive noisy ones.
 
-2.2 Dataset Quality > Model Complexity
+3. Diversity
 
-A simple model with:
+Does the data represent the real decision environment?
 
-clean labels
+Missing diversity causes:
 
-correct schema
+domain failure
 
-representative distribution
+language failure
 
-beats a large model trained on noisy data.
+demographic bias
 
-This is one of the most consistent empirical truths in ML.
+distribution shift in production
 
-2.3 Evaluation Depends on Dataset Design
+Visualization — Data Quality vs Quantity Tradeoff
 
-If your test set is flawed:
+Credible reference:
+Stanford AI Index & scaling-law literature consistently show:
 
-metrics mislead
+performance improves with scale
 
-thresholds fail
+but plateaus without quality improvements
 
-decisions become unsafe
+Recommended visual:
 
-So evaluation is a dataset engineering problem.
+https://hai.stanford.edu/ai-index
 
-3. Visualizing Dataset Failure Modes
-Distribution Shift (Credible Visualization)
 
-See:
+Look for:
 
-Google ML Crash Course — Training vs Serving Skew
-https://developers.google.com/machine-learning/crash-course/production-ml-systems/monitoring
+training compute vs performance curves
 
-This diagram shows:
+This is the empirical foundation of Chapter 8.
 
-Models fail not because they are wrong —
-but because reality moved.
+Dataset Sources Used in Real AI Systems
 
-Data-Centric AI Perspective
+Below are credible, industry-relevant datasets worth knowing.
 
-Andrew Ng’s data-centric AI framing:
+Web-Scale Text
 
-https://landing.ai/data-centric-ai/
+Common Crawl
+https://commoncrawl.org
 
-Core idea:
+C4 Dataset
+https://www.tensorflow.org/datasets/catalog/c4
 
-Improving data quality often yields bigger gains than model tuning.
+These power many foundation models.
 
-This aligns directly with Chapter 8’s thesis.
+Structured / Tabular
 
-4. Real-World Dataset Sources for Course Projects
+UCI Machine Learning Repository
+https://archive.ics.uci.edu
 
-These are credible, decision-relevant datasets aligned with informatics.
+Kaggle datasets
+https://www.kaggle.com/datasets
 
-Predictive Maintenance — NASA C-MAPSS
+Useful for decision-oriented ML.
 
-https://data.nasa.gov/dataset/cmapss-jet-engine-simulated-data
+Multimodal
 
-Used for:
+LAION image-text datasets
+https://laion.ai
 
-remaining useful life prediction
+Critical for:
 
-maintenance scheduling decisions
+diffusion models
 
-Cybersecurity — CICIDS2017
-
-https://www.unb.ca/cic/datasets/ids-2017.html
-
-Used for:
-
-intrusion detection
-
-SOC alert prioritization
-
-Healthcare — UCI Diabetes
-
-https://archive.ics.uci.edu/ml/datasets/diabetes%2B130-us%2Bhospitals%2Bfor%2Byears%2B1999-2008
-
-Used for:
-
-readmission risk
-
-intervention allocation
-
-Energy — PJM Consumption
-
-https://www.kaggle.com/datasets/robikscube/hourly-energy-consumption
-
-Used for:
-
-load forecasting
-
-grid decision optimization
-
-5. Synthetic Data in AI Engineering (Why It Matters)
-
-Chapter 8 emphasizes:
-
-Real data is scarce, biased, or sensitive.
-
-So engineers use:
-
-synthetic structured data
-
-synthetic text
-
-synthetic images
-
-embedding-guided augmentation
-
-But:
-
-Synthetic data must preserve decision-relevant structure
-or it becomes useless.
-
-6. Demo 1 — Synthetic Structured Data (Tabular)
-import numpy as np
-import pandas as pd
-
-np.random.seed(42)
-
-n = 1000
-
-data = pd.DataFrame({
-    "temperature": np.random.normal(75, 10, n),
-    "vibration": np.random.normal(0.5, 0.1, n),
-    "pressure": np.random.normal(30, 5, n),
-})
-
-data["failure"] = (
-    (data["temperature"] > 90) &
-    (data["vibration"] > 0.6)
-).astype(int)
-
-data.head()
+vision-language systems
 
 Informatics Insight
 
-This creates:
+Notice something important:
 
-causal structure
+None of these datasets were built for your decision.
 
-decision signal
+That gap explains:
 
-testable pipeline input
+domain-specific models
 
-Synthetic ≠ fake
-Synthetic = controlled experiment space.
+retrieval-augmented generation
 
-7. Demo 2 — Synthetic Text Generation for Rare Classes
-from faker import Faker
-fake = Faker()
+synthetic data
 
-alerts = [fake.sentence(nb_words=8) for _ in range(10)]
-alerts
+evaluation pipelines
+
+All core AI-engineering patterns.
+
+Synthetic Data — Engineering Reality When Reality Is Missing
+
+Synthetic data = artificially generated training examples
+that preserve:
+
+structure
+
+distribution
+
+semantics
+
+without requiring:
+
+expensive collection
+
+sensitive data access
+
+rare real-world events
+
+Why Synthetic Data Exists
+
+Three dominant reasons:
+
+1. Privacy
+
+Healthcare, finance, defense.
+
+Real data cannot be freely shared.
+
+2. Scarcity
+
+Rare failures, edge cases, anomalies.
+
+Exactly the cases we most need to learn from.
+
+3. Cost
+
+Human labeling is expensive and slow.
+
+Synthetic generation scales instantly.
+
+Visualization — Real vs Synthetic Data Pipeline
+
+Helpful conceptual diagram:
+
+Real World → Small Real Dataset → Synthetic Expansion → Model Training → Evaluation → Decision
 
 
-Use cases:
+Credible reference discussion:
 
-rare fraud scenarios
+https://hai.stanford.edu/news/synthetic-data-ai
 
-medical edge cases
+Hands-On Demo — Creating Synthetic Tabular Data
+Goal
 
-cybersecurity anomalies
+Simulate a decision dataset when real data is unavailable.
 
-Key warning from Chapter 8:
-
-Synthetic text can amplify hallucinated patterns
-if not validated.
-
-8. Demo 3 — Synthetic Images (Conceptual + Tooling)
-
-Common tools:
-
-Stable Diffusion
-
-Midjourney
-
-DALL·E-style generators
-
-Credible overview:
-
-https://arxiv.org/abs/2301.04246
-
-Use cautiously:
-
-label noise risk
-
-domain realism gaps
-
-9. Demo 4 — Embedding-Guided Augmentation
-from sklearn.metrics.pairwise import cosine_similarity
+Python Example
+import pandas as pd
 import numpy as np
 
-embeddings = np.random.rand(5, 4)
+np.random.seed(42)
 
-similarity = cosine_similarity(embeddings)
-similarity
+n = 500
+
+data = pd.DataFrame({
+    "age": np.random.normal(40, 10, n).astype(int),
+    "income": np.random.normal(70000, 15000, n).astype(int),
+    "risk_score": np.random.uniform(0, 1, n)
+})
+
+data["decision"] = (data["risk_score"] > 0.6).astype(int)
+
+data.head()
+
+Informatics Reflection
+
+What just happened?
+
+We engineered information:
+
+defined variables
+
+defined distributions
+
+defined a decision rule
+
+This is informatics in action.
+
+Demo Extension — Synthetic Text with an LLM
+from openai import OpenAI
+
+client = OpenAI()
+
+prompt = """
+Generate 5 realistic customer support complaints
+about delayed shipping. Keep each under 20 words.
+"""
+
+response = client.responses.create(
+    model="gpt-4.1-mini",
+    input=prompt
+)
+
+print(response.output[0].content[0].text)
+
+Why This Matters
+
+Synthetic text enables:
+
+classifier training
+
+evaluation benchmarks
+
+edge-case simulation
+
+without scraping real users.
+
+Risks of Synthetic Data
+
+(Critical Chapter 8 theme)
+
+Synthetic data can silently fail.
+
+Distribution Drift
+
+Generated data may not match reality.
+
+Feedback Loops
+
+Models trained on synthetic outputs
+learn their own mistakes.
+
+Hidden Bias
+
+Synthetic generation reflects
+the bias of the generator.
+
+Informatics Principle
+
+Synthetic data must always be evaluated against real-world decisions.
+
+Not just statistical similarity.
+
+Connecting Back to AI Engineering
+
+We now see a layered system:
+
+Data Engineering
+    ↓
+Dataset Strategy
+    ↓
+Model Training / Selection
+    ↓
+Evaluation
+    ↓
+Decision Support
 
 
-Used for:
+Chapter 8 focuses on the first two layers—
+the ones most courses ignore.
 
-semantic diversity
+Live Discussion Prompt (Canvas)
 
-training coverage expansion
+Question:
 
-retrieval robustness
+When is synthetic data more valuable than real data?
 
-This connects directly to Lecture 02 embeddings.
+Consider:
 
-10. The Deep Link: Dataset Engineering → Informatics Decisions
+privacy
 
-Here is the key conceptual bridge:
+safety
 
-Dataset Engineering Controls Decision Reliability
-Dataset Property	Decision Impact
-Label noise	Wrong interventions
-Missing features	Hidden risk
-Skewed sampling	Biased policy
-Drift	Unsafe automation
+cost
 
-So:
+rare events
 
-Dataset engineering is decision engineering.
+simulation
 
-That is pure informatics.
+Post one concrete engineering scenario.
 
-11. Hands-On Notebook for This Week
+Week 3 Practical Task
+Build a Tiny Decision Dataset
 
-Run:
+Choose a domain
 
-notebooks/week03/03_dataset_engineering_demo.ipynb
+Define 3–5 variables
 
+Generate synthetic rows
 
-This notebook will:
+Define a decision rule
 
-load a real dataset
+Reflect:
 
-generate synthetic variants
+What real-world assumptions did you encode?
 
-compare decision thresholds
+Submit:
 
-simulate drift
+notebook link
 
-12. Week 3 Discussion Prompt (Canvas)
+1-paragraph informatics reflection
 
-Prompt:
+Looking Ahead — Lecture 04
 
-Describe one realistic way your dataset could fail in production.
-What decision would be harmed?
-How would you detect it?
+Next week we move into:
 
-This forces:
+Evaluation as the core of AI engineering
 
-informatics thinking
+Because:
 
-not just modeling
+A system that cannot be evaluated
+cannot be trusted.
 
-13. Project Progress This Week
+Closing Thought
 
-You should now begin:
+The most important shift so far in this course:
 
-Pipeline Sketch
-ingest → validate → transform → store → serve → monitor
+AI success is rarely about the model.
 
+It is about
+how we construct reality through data
+to support better human decisions.
 
-Deliverable coming in Milestone M2.
-
-14. Looking Ahead
-
-Next lecture:
-
-Evaluation Methodology (Chapter 3)
-
-We move from:
-
-“Does the model work?”
-
-to:
-
-“Does the decision improve?”
-
-That is the central intellectual shift of this course.
-
-15. Closing Thought
-
-Chapter 8 quietly delivers one of the most important truths in AI:
-
-Reliable AI systems are built
-less by training models
-and more by engineering data correctly.
-
-And in informatics language:
-
-Better data → better information → better decisions → safer action.
-
-That is the backbone of everything we are building this semester.
+That idea—more than any algorithm—
+is the foundation of AI-enabled informatics.
