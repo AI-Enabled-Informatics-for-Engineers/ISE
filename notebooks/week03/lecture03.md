@@ -1,395 +1,243 @@
-Lecture 03 — Data, Datasets, and Synthetic Reality
+# Lecture 03 — Dataset Engineering & Reliability (AI Engineering, Chapter 8)
+**Course:** AI-Enabled Informatics for Engineers  
+**Theme:** Turning messy signals into dependable information systems  
+**Reading:** Chip Huyen, *AI Engineering* — **Chapter 8** (Dataset Engineering)
 
-Course: AI-Enabled Informatics for Engineers
-Week: 3
-Primary Text: Chip Huyen, AI Engineering (2024/2025), Chapter 8
-Format: GitHub-first · demo-driven · informatics-anchored
+---
 
-Why This Lecture Matters
+## Why this lecture matters
+Models don’t fail politely. They fail silently—because the **data changed**, a **join broke**, a **field got redefined**, or a “helpful” feature accidentally included the future.
 
-Modern AI systems rarely fail because of model architecture alone.
-They fail because of data:
+Chapter 8’s core idea is central to both AI and Informatics:
 
-missing data
+> **The dataset is a product.**  
+> Not a CSV. Not “the data folder.” A product with contracts, tests, versioning, and monitoring.
 
-biased data
+This is also exactly what **informatics** is: engineering the information supply chain so decisions are trustworthy.
 
-stale data
+---
 
-misaligned data
+## Learning outcomes
+By the end of this lecture you should be able to:
 
-or no data at all for the decision we actually care about
+- Explain how dataset engineering is an informatics discipline (data → information → action).
+- Name common dataset failure modes (schema drift, leakage, label noise, coverage gaps).
+- Define a **data contract** (schema + constraints + semantics).
+- Implement basic reliability checks: schema validation, leakage-safe split, drift checks.
+- Keep demos simple: run them in **Google Colab** with copy/paste (no extra files required).
+- (Optional) Store demos in your repo in a clean way if you want them versioned.
 
-This week shifts our focus from:
+---
 
-models → information pipelines
+# 1) Dataset engineering is informatics
+Informatics is the study and practice of transforming raw data into usable, reliable information.
 
-That shift is the heart of informatics.
+In AI systems, the dataset is the *lens* the model uses to interpret the world.
 
-The Informatics Lens on Data
+If the lens is distorted:
+- accuracy looks fine… until it doesn’t
+- evaluation results are “great”… because you leaked the future
+- the model “degrades”… because the input meaning changed (not the algorithm)
 
-Recall the course backbone:
+A practical framing:
 
-data → information → decision → action
+- **Data engineering:** move and shape data
+- **Dataset engineering (Chapter 8):** make data dependable for learning and decision-making
+- **Informatics:** build the end-to-end system that keeps information true over time
 
+---
 
-Chapter 8 lives almost entirely in the data → information boundary.
+# 2) The dataset is a product (not a file)
+A dataset “product” has owners, users, requirements, a release process, and tests.
 
-Key insight:
+### A dataset product must answer:
+- **What is it for?** (decision support, forecasting, ranking, detection)
+- **What does each field mean?** (semantics, units, definitions)
+- **What are the rules?** (ranges, null policy, invariants)
+- **How is it made?** (pipeline + transformations)
+- **How do we know it’s still valid today?** (tests + monitoring)
 
-AI engineering is often data engineering in disguise.
+### Your new default mindset
+If the dataset feeds a model that affects decisions, treat it like production software:
+- contracts
+- tests
+- versioning
+- observability
 
-Real-world implication:
+---
 
-The best model with the wrong data → useless
+# 3) Failure modes that happen in real life
+These are the recurring villains from Chapter 8, phrased the way they show up at work.
 
-A simple model with the right data → transformative
+## 3.1 Schema drift (loud break or silent break)
+- A field changes type: `"42"` becomes `42`
+- A field changes name: `zip` becomes `postal_code`
+- A field changes unit: Celsius becomes Fahrenheit
+- A field changes meaning: `status="active"` now includes “trial users” too
 
-Three Properties of Useful Training Data
+Schema drift is dangerous because it can be:
+- **obvious** (pipeline crashes)
+- **silent** (pipeline runs, model performance quietly drops)
 
-(Huyen, Ch. 8 synthesis)
+## 3.2 Data leakage (evaluation lies)
+Leakage is when your training features contain information that wouldn’t exist at prediction time.
 
-Every dataset can be evaluated along three axes:
+Common leakage sources:
+- random split when time ordering matters
+- using “post-event” features (e.g., “refund_flag” for predicting churn)
+- joining future outcomes into features by accident
+- duplicating entities across train/test
 
-1. Quantity
+If you remember one rule:
+> **Your features must be available at the moment the decision is made.**
 
-How much data exists?
+## 3.3 Label noise and label drift
+Labels are rarely “ground truth.” They’re often:
+- subjective
+- inconsistently applied
+- delayed
+- impacted by policy changes (what the org considers “fraud” this year)
 
-Tokens
+Two big patterns:
+- **noise:** labels are wrong/inconsistent
+- **drift:** label definitions change over time
 
-Rows
+## 3.4 Coverage gaps (your model never saw that slice of the world)
+Even when the overall metrics look fine, performance can collapse for:
+- rare segments (low volume)
+- new user types
+- edge behaviors
+- new regions/products/policies
 
-Images
+This is informatics: the dataset defines which reality is represented.
 
-Events
+---
 
-Scaling laws show performance often rises with more data—
-but only to a point.
+# 4) The simplest reliable dataset architecture
+A minimal “reliable dataset” structure in plain English:
 
-2. Quality
+1. **Raw logs** (append-only if possible)
+2. **Validated staging table** (schema + sanity checks)
+3. **Curated training set** (features + labels + metadata)
+4. **Evaluation sets** (frozen / versioned)
+5. **Monitoring** (drift + quality gates)
 
-Is the data correct, clean, and meaningful?
+You don’t need expensive tooling to start. You need discipline.
 
-Low-quality data introduces:
+---
 
-hallucination risk
+# 5) Data contracts: the practical definition
+A data contract is **a written, testable agreement** that defines what the data must look like and what it means.
 
-bias propagation
+A good contract includes:
 
-brittle predictions
+### 5.1 Schema (structure)
+- column names
+- data types
+- required vs optional fields
 
-Small high-quality datasets often outperform massive noisy ones.
+### 5.2 Constraints (rules)
+- ranges (0 ≤ latency_ms ≤ 120000)
+- allowed values (region in {NA, EU, APAC})
+- uniqueness rules (primary keys)
+- missingness policy (null allowed or not)
 
-3. Diversity
+### 5.3 Invariants (relationships that must always hold)
+- end_time ≥ start_time
+- count_success + count_fail = count_total
+- if `is_employee=true`, then `email` is non-null
 
-Does the data represent the real decision environment?
+### 5.4 Semantics (meaning)
+- units (ms, seconds, dollars)
+- definition (“active user” means logged in within last 30 days)
+- provenance (where it comes from, how it’s computed)
 
-Missing diversity causes:
+**Why semantics matter:**  
+A model can’t protect you from a definition change it doesn’t know happened.
 
-domain failure
+---
 
-language failure
+# 6) Evaluation integrity: splitting without lying
+A model evaluation should answer a single question:
 
-demographic bias
+> “If I deploy this, how will it perform on the next data it sees?”
 
-distribution shift in production
+That means your split must reflect deployment reality.
 
-Visualization — Data Quality vs Quantity Tradeoff
+## 6.1 Time-based split (most common)
+If the world changes over time (it does), use:
+- train = past
+- test = future
 
-Credible reference:
-Stanford AI Index & scaling-law literature consistently show:
+## 6.2 Group/entity split (when identity matters)
+If multiple rows belong to the same entity (user/device/patient):
+- keep that entity in **one** split
+- otherwise you get “identity leakage”
 
-performance improves with scale
+## 6.3 Frozen test sets (for honesty over time)
+If you keep regenerating the test set, you keep moving the goalposts.
+A frozen test set becomes your “benchmark reality.”
 
-but plateaus without quality improvements
+---
 
-Recommended visual:
+# 7) Drift: the difference between “works” and “still works”
+Drift checks aren’t fancy. They’re practical.
 
-https://hai.stanford.edu/ai-index
+### 7.1 Data quality drift
+- null rate changed
+- range changed
+- new categories appeared
+- schema changed
 
+### 7.2 Distribution drift
+- feature distribution shifts
+- correlations shift
+- segment mix shifts (different population)
 
-Look for:
+### 7.3 Concept drift (harder)
+- relationship between inputs and target changes  
+Example: “fraud” behavior evolves, or policies change.
 
-training compute vs performance curves
+**Minimum viable drift monitoring** (start here):
+- null rate per column
+- range checks
+- PSI (Population Stability Index)
+- KS test (distribution shift)
 
-This is the empirical foundation of Chapter 8.
+---
 
-Dataset Sources Used in Real AI Systems
+# 8) Datasets for Testing
 
-Below are credible, industry-relevant datasets worth knowing.
+- **NASA C-MAPSS (predictive maintenance)** dataset page  
+  https://data.nasa.gov/dataset/cmapss-jet-engine-simulated-data  
+- **UCI ML Repository** (classic datasets, well documented)  
+  https://archive.ics.uci.edu/  
+- **CIC IDS 2017** (cyber intrusion dataset)  
+  https://www.unb.ca/cic/datasets/ids-2017.html  
 
-Web-Scale Text
+Tip: Many dataset pages include schema descriptions, feature lists, and usage papers—those are often the most credible because they come with definitions.
 
-Common Crawl
-https://commoncrawl.org
+---
 
-C4 Dataset
-https://www.tensorflow.org/datasets/catalog/c4
+# 9) Demos: run directly in Google Colab 
+Run these demos by copy/pasting each block into Colab.
 
-These power many foundation models.
+## 9.1 Colab quick start
+1. Open: https://colab.research.google.com
+2. Click **New Notebook**
+3. Create cells and paste the blocks below **in order**
+4. Run top to bottom
 
-Structured / Tabular
+---
 
-UCI Machine Learning Repository
-https://archive.ics.uci.edu
+## DEMO 0 — Install + imports
+```python
+!pip -q install pandas numpy matplotlib scipy scikit-learn pandera
 
-Kaggle datasets
-https://www.kaggle.com/datasets
-
-Useful for decision-oriented ML.
-
-Multimodal
-
-LAION image-text datasets
-https://laion.ai
-
-Critical for:
-
-diffusion models
-
-vision-language systems
-
-Informatics Insight
-
-Notice something important:
-
-None of these datasets were built for your decision.
-
-That gap explains:
-
-domain-specific models
-
-retrieval-augmented generation
-
-synthetic data
-
-evaluation pipelines
-
-All core AI-engineering patterns.
-
-Synthetic Data — Engineering Reality When Reality Is Missing
-
-Synthetic data = artificially generated training examples
-that preserve:
-
-structure
-
-distribution
-
-semantics
-
-without requiring:
-
-expensive collection
-
-sensitive data access
-
-rare real-world events
-
-Why Synthetic Data Exists
-
-Three dominant reasons:
-
-1. Privacy
-
-Healthcare, finance, defense.
-
-Real data cannot be freely shared.
-
-2. Scarcity
-
-Rare failures, edge cases, anomalies.
-
-Exactly the cases we most need to learn from.
-
-3. Cost
-
-Human labeling is expensive and slow.
-
-Synthetic generation scales instantly.
-
-Visualization — Real vs Synthetic Data Pipeline
-
-Helpful conceptual diagram:
-
-Real World → Small Real Dataset → Synthetic Expansion → Model Training → Evaluation → Decision
-
-
-Credible reference discussion:
-
-https://hai.stanford.edu/news/synthetic-data-ai
-
-Hands-On Demo — Creating Synthetic Tabular Data
-Goal
-
-Simulate a decision dataset when real data is unavailable.
-
-Python Example
-import pandas as pd
 import numpy as np
-
-np.random.seed(42)
-
-n = 500
-
-data = pd.DataFrame({
-    "age": np.random.normal(40, 10, n).astype(int),
-    "income": np.random.normal(70000, 15000, n).astype(int),
-    "risk_score": np.random.uniform(0, 1, n)
-})
-
-data["decision"] = (data["risk_score"] > 0.6).astype(int)
-
-data.head()
-
-Informatics Reflection
-
-What just happened?
-
-We engineered information:
-
-defined variables
-
-defined distributions
-
-defined a decision rule
-
-This is informatics in action.
-
-Demo Extension — Synthetic Text with an LLM
-from openai import OpenAI
-
-client = OpenAI()
-
-prompt = """
-Generate 5 realistic customer support complaints
-about delayed shipping. Keep each under 20 words.
-"""
-
-response = client.responses.create(
-    model="gpt-4.1-mini",
-    input=prompt
-)
-
-print(response.output[0].content[0].text)
-
-Why This Matters
-
-Synthetic text enables:
-
-classifier training
-
-evaluation benchmarks
-
-edge-case simulation
-
-without scraping real users.
-
-Risks of Synthetic Data
-
-(Critical Chapter 8 theme)
-
-Synthetic data can silently fail.
-
-Distribution Drift
-
-Generated data may not match reality.
-
-Feedback Loops
-
-Models trained on synthetic outputs
-learn their own mistakes.
-
-Hidden Bias
-
-Synthetic generation reflects
-the bias of the generator.
-
-Informatics Principle
-
-Synthetic data must always be evaluated against real-world decisions.
-
-Not just statistical similarity.
-
-Connecting Back to AI Engineering
-
-We now see a layered system:
-
-Data Engineering
-    ↓
-Dataset Strategy
-    ↓
-Model Training / Selection
-    ↓
-Evaluation
-    ↓
-Decision Support
-
-
-Chapter 8 focuses on the first two layers—
-the ones most courses ignore.
-
-Live Discussion Prompt (Canvas)
-
-Question:
-
-When is synthetic data more valuable than real data?
-
-Consider:
-
-privacy
-
-safety
-
-cost
-
-rare events
-
-simulation
-
-Post one concrete engineering scenario.
-
-Week 3 Practical Task
-Build a Tiny Decision Dataset
-
-Choose a domain
-
-Define 3–5 variables
-
-Generate synthetic rows
-
-Define a decision rule
-
-Reflect:
-
-What real-world assumptions did you encode?
-
-Submit:
-
-notebook link
-
-1-paragraph informatics reflection
-
-Looking Ahead — Lecture 04
-
-Next week we move into:
-
-Evaluation as the core of AI engineering
-
-Because:
-
-A system that cannot be evaluated
-cannot be trusted.
-
-Closing Thought
-
-The most important shift so far in this course:
-
-AI success is rarely about the model.
-
-It is about
-how we construct reality through data
-to support better human decisions.
-
-That idea—more than any algorithm—
-is the foundation of AI-enabled informatics.
+import pandas as pd
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+from scipy.stats import ks_2samp
+
+print("Ready.")
