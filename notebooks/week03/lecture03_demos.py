@@ -1,671 +1,581 @@
-#!/usr/bin/env python3
-"""
-lecture03_demos.py — Demos for Lecture 03 (Chapter 8 + Informatics linkages)
-
-- Decision Context → Informatics Role → Code → Output → Interpretation → Decision Impact
-
-Run (local):
-  python lecture03_demos.py --out_dir artifacts --show_plots 0
-
-Run (Colab/Azure):
-  !python lecture03_demos.py --out_dir artifacts --show_plots 0
-
-Outputs:
-  artifacts/
-    demo01_validation_report.csv
-    demo01_validation_summary.json
-    demo02_missingness_summary.json
-    demo02_imputation_plot.png
-    demo03_synthetic_dataset.csv
-    demo03_model_metrics.json
-    demo03_confusion_matrix.png
-    demo03_feature_importance.png
-    
-"""
+# lecture03_demos.py
+# =============================================================================
+# AI-Enabled Informatics for Engineers — Week 03 Demos (Lecture 03)
+#
+# PURPOSE (for students)
+#   This file is a *single runnable demo script* that supports Lecture 03.
+#   Lecture 03 is about data + informatics: dataset quality, schema, provenance,
+#   synthetic data, and building “analysis-ready” artifacts you can trust.
+#
+#   You will generate:
+#     - A realistic synthetic tabular dataset (with intentional issues)
+#     - A simple “data dictionary” / schema report
+#     - Data quality diagnostics (missingness, outliers, correlations)
+#     - A cleaned “analysis-ready” dataset
+#     - A synthetic text dataset (short feedback strings) + basic NLP features
+#     - Plots and CSVs that map to the lecture sections
+#
+# OUTPUTS (written to --out_dir, default: artifacts/)
+#   artifacts/
+#     01_raw_tabular.csv
+#     02_schema_report.txt
+#     03_quality_summary.json
+#     04_missingness_by_column.csv
+#     05_outlier_rows.csv
+#     06_clean_tabular.csv
+#     07_text_feedback.csv
+#     08_text_features.csv
+#     plot_missingness.png
+#     plot_correlation.png
+#     plot_value_distributions.png
+#     plot_text_top_terms.png
+#
+# =============================================================================
+# HOW TO RUN (Google Colab — recommended)
+#
+# IMPORTANT: In Colab you clone the *repo root*, not a subfolder URL.
+#
+# 1) In Colab, run a cell like this (replace with your repo URL):
+#
+#    !git clone https://github.com/<ORG>/<REPO>.git
+#    %cd <REPO>/notebooks/week03
+#    !pip -q install pandas numpy matplotlib scikit-learn
+#    !python lecture03_demos.py --out_dir artifacts --show_plots 1
+#
+# 2) After it runs, open the artifacts/ folder in the left Colab file browser.
+#
+# =============================================================================
+# HOW TO RUN (Local)
+#   cd notebooks/week03
+#   python -m venv .venv
+#   # Windows: .venv\Scripts\activate
+#   # Mac/Linux: source .venv/bin/activate
+#   pip install pandas numpy matplotlib scikit-learn
+#   python lecture03_demos.py --out_dir artifacts --show_plots 1
+#
+# =============================================================================
+# WHY THIS MATTERS (Lecture 03 linkage)
+#   Informatics is about making data *usable, interpretable, and trustworthy*.
+#   AI is powerful, but “garbage in → garbage out” is still undefeated.
+#   The goal this week is to show that:
+#     - Schema + meaning (not just files) is an engineering responsibility
+#     - Synthetic data can be a safe, fast stand-in for prototyping
+#     - Quality checks should be repeatable, automated, and visible
+#
+# =============================================================================
+# TROUBLESHOOTING (Colab)
+#   If it fails, it’s usually one of these:
+#     - You didn’t cd into the correct folder (week03)
+#     - Dependencies not installed: re-run pip install
+#     - Filename mismatch: ensure this file is named EXACTLY lecture03_demos.py
+#
+# =============================================================================
 
 from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
-import sys
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
+
+# Matplotlib: use a non-interactive backend-safe approach for notebook/Colab
+import matplotlib
+matplotlib.use("Agg")  # safe in Colab and headless environments
 import matplotlib.pyplot as plt
 
-# Optional dependency: pandera (validation). If unavailable, we degrade gracefully.
-try:
-    import pandera as pa
-    from pandera import Column, DataFrameSchema, Check
-    PANDERA_AVAILABLE = True
-except Exception:
-    PANDERA_AVAILABLE = False
-
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
-    confusion_matrix,
-)
-from sklearn.linear_model import LogisticRegression
+from sklearn.feature_extraction.text import CountVectorizer
 
 
-# ---------------------------
-# Utilities: explainability scaffolding
-# ---------------------------
+# -----------------------------------------------------------------------------
+# Small utilities
+# -----------------------------------------------------------------------------
+
+def now_iso() -> str:
+    return datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+
+
+def ensure_dir(path: str) -> None:
+    os.makedirs(path, exist_ok=True)
+
+
+def save_fig(path: str, show_plots: bool) -> None:
+    """Save a figure; optionally display when running interactively."""
+    plt.tight_layout()
+    plt.savefig(path, dpi=160)
+    if show_plots:
+        # In Colab, Agg won't auto-display; this still works in many setups.
+        # Students can open the PNGs from artifacts/ regardless.
+        try:
+            from IPython.display import display
+            display(plt.gcf())
+        except Exception:
+            pass
+    plt.close()
+
+
+def write_text(path: str, text: str) -> None:
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+
+
+def write_json(path: str, obj: Dict) -> None:
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(obj, f, indent=2)
+
+
+# -----------------------------------------------------------------------------
+# Demo 1: Generate a realistic synthetic TABULAR dataset (with intentional issues)
+# -----------------------------------------------------------------------------
 
 @dataclass
-class DecisionBox:
-    who_decides: str
-    decision: str
-    risk_if_wrong: str
-    how_this_demo_helps: str
-
-@dataclass
-class DemoNarrative:
-    title: str
-    decision_context: str
-    informatics_role: str
-    interpretation: str
-    decision_impact: str
-    artifacts: List[str]
-
-class Narrator:
-    """Prints structured, readable demo narration and builds a markdown narrative file."""
-    def __init__(self, out_dir: Path):
-        self.out_dir = out_dir
-        self.md_lines: List[str] = []
-        self._init_md()
-
-    def _init_md(self):
-        self.md_lines.append("# Lecture 03 Demos — Explainable Outputs\n")
-        self.md_lines.append(f"_Generated: {datetime.now().isoformat(timespec='seconds')}_\n")
-        self.md_lines.append(
-            "This page is auto-generated by `lecture03_demos.py` and is designed to map cleanly to the lecture.\n"
-            "Each demo follows the same structure: **Decision Context → Informatics Role → Output → Interpretation → Decision Impact**.\n"
-        )
-
-    def section(self, h2: str):
-        print("\n" + "=" * 88)
-        print(h2)
-        print("=" * 88)
-        self.md_lines.append(f"\n## {h2}\n")
-
-    def decision_box(self, box: DecisionBox):
-        # Console
-        print("\n[Decision Box]")
-        print(f"- Who decides: {box.who_decides}")
-        print(f"- Decision: {box.decision}")
-        print(f"- Risk if wrong: {box.risk_if_wrong}")
-        print(f"- How this demo helps: {box.how_this_demo_helps}")
-
-        # Markdown
-        self.md_lines.append(
-            "\n> **Decision Box**\n"
-            f">\n> **Who decides:** {box.who_decides}  \n"
-            f"> **Decision:** {box.decision}  \n"
-            f"> **Risk if wrong:** {box.risk_if_wrong}  \n"
-            f"> **How this demo helps:** {box.how_this_demo_helps}\n"
-        )
-
-    def text_block(self, label: str, text: str):
-        # Console
-        print(f"\n{label}:\n{text.strip()}")
-        # Markdown
-        self.md_lines.append(f"\n### {label}\n\n{text.strip()}\n")
-
-    def artifacts(self, artifact_paths: List[Path]):
-        if not artifact_paths:
-            return
-        self.md_lines.append("\n### Artifacts\n")
-        for p in artifact_paths:
-            rel = p.name
-            # Render images inline; others as links
-            if p.suffix.lower() in [".png", ".jpg", ".jpeg", ".svg", ".webp"]:
-                self.md_lines.append(f"- `{rel}`\n\n  ![]({rel})\n")
-            else:
-                self.md_lines.append(f"- [{rel}]({rel})\n")
-
-    def finalize(self) -> Path:
-        md_path = self.out_dir / "lecture03_demo_narrative.md"
-        md_path.write_text("\n".join(self.md_lines), encoding="utf-8")
-        return md_path
+class TabularConfig:
+    n: int = 4000
+    seed: int = 42
 
 
-def safe_mkdir(p: Path):
-    p.mkdir(parents=True, exist_ok=True)
-
-
-def write_json(path: Path, obj: dict):
-    path.write_text(json.dumps(obj, indent=2, sort_keys=True), encoding="utf-8")
-
-
-def seed_everything(seed: int = 42):
-    np.random.seed(seed)
-
-
-# ---------------------------
-# Demo 0: Synthetic data generator (shared for all)
-# ---------------------------
-
-def generate_telemetry_dataset(n: int = 2500, missing_rate: float = 0.08, seed: int = 42) -> pd.DataFrame:
+def generate_tabular(cfg: TabularConfig) -> pd.DataFrame:
     """
-    Generates a realistic-enough telemetry dataset for teaching:
-      - sensor_temp_c: operating temperature
-      - vibration_mm_s: vibration velocity
-      - voltage_v: supply voltage
-      - pressure_kpa: hydraulic pressure
-      - load_pct: system load (0-100)
-      - time_min: time index
-      - failure_within_24h: label (binary)
-    Includes:
-      - mild drift
-      - correlated signals
-      - injected missingness
-      - injected outliers (for validation demo)
+    Creates a synthetic dataset meant to resemble operational/engineering data.
+    You can imagine this as: tickets, incidents, device telemetry summaries,
+    or quality-control measurements.
+
+    Intentional issues injected (on purpose, to practice informatics):
+      - missing values in a critical field
+      - outliers in a numeric field
+      - inconsistent category label (typo)
     """
-    seed_everything(seed)
-    time_min = np.arange(n)
+    rng = np.random.default_rng(cfg.seed)
 
-    # Load pattern: daily-ish sinusoid + noise, bounded
-    load = 55 + 25*np.sin(2*np.pi*time_min/480) + np.random.normal(0, 8, n)
-    load = np.clip(load, 0, 100)
+    # Categorical “source” could be region, unit, product line, etc.
+    source = rng.choice(["alpha", "bravo", "charlie"], size=cfg.n, p=[0.55, 0.30, 0.15])
 
-    # Temperature: correlated with load + drift
-    drift = 0.003 * time_min
-    temp = 45 + 0.35*load + drift + np.random.normal(0, 2.2, n)
+    # A “week” feature to hint at time windows and drift analysis later
+    week = rng.integers(1, 13, size=cfg.n)
 
-    # Vibration: increases with load; spikes when temp high
-    vib = 1.2 + 0.03*load + 0.02*np.maximum(temp - 75, 0) + np.random.normal(0, 0.25, n)
-    vib = np.clip(vib, 0, None)
+    # Continuous measures
+    load = rng.normal(loc=0.0, scale=1.0, size=cfg.n) + (week - 6) * 0.08  # slight trend
+    latency_ms = rng.lognormal(mean=4.2, sigma=0.35, size=cfg.n)  # positive skew
 
-    # Voltage: nominal ~ 48V with small variation; droops slightly under high load
-    voltage = 48 - 0.015*load + np.random.normal(0, 0.35, n)
+    # A bounded score
+    quality_score = np.clip(rng.normal(loc=0.75, scale=0.12, size=cfg.n), 0.0, 1.0)
 
-    # Pressure: depends on load + noise
-    pressure = 210 + 0.8*load + np.random.normal(0, 7.0, n)
+    # Risk-ish label derived from a rule (not “truth”, but a plausible toy process)
+    # Higher load + higher latency + lower quality → higher risk
+    logits = 0.9 * load + 0.012 * (latency_ms - latency_ms.mean()) - 2.0 * (quality_score - 0.7)
+    prob = 1 / (1 + np.exp(-logits))
+    risk_flag = rng.binomial(1, p=np.clip(prob * 0.65, 0, 1), size=cfg.n)  # mild imbalance
 
-    # Failure probability: nonlinear combination (teaching-friendly)
-    # High risk when vib high, temp high, voltage low (droop), pressure high (overload)
-    risk_score = (
-        0.06*(temp - 70)
-        + 1.1*(vib - 2.2)
-        - 0.9*(voltage - 47.2)
-        + 0.01*(pressure - 260)
+    df = pd.DataFrame(
+        {
+            "source": source,
+            "week": week,
+            "load": load.astype(float),
+            "latency_ms": latency_ms.astype(float),
+            "quality_score": quality_score.astype(float),
+            "risk_flag": risk_flag.astype(int),
+        }
     )
-    # squash
-    prob = 1 / (1 + np.exp(-risk_score))
-    # Add base rarity control
-    prob = np.clip(0.02 + 0.35*prob, 0, 0.95)
-    y = (np.random.rand(n) < prob).astype(int)
 
-    df = pd.DataFrame({
-        "time_min": time_min,
-        "load_pct": load,
-        "sensor_temp_c": temp,
-        "vibration_mm_s": vib,
-        "voltage_v": voltage,
-        "pressure_kpa": pressure,
-        "failure_within_24h": y,
-    })
+    # --- Inject intentional issues ---
+    # Missingness in latency_ms (simulate sensor dropouts)
+    miss_idx = rng.choice(cfg.n, size=int(cfg.n * 0.015), replace=False)
+    df.loc[miss_idx, "latency_ms"] = np.nan
 
-    # Inject missingness at random columns (except label/time)
-    rng = np.random.default_rng(seed + 1)
-    cols = ["load_pct", "sensor_temp_c", "vibration_mm_s", "voltage_v", "pressure_kpa"]
-    for c in cols:
-        mask = rng.random(n) < missing_rate
-        df.loc[mask, c] = np.nan
+    # Outliers in latency_ms (simulate rare extreme incidents)
+    out_idx = rng.choice(cfg.n, size=int(cfg.n * 0.004), replace=False)
+    df.loc[out_idx, "latency_ms"] = df.loc[out_idx, "latency_ms"] * rng.uniform(4, 8, size=len(out_idx))
 
-    # Inject a few "hard outliers" to simulate bad ingestion/sensor glitches
-    outlier_idx = rng.choice(n, size=max(6, n // 400), replace=False)
-    df.loc[outlier_idx[: len(outlier_idx)//2], "sensor_temp_c"] = 200  # impossible
-    df.loc[outlier_idx[len(outlier_idx)//2 :], "voltage_v"] = -5       # impossible
+    # Category typo (simulate data entry inconsistency)
+    typo_idx = rng.choice(cfg.n, size=int(cfg.n * 0.002), replace=False)
+    df.loc[typo_idx, "source"] = "charliee"  # typo on purpose
 
     return df
 
 
-# ---------------------------
-# Demo 1: Data validation (Chapter 8: data quality & governance)
-# ---------------------------
+# -----------------------------------------------------------------------------
+# Demo 2: Schema/Data Dictionary report (lightweight, lecture-friendly)
+# -----------------------------------------------------------------------------
 
-def demo01_validation(df: pd.DataFrame, out_dir: Path, narrator: Narrator) -> List[Path]:
-    narrator.section("Demo 1 — Data Validation as Decision Insurance (Quality Gate)")
+def schema_report(df: pd.DataFrame) -> str:
+    """
+    A simple data dictionary: column types, missingness, ranges, and categories.
+    This is informatics: turning “data” into “understood data”.
+    """
+    lines: List[str] = []
+    lines.append("SCHEMA + DATA DICTIONARY REPORT (Lecture 03)")
+    lines.append(f"Generated: {now_iso()}")
+    lines.append(f"Rows: {len(df):,}")
+    lines.append("")
 
-    narrator.decision_box(DecisionBox(
-        who_decides="Reliability Engineer / Ops Lead",
-        decision="Can we trust this batch of telemetry enough to trigger alerts or maintenance actions?",
-        risk_if_wrong="False alarms (wasted downtime) or missed failures (unsafe operation).",
-        how_this_demo_helps="Creates an explicit quality gate that turns raw data into trusted information."
-    ))
+    for col in df.columns:
+        s = df[col]
+        lines.append(f"Column: {col}")
+        lines.append(f"  dtype: {s.dtype}")
+        lines.append(f"  missing: {int(s.isna().sum())} ({(s.isna().mean()*100):.2f}%)")
 
-    narrator.text_block("Decision Context",
-        "A monitoring system ingests telemetry continuously. If bad values slip through (e.g., impossible voltage),\n"
-        "downstream analytics and alerting become unreliable. This demo shows how validation rules catch issues early\n"
-        "and produce an actionable report instead of silently corrupting the pipeline."
-    )
+        if pd.api.types.is_numeric_dtype(s):
+            lines.append(f"  min/max: {np.nanmin(s):.4g} / {np.nanmax(s):.4g}")
+            lines.append(f"  mean/std: {np.nanmean(s):.4g} / {np.nanstd(s):.4g}")
+        else:
+            # show top categories
+            vc = s.value_counts(dropna=False).head(8)
+            lines.append("  top values:")
+            for k, v in vc.items():
+                lines.append(f"    - {repr(k)}: {v}")
 
-    narrator.text_block("Informatics Role",
-        "Informatics converts **raw data → validated information**.\n"
-        "Validation is a governance mechanism: it enforces schema + constraints so decisions are based on credible inputs."
-    )
+        lines.append("")
 
-    artifacts: List[Path] = []
-
-    # Minimal fallback if pandera isn't present
-    if not PANDERA_AVAILABLE:
-        # Simple rule checks (still teachable)
-        checks = {
-            "sensor_temp_c": lambda s: s.between(-20, 120) | s.isna(),
-            "voltage_v": lambda s: s.between(0, 60) | s.isna(),
-            "vibration_mm_s": lambda s: (s >= 0) | s.isna(),
-            "pressure_kpa": lambda s: s.between(0, 600) | s.isna(),
-            "load_pct": lambda s: s.between(0, 100) | s.isna(),
-        }
-
-        report_rows = []
-        for col, fn in checks.items():
-            ok = fn(df[col])
-            bad_count = int((~ok).sum())
-            report_rows.append({
-                "column": col,
-                "bad_count": bad_count,
-                "bad_pct": float(bad_count / len(df)),
-            })
-
-        report = pd.DataFrame(report_rows).sort_values("bad_count", ascending=False)
-        report_path = out_dir / "demo01_validation_report.csv"
-        report.to_csv(report_path, index=False)
-        artifacts.append(report_path)
-
-        summary = {
-            "pandera_available": False,
-            "rows": int(len(df)),
-            "invalid_cells_total": int(report["bad_count"].sum()),
-            "invalid_by_column": report.set_index("column")["bad_count"].to_dict(),
-            "action_recommendation": "Quarantine batch or route to remediation if invalid_cells_total > 0."
-        }
-        summary_path = out_dir / "demo01_validation_summary.json"
-        write_json(summary_path, summary)
-        artifacts.append(summary_path)
-
-        narrator.text_block("Output (What you should notice)",
-            f"- Saved a validation report to `{report_path.name}`\n"
-            f"- Saved a validation summary to `{summary_path.name}`\n"
-            "Even without Pandera, we produced a consistent, auditable quality gate."
-        )
-
-    else:
-        schema = DataFrameSchema({
-            "time_min": Column(int, Check.ge(0)),
-            "load_pct": Column(float, [Check.ge(0), Check.le(100)], nullable=True),
-            "sensor_temp_c": Column(float, [Check.ge(-20), Check.le(120)], nullable=True),
-            "vibration_mm_s": Column(float, [Check.ge(0), Check.le(50)], nullable=True),
-            "voltage_v": Column(float, [Check.ge(0), Check.le(60)], nullable=True),
-            "pressure_kpa": Column(float, [Check.ge(0), Check.le(600)], nullable=True),
-            "failure_within_24h": Column(int, Check.isin([0, 1])),
-        })
-
-        try:
-            schema.validate(df, lazy=True)
-            # If this passes, no issues (unlikely with injected outliers)
-            report = pd.DataFrame([{"column": "ALL", "bad_count": 0, "bad_pct": 0.0}])
-            invalid_total = 0
-            invalid_by_column = {}
-        except Exception as e:
-            # Pandera's failure cases can be rich; we want a student-friendly report.
-            # We extract "failure_cases" if present.
-            failure_cases = getattr(e, "failure_cases", None)
-            if failure_cases is None:
-                # Generic error fallback
-                failure_cases = pd.DataFrame({"column": ["unknown"], "failure_case": [str(e)]})
-
-            # Normalize
-            if "column" not in failure_cases.columns:
-                failure_cases["column"] = "unknown"
-
-            report = (failure_cases.groupby("column")
-                      .size()
-                      .reset_index(name="bad_count")
-                      .sort_values("bad_count", ascending=False))
-            report["bad_pct"] = report["bad_count"] / len(df)
-
-            invalid_total = int(report["bad_count"].sum())
-            invalid_by_column = report.set_index("column")["bad_count"].to_dict()
-
-        report_path = out_dir / "demo01_validation_report.csv"
-        report.to_csv(report_path, index=False)
-        artifacts.append(report_path)
-
-        summary = {
-            "pandera_available": True,
-            "rows": int(len(df)),
-            "invalid_cells_total": invalid_total,
-            "invalid_by_column": invalid_by_column,
-            "action_recommendation": "If invalid_cells_total > 0: quarantine batch, remediate source, re-run validation."
-        }
-        summary_path = out_dir / "demo01_validation_summary.json"
-        write_json(summary_path, summary)
-        artifacts.append(summary_path)
-
-        narrator.text_block("Output (What you should notice)",
-            f"- Validation found **{invalid_total}** invalid cells (injected outliers simulate real ingestion glitches).\n"
-            f"- Report: `{report_path.name}` (which columns failed and how often)\n"
-            f"- Summary: `{summary_path.name}` (auditable decision support)\n"
-            "This is what it looks like to treat data quality as part of the decision pipeline."
-        )
-
-    narrator.text_block("Interpretation",
-        "When validation flags impossible readings, it usually indicates one of:\n"
-        "- sensor faults\n"
-        "- ingestion/parsing errors (units, sign, decimal shift)\n"
-        "- schema drift\n\n"
-        "The key informatics principle: **don’t let bad data quietly become ‘facts’**."
-    )
-
-    narrator.text_block("Decision Impact",
-        "With an explicit quality gate, teams can quarantine the batch, remediate upstream issues, and reprocess.\n"
-        "Without it, downstream models learn from corrupted inputs, which produces confident but wrong decisions."
-    )
-
-    narrator.artifacts(artifacts)
-    return artifacts
+    # quick “risk framing” reminder (ties to informatics and later evaluation/monitoring)
+    lines.append("NOTES (why you care):")
+    lines.append("- Missingness can bias metrics and training; document your handling policy.")
+    lines.append("- Category typos create silent fragmentation (two buckets that should be one).")
+    lines.append("- Outliers can dominate averages; always inspect distributions.")
+    return "\n".join(lines)
 
 
-# ---------------------------
-# Demo 2: Missingness + imputation (Chapter 8: data completeness & uncertainty)
-# ---------------------------
+# -----------------------------------------------------------------------------
+# Demo 3: Data quality diagnostics (missingness, outliers, correlation)
+# -----------------------------------------------------------------------------
 
-def demo02_missingness_imputation(df: pd.DataFrame, out_dir: Path, narrator: Narrator, show_plots: bool) -> List[Path]:
-    narrator.section("Demo 2 — Missing Data: Filling Gaps Without Lying to Yourself")
-
-    narrator.decision_box(DecisionBox(
-        who_decides="Maintenance Planner / Data Analyst",
-        decision="Do we have enough signal continuity to detect degradation trends and act?",
-        risk_if_wrong="Hidden degradation (missed intervention) or overreaction to noisy estimates.",
-        how_this_demo_helps="Quantifies missingness and shows imputation as a controlled approximation—plus uncertainty language."
-    ))
-
-    narrator.text_block("Decision Context",
-        "Telemetry pipelines are messy: sensors drop packets, gateways reboot, networks hiccup.\n"
-        "If you ignore missing data, you may erase a trend. If you impute blindly, you may manufacture certainty.\n"
-        "This demo shows missingness profiling and a simple, transparent imputation approach."
-    )
-
-    narrator.text_block("Informatics Role",
-        "Informatics is not just modeling—it’s **data stewardship**.\n"
-        "Missingness is a first-class signal about system reliability and data pipeline health.\n"
-        "Imputation converts partial data into a usable dataset, but must preserve the idea that it’s an estimate."
-    )
-
-    artifacts: List[Path] = []
-
-    cols = ["load_pct", "sensor_temp_c", "vibration_mm_s", "voltage_v", "pressure_kpa"]
-    missing_counts = df[cols].isna().sum().to_dict()
-    missing_pct = (df[cols].isna().mean() * 100).round(2).to_dict()
-
-    missing_summary = {
+def summarize_quality(df: pd.DataFrame) -> Tuple[Dict, pd.DataFrame, pd.DataFrame]:
+    """
+    Returns:
+      - a dict quality summary
+      - missingness table
+      - outlier rows table (simple z-score approach on numeric cols)
+    """
+    summary: Dict = {
+        "generated_utc": now_iso(),
         "rows": int(len(df)),
-        "missing_counts": {k: int(v) for k, v in missing_counts.items()},
-        "missing_pct": {k: float(v) for k, v in missing_pct.items()},
-        "note": "Imputation introduces estimates; downstream decisions should acknowledge uncertainty."
+        "columns": list(df.columns),
     }
 
-    summary_path = out_dir / "demo02_missingness_summary.json"
-    write_json(summary_path, missing_summary)
-    artifacts.append(summary_path)
-
-    narrator.text_block("Output (What you should notice)",
-        f"- Missingness summary saved to `{summary_path.name}`\n"
-        "Look for columns with high missingness: they can compromise trend detection and model stability."
+    missing = (
+        df.isna().mean()
+        .rename("missing_rate")
+        .to_frame()
+        .sort_values("missing_rate", ascending=False)
+        .reset_index()
+        .rename(columns={"index": "column"})
     )
 
-    # Impute using time-based interpolation (works since we have a time index)
-    df_sorted = df.sort_values("time_min").reset_index(drop=True)
-    imputed = df_sorted.copy()
-    imputed[cols] = imputed[cols].interpolate(method="linear", limit_direction="both")
-
-    # Compare one signal before/after
-    signal = "sensor_temp_c"
-    plot_path = out_dir / "demo02_imputation_plot.png"
-
-    plt.figure()
-    # plot raw (with gaps) as points, imputed as line
-    plt.plot(df_sorted["time_min"], imputed[signal], label="Imputed (linear)")
-    plt.scatter(df_sorted["time_min"], df_sorted[signal], s=6, label="Observed (gappy)")
-    plt.xlabel("Time (min)")
-    plt.ylabel(signal)
-    plt.title("Missingness + Imputation: Observed vs Imputed")
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(plot_path, dpi=160)
-    artifacts.append(plot_path)
-
-    if show_plots:
-        plt.show()
-    plt.close()
-
-    narrator.text_block("Interpretation",
-        "Interpolation restores continuity, which is useful for visualization and some models.\n"
-        "But it can also smooth out real spikes. So the *right mental model* is:\n"
-        "- observed points = evidence\n"
-        "- imputed points = best guess\n\n"
-        "In practice, you often track a companion indicator like `is_imputed` per cell/row."
-    )
-
-    narrator.text_block("Decision Impact",
-        "You can now:\n"
-        "- detect trends without breaking the timeline\n"
-        "- run baseline models for early insight\n\n"
-        "But you should avoid irreversible operational actions (e.g., shutdown) based solely on imputed segments.\n"
-        "This is the informatics ethic: **use estimates, but label them honestly**."
-    )
-
-    narrator.artifacts(artifacts)
-    return artifacts
-
-
-# ---------------------------
-# Demo 3: Synthetic data + simple model + interpretable outputs
-# (Chapter 8: evaluation, risk, and decision thresholds)
-# ---------------------------
-
-def demo03_modeling(df: pd.DataFrame, out_dir: Path, narrator: Narrator, show_plots: bool) -> List[Path]:
-    narrator.section("Demo 3 — From Data → Decision: A Minimal, Auditable Predictive Model")
-
-    narrator.decision_box(DecisionBox(
-        who_decides="Ops Lead / Reliability Team",
-        decision="Should we schedule preventative maintenance in the next 24 hours?",
-        risk_if_wrong="Unplanned failure (high cost) or unnecessary maintenance (downtime + waste).",
-        how_this_demo_helps="Builds a small, interpretable model and reports metrics + confusion matrix as decision evidence."
-    ))
-
-    narrator.text_block("Decision Context",
-        "Most real teams start with *something simple that works*.\n"
-        "This demo trains a basic logistic regression model to predict `failure_within_24h` from telemetry features.\n"
-        "We emphasize auditable evaluation outputs instead of chasing fancy modeling."
-    )
-
-    narrator.text_block("Informatics Role",
-        "This is the classic pipeline:\n"
-        "**data → features → model → evaluation → decision threshold → action**.\n"
-        "Informatics asks: can we justify the model outputs as trustworthy inputs to decisions?"
-    )
-
-    artifacts: List[Path] = []
-
-    # Prepare features
-    feature_cols = ["load_pct", "sensor_temp_c", "vibration_mm_s", "voltage_v", "pressure_kpa"]
-    model_df = df[feature_cols + ["failure_within_24h"]].copy()
-
-    # Basic imputation (median) for modeling baseline; keep it explicit and honest
-    medians = model_df[feature_cols].median(numeric_only=True)
-    model_df[feature_cols] = model_df[feature_cols].fillna(medians)
-
-    # Save dataset for students to inspect
-    dataset_path = out_dir / "demo03_synthetic_dataset.csv"
-    model_df.to_csv(dataset_path, index=False)
-    artifacts.append(dataset_path)
-
-    X = model_df[feature_cols].values
-    y = model_df["failure_within_24h"].values
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.25, random_state=42, stratify=y
-    )
-
-    # Simple, interpretable baseline
-    clf = LogisticRegression(max_iter=500)
-    clf.fit(X_train, y_train)
-
-    # Predictions
-    y_prob = clf.predict_proba(X_test)[:, 1]
-    # Default threshold = 0.5 (we will discuss thresholding as a decision policy)
-    threshold = 0.5
-    y_pred = (y_prob >= threshold).astype(int)
-
-    # Metrics
-    metrics = {
-        "threshold": threshold,
-        "accuracy": float(accuracy_score(y_test, y_pred)),
-        "precision": float(precision_score(y_test, y_pred, zero_division=0)),
-        "recall": float(recall_score(y_test, y_pred, zero_division=0)),
-        "f1": float(f1_score(y_test, y_pred, zero_division=0)),
-        "base_rate_failure": float(y_test.mean()),
-        "note": "Metrics depend on decision threshold. In real systems, threshold is chosen based on cost of false positives/negatives."
+    summary["missing_rate_by_column"] = {
+        row["column"]: float(row["missing_rate"]) for _, row in missing.iterrows()
     }
-    metrics_path = out_dir / "demo03_model_metrics.json"
-    write_json(metrics_path, metrics)
-    artifacts.append(metrics_path)
 
-    narrator.text_block("Output (What you should notice)",
-        f"- Saved the modeling dataset to `{dataset_path.name}` (inspect it; understand the features)\n"
-        f"- Saved model metrics to `{metrics_path.name}`\n"
-        "These artifacts are designed to be *decision-facing evidence*, not just ML trivia."
-    )
+    # Outliers: z-score on numeric columns (robust enough for a teaching demo)
+    num_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
+    outlier_mask = np.zeros(len(df), dtype=bool)
 
-    # Confusion matrix plot
-    cm = confusion_matrix(y_test, y_pred)
-    cm_path = out_dir / "demo03_confusion_matrix.png"
+    for c in num_cols:
+        s = df[c].to_numpy(dtype=float)
+        mu = np.nanmean(s)
+        sd = np.nanstd(s) + 1e-9
+        z = (s - mu) / sd
+        outlier_mask |= (np.abs(z) > 4.5)  # stricter threshold: “rare extremes”
 
+    outliers = df.loc[outlier_mask].copy()
+    summary["outlier_rows_detected"] = int(len(outliers))
+
+    return summary, missing, outliers
+
+
+def plot_missingness(missing_df: pd.DataFrame, out_path: str, show_plots: bool) -> None:
     plt.figure()
-    plt.imshow(cm, interpolation="nearest")
-    plt.title("Confusion Matrix (Threshold = 0.5)")
-    plt.xlabel("Predicted")
-    plt.ylabel("Actual")
-    plt.colorbar()
-    tick_marks = np.arange(2)
-    plt.xticks(tick_marks, ["NoFail", "Fail"])
-    plt.yticks(tick_marks, ["NoFail", "Fail"])
-
-    # Annotate
-    for i in range(cm.shape[0]):
-        for j in range(cm.shape[1]):
-            plt.text(j, i, str(cm[i, j]), ha="center", va="center")
-
-    plt.tight_layout()
-    plt.savefig(cm_path, dpi=160)
-    artifacts.append(cm_path)
-    if show_plots:
-        plt.show()
-    plt.close()
-
-    # Feature importance (logistic regression coefficients as a simple interpretability tool)
-    coefs = clf.coef_.ravel()
-    coef_df = pd.DataFrame({"feature": feature_cols, "coef": coefs}).sort_values("coef", ascending=False)
-
-    fi_path = out_dir / "demo03_feature_importance.png"
-    plt.figure()
-    plt.bar(coef_df["feature"], coef_df["coef"])
+    plt.bar(missing_df["column"], missing_df["missing_rate"])
+    plt.title("Missingness by Column (Lecture 03)")
+    plt.xlabel("Column")
+    plt.ylabel("Missing rate")
     plt.xticks(rotation=30, ha="right")
-    plt.ylabel("Coefficient (log-odds contribution)")
-    plt.title("Interpretability: Logistic Regression Coefficients")
-    plt.tight_layout()
-    plt.savefig(fi_path, dpi=160)
-    artifacts.append(fi_path)
-    if show_plots:
-        plt.show()
-    plt.close()
+    save_fig(out_path, show_plots)
 
-    # Plain-English interpretation text
-    top_pos = coef_df.iloc[0]
-    top_neg = coef_df.iloc[-1]
 
-    narrator.text_block("Interpretation",
-        "The confusion matrix tells a story:\n"
-        "- **False negatives** (missed failures) are the scary ones if safety is critical.\n"
-        "- **False positives** (unnecessary maintenance) are costly but usually safer.\n\n"
-        "The coefficient chart is a simple interpretability tool:\n"
-        f"- Most positive driver (in this fit): `{top_pos['feature']}`\n"
-        f"- Most negative driver (in this fit): `{top_neg['feature']}`\n\n"
-        "Important: coefficients are not 'truth'—they’re a transparent summary of what this model learned from this dataset."
+def plot_correlation(df: pd.DataFrame, out_path: str, show_plots: bool) -> None:
+    num_df = df.select_dtypes(include=[np.number]).copy()
+    corr = num_df.corr(numeric_only=True)
+    plt.figure()
+    plt.imshow(corr)
+    plt.title("Numeric Feature Correlation (Lecture 03)")
+    plt.xticks(range(len(corr.columns)), corr.columns, rotation=30, ha="right")
+    plt.yticks(range(len(corr.columns)), corr.columns)
+    for (i, j), v in np.ndenumerate(corr.to_numpy()):
+        plt.text(j, i, f"{v:.2f}", ha="center", va="center", fontsize=8)
+    save_fig(out_path, show_plots)
+
+
+def plot_distributions(df: pd.DataFrame, out_path: str, show_plots: bool) -> None:
+    """
+    A single figure with multiple histograms is often done via subplots.
+    BUT: you asked earlier to avoid subplots when charting *for the user* via python tool.
+    Here, we're generating a single PNG for students. Subplots are reasonable and common.
+    """
+    num_cols = ["load", "latency_ms", "quality_score"]
+    plt.figure(figsize=(10, 3))
+    for i, c in enumerate(num_cols, 1):
+        plt.subplot(1, 3, i)
+        plt.hist(df[c].dropna().to_numpy(), bins=30)
+        plt.title(c)
+    plt.suptitle("Value Distributions (Lecture 03)")
+    save_fig(out_path, show_plots)
+
+
+# -----------------------------------------------------------------------------
+# Demo 4: Cleaning policy (explicit, repeatable)
+# -----------------------------------------------------------------------------
+
+def clean_tabular(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Cleaning is a POLICY decision. We make it explicit for students:
+
+    Policy:
+      1) Fix known category typos:
+         - "charliee" -> "charlie"
+      2) Handle missing latency:
+         - Impute with median per source (simple, transparent baseline)
+      3) Handle extreme outliers in latency:
+         - Winsorize (cap) at 99.5 percentile
+    """
+    out = df.copy()
+
+    # 1) Category normalization
+    out["source"] = out["source"].replace({"charliee": "charlie"})
+
+    # 2) Impute missing latency by median per source
+    out["latency_ms"] = out.groupby("source")["latency_ms"].transform(
+        lambda s: s.fillna(s.median())
     )
 
-    narrator.text_block("Decision Impact",
-        "You now have a defensible baseline model and evaluation evidence.\n"
-        "Next step (policy): choose a threshold based on cost.\n"
-        "- If missed failures are unacceptable → lower threshold to increase recall.\n"
-        "- If maintenance is extremely expensive → raise threshold to increase precision.\n\n"
-        "That’s Chapter 8 in action: evaluation is not academic—it defines operational decision policy."
+    # 3) Cap extreme outliers (winsorize)
+    cap = out["latency_ms"].quantile(0.995)
+    out["latency_ms"] = out["latency_ms"].clip(upper=float(cap))
+
+    return out
+
+
+# -----------------------------------------------------------------------------
+# Demo 5: Synthetic TEXT data + basic NLP features (informatics meets AI)
+# -----------------------------------------------------------------------------
+
+TEXT_TEMPLATES = [
+    "Latency spikes when load is high",
+    "System feels slow after update",
+    "Quality improved this week",
+    "Too many false alarms in monitoring",
+    "Dashboard is helpful but confusing",
+    "Needs clearer documentation",
+    "Data seems incomplete for {source}",
+    "Model output is hard to interpret",
+    "Great performance in segment {source}",
+    "Unexpected errors when traffic shifts",
+]
+
+TEXT_LABELS = [
+    "performance",
+    "reliability",
+    "usability",
+    "data_quality",
+    "explainability",
+]
+
+
+def generate_text_feedback(df_clean: pd.DataFrame, seed: int) -> pd.DataFrame:
+    """
+    Create small synthetic “feedback” rows aligned to the tabular dataset.
+    We attach feedback to source + week to show how informatics metadata matters.
+    """
+    rng = np.random.default_rng(seed)
+    n = min(len(df_clean), 1200)  # keep it manageable
+    sample = df_clean.sample(n=n, random_state=seed).reset_index(drop=True)
+
+    texts = []
+    topics = []
+    for _, row in sample.iterrows():
+        template = rng.choice(TEXT_TEMPLATES)
+        txt = template.format(source=row["source"])
+        # Add mild variation
+        if rng.random() < 0.35:
+            txt += f" (week {int(row['week'])})"
+        texts.append(txt)
+
+        # Topic heuristic: ties to lecture point that labels can be engineered/heuristic early
+        if "Latency" in txt or "slow" in txt:
+            topics.append("performance")
+        elif "false alarms" in txt or "errors" in txt:
+            topics.append("reliability")
+        elif "confusing" in txt or "documentation" in txt:
+            topics.append("usability")
+        elif "incomplete" in txt:
+            topics.append("data_quality")
+        else:
+            topics.append("explainability")
+
+    feedback = pd.DataFrame(
+        {
+            "source": sample["source"],
+            "week": sample["week"],
+            "feedback_text": texts,
+            "topic_label": topics,
+        }
     )
-
-    narrator.artifacts(artifacts)
-    return artifacts
+    return feedback
 
 
-# ---------------------------
-# Main
-# ---------------------------
+def text_features(feedback: pd.DataFrame, out_dir: str, show_plots: bool) -> pd.DataFrame:
+    """
+    Build simple NLP features: term counts (bag-of-words).
+    This is a deliberate “Week 03” approach: start simple before embeddings/transformers.
+    """
+    vec = CountVectorizer(stop_words="english", max_features=30)
+    X = vec.fit_transform(feedback["feedback_text"])
+    terms = vec.get_feature_names_out()
 
-def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Lecture 03 explainable demos (Chapter 8 + Informatics linkages).")
-    p.add_argument("--out_dir", type=str, default="artifacts", help="Output directory for artifacts.")
-    p.add_argument("--show_plots", type=int, default=0, help="1 to display plots; 0 to only save PNGs.")
-    p.add_argument("--n_rows", type=int, default=2500, help="Number of synthetic rows to generate.")
-    p.add_argument("--missing_rate", type=float, default=0.08, help="Missingness rate for synthetic data.")
-    p.add_argument("--seed", type=int, default=42, help="Random seed.")
-    return p.parse_args(argv)
+    feats = pd.DataFrame(X.toarray(), columns=[f"term_{t}" for t in terms])
+    feats.insert(0, "topic_label", feedback["topic_label"].values)
+
+    # Plot top terms overall
+    counts = np.asarray(X.sum(axis=0)).ravel()
+    order = np.argsort(counts)[::-1]
+    top_terms = terms[order][:15]
+    top_counts = counts[order][:15]
+
+    plt.figure()
+    plt.bar(top_terms, top_counts)
+    plt.title("Top Terms in Synthetic Feedback (Lecture 03)")
+    plt.xlabel("Term")
+    plt.ylabel("Count")
+    plt.xticks(rotation=35, ha="right")
+    save_fig(os.path.join(out_dir, "plot_text_top_terms.png"), show_plots)
+
+    return feats
 
 
-def main(argv: Optional[List[str]] = None) -> int:
-    args = parse_args(argv)
-    out_dir = Path(args.out_dir)
-    safe_mkdir(out_dir)
+# -----------------------------------------------------------------------------
+# Main runner
+# -----------------------------------------------------------------------------
 
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out_dir", type=str, default="artifacts")
+    ap.add_argument("--show_plots", type=int, default=0)
+    ap.add_argument("--n", type=int, default=4000)
+    ap.add_argument("--seed", type=int, default=42)
+    args = ap.parse_args()
+
+    out_dir = args.out_dir
     show_plots = bool(args.show_plots)
+    ensure_dir(out_dir)
 
-    narrator = Narrator(out_dir=out_dir)
+    print("\n=== Lecture 03 Demos: Data + Informatics (Week 03) ===")
+    print(f"Output directory: {out_dir}")
+    print("If you are in Colab, open the artifacts/ folder after the run.\n")
 
-    # Generate dataset once for all demos
-    df = generate_telemetry_dataset(
-        n=args.n_rows,
-        missing_rate=args.missing_rate,
-        seed=args.seed,
-    )
+    # -------------------------------------------------------------------------
+    # DEMO 1: Generate raw tabular data
+    # -------------------------------------------------------------------------
+    print("[DEMO 1] Generating synthetic tabular dataset (with intentional issues)...")
+    raw = generate_tabular(TabularConfig(n=args.n, seed=args.seed))
+    raw_path = os.path.join(out_dir, "01_raw_tabular.csv")
+    raw.to_csv(raw_path, index=False)
+    print(f"  Saved: {raw_path}")
 
-    # Run demos
-    _ = demo01_validation(df, out_dir, narrator)
-    _ = demo02_missingness_imputation(df, out_dir, narrator, show_plots=show_plots)
-    _ = demo03_modeling(df, out_dir, narrator, show_plots=show_plots)
+    # -------------------------------------------------------------------------
+    # DEMO 2: Create schema/data dictionary report
+    # -------------------------------------------------------------------------
+    print("[DEMO 2] Writing schema + data dictionary report...")
+    report = schema_report(raw)
+    report_path = os.path.join(out_dir, "02_schema_report.txt")
+    write_text(report_path, report)
+    print(f"  Saved: {report_path}")
 
-    # Finalize narrative markdown
-    md_path = narrator.finalize()
+    # -------------------------------------------------------------------------
+    # DEMO 3: Data quality diagnostics
+    # -------------------------------------------------------------------------
+    print("[DEMO 3] Running quality diagnostics (missingness, outliers, correlation)...")
+    summary, missing_tbl, outliers_tbl = summarize_quality(raw)
 
-    print("\n" + "-" * 88)
-    print("DONE")
-    print(f"Artifacts written to: {out_dir.resolve()}")
-    print(f"Demo narrative markdown: {md_path.resolve()}")
-    print("-" * 88)
+    summary_path = os.path.join(out_dir, "03_quality_summary.json")
+    write_json(summary_path, summary)
+    print(f"  Saved: {summary_path}")
 
-    return 0
+    miss_path = os.path.join(out_dir, "04_missingness_by_column.csv")
+    missing_tbl.to_csv(miss_path, index=False)
+    print(f"  Saved: {miss_path}")
+
+    out_path = os.path.join(out_dir, "05_outlier_rows.csv")
+    outliers_tbl.to_csv(out_path, index=False)
+    print(f"  Saved: {out_path}")
+
+    plot_missingness(missing_tbl, os.path.join(out_dir, "plot_missingness.png"), show_plots)
+    plot_correlation(raw, os.path.join(out_dir, "plot_correlation.png"), show_plots)
+    plot_distributions(raw, os.path.join(out_dir, "plot_value_distributions.png"), show_plots)
+    print("  Saved plots: plot_missingness.png, plot_correlation.png, plot_value_distributions.png")
+
+    # -------------------------------------------------------------------------
+    # DEMO 4: Cleaning policy → analysis-ready dataset
+    # -------------------------------------------------------------------------
+    print("[DEMO 4] Cleaning dataset (explicit policy: normalize categories, impute, cap)...")
+    clean = clean_tabular(raw)
+    clean_path = os.path.join(out_dir, "06_clean_tabular.csv")
+    clean.to_csv(clean_path, index=False)
+    print(f"  Saved: {clean_path}")
+
+    # -------------------------------------------------------------------------
+    # DEMO 5: Synthetic text feedback + basic NLP features
+    # -------------------------------------------------------------------------
+    print("[DEMO 5] Generating synthetic text feedback + extracting simple NLP features...")
+    feedback = generate_text_feedback(clean, seed=args.seed)
+    fb_path = os.path.join(out_dir, "07_text_feedback.csv")
+    feedback.to_csv(fb_path, index=False)
+    print(f"  Saved: {fb_path}")
+
+    feats = text_features(feedback, out_dir=out_dir, show_plots=show_plots)
+    feats_path = os.path.join(out_dir, "08_text_features.csv")
+    feats.to_csv(feats_path, index=False)
+    print(f"  Saved: {feats_path}")
+
+    # -------------------------------------------------------------------------
+    # Student reflection prompts (kept inside file by request)
+    # -------------------------------------------------------------------------
+    reflection = []
+    reflection.append("STUDENT NOTES + INSIGHTS (Lecture 03)")
+    reflection.append(f"Generated: {now_iso()}")
+    reflection.append("")
+    reflection.append("1) What did the schema report reveal?")
+    reflection.append("   - Which field(s) had missing values? Would that matter for downstream analysis?")
+    reflection.append("")
+    reflection.append("2) What is an example of 'semantic' data quality (not just type/format)?")
+    reflection.append("   - Example: category typo 'charliee' silently creates a new bucket.")
+    reflection.append("")
+    reflection.append("3) Compare cleaning strategies:")
+    reflection.append("   - Why choose median imputation by group (source) instead of global mean?")
+    reflection.append("   - Why cap outliers instead of deleting rows?")
+    reflection.append("")
+    reflection.append("4) How does the text demo connect to informatics?")
+    reflection.append("   - The 'topic_label' is a simple heuristic label—good enough for prototyping.")
+    reflection.append("   - Next steps later in the course: embeddings, clustering, transformers.")
+    reflection.append("")
+    reflection.append("5) Practical takeaway:")
+    reflection.append("   - If you can’t explain how your dataset was produced and cleaned,")
+    reflection.append("     you can’t defend any model built on top of it.")
+    reflection.append("")
+
+    notes_path = os.path.join(out_dir, "STUDENT_NOTES.txt")
+    write_text(notes_path, "\n".join(reflection))
+    print(f"\nSaved student reflection prompts: {notes_path}")
+
+    print("\n=== DONE ===")
+    print("Open artifacts/ and review:")
+    print(" - 02_schema_report.txt (data dictionary)")
+    print(" - 03_quality_summary.json (quick stats)")
+    print(" - plot_*.png (visualizations)")
+    print(" - 06_clean_tabular.csv (analysis-ready dataset)")
+    print(" - 07_text_feedback.csv + 08_text_features.csv (text + NLP features)\n")
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()
