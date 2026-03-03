@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 6 — Inference Optimization | ISE AI-Enabled Informatics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void:#080c10;--panel:#0e1420;--panel2:#131c28;--panel3:#1a2535;--panel4:#243040;
+  --orange:#ff6b2b;--orange2:#ff9156;--orange3:#ffbf9e;
+  --cyan:#00d4ff;--cyan2:#7ee8ff;--green:#00ff88;--green2:#5dffb3;
+  --red:#ff3d5a;--yellow:#ffd700;--purple:#c084fc;
+  --text:#e8f0fe;--text2:#8fa8c8;--text3:#c5d5e8;
+  --border:#1e3050;--border2:#2a4060;
+  --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;--serif:'Playfair Display',serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;font-size:16px;}
+body{background:var(--void);color:var(--text);font-family:var(--sans);font-size:1rem;line-height:1.75;min-height:100vh;position:relative;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,107,43,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,107,43,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+body>*{position:relative;z-index:1;}
+#progress-bar{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--orange),var(--cyan),var(--orange2));width:0%;z-index:1000;box-shadow:0 0 8px var(--orange);transition:width 0.1s linear;}
+nav{position:sticky;top:0;z-index:100;background:rgba(8,12,16,0.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:.65rem 2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;box-shadow:0 2px 20px rgba(0,0,0,.5);}
+.nav-brand{font-family:var(--mono);font-size:.72rem;color:var(--orange);font-weight:700;letter-spacing:.08em;white-space:nowrap;display:flex;align-items:center;gap:.5rem;}
+.nav-brand::before{content:'◉';color:var(--green);animation:pulse-dot 2s ease infinite;}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+.nav-links{display:flex;gap:.2rem;flex-wrap:wrap;list-style:none;}
+.nav-links a{font-size:.68rem;font-family:var(--mono);color:var(--text2);text-decoration:none;padding:.28rem .65rem;border-radius:3px;border:1px solid transparent;transition:all .2s;letter-spacing:.03em;}
+.nav-links a:hover{background:rgba(255,107,43,.1);border-color:rgba(255,107,43,.3);color:var(--orange);}
+.hero{position:relative;padding:5rem 2rem 4.5rem;text-align:center;overflow:hidden;}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(255,107,43,.08) 0%,transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(0,212,255,.06) 0%,transparent 60%),radial-gradient(ellipse at 50% 0%,rgba(255,107,43,.12) 0%,transparent 50%);pointer-events:none;}
+.hero::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.08) 3px,rgba(0,0,0,.08) 4px);pointer-events:none;}
+.week-badge{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--orange);background:rgba(255,107,43,.08);border:1px solid rgba(255,107,43,.35);border-radius:3px;padding:.4rem 1rem;margin-bottom:1.75rem;}
+.week-badge .blink{animation:blink 1.2s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.hero h1{font-family:var(--sans);font-size:clamp(2.2rem,5.5vw,3.8rem);font-weight:700;line-height:1.1;color:var(--text);margin-bottom:.75rem;letter-spacing:-.02em;}
+.hero h1 .accent{color:var(--orange);}.hero h1 .accent2{color:var(--cyan);}
+.hero .subtitle{font-family:var(--serif);font-size:1.05rem;color:var(--text2);font-style:italic;margin-bottom:2.5rem;}
+.hero-meta{display:flex;justify-content:center;flex-wrap:wrap;gap:.75rem;}
+.hero-badge{font-family:var(--mono);font-size:.7rem;color:var(--text2);background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:3px;padding:.35rem .85rem;display:flex;align-items:center;gap:.4rem;}
+.hero-badge .hb-dot{width:5px;height:5px;border-radius:50%;background:var(--orange);}
+.container{max-width:1020px;margin:0 auto;padding:0 2rem;}
+.section-block{margin:3rem 0;}
+.part-header{display:flex;align-items:flex-start;gap:1.25rem;margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);position:relative;}
+.part-header::after{content:'';position:absolute;bottom:-1px;left:0;width:80px;height:1px;background:var(--orange);box-shadow:0 0 8px var(--orange);}
+.part-number{font-family:var(--mono);font-size:.65rem;font-weight:700;letter-spacing:.12em;color:var(--orange);background:rgba(255,107,43,.08);border:1px solid rgba(255,107,43,.3);border-radius:3px;padding:.35rem .7rem;white-space:nowrap;margin-top:.45rem;text-transform:uppercase;}
+.part-header h2{font-size:1.7rem;font-weight:700;color:var(--text);line-height:1.2;letter-spacing:-.01em;}
+.part-header .timing{font-family:var(--mono);font-size:.68rem;color:var(--text2);margin-top:.4rem;}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1.5rem;margin:1.25rem 0;}
+.card-orange{border-left:2px solid var(--orange);box-shadow:-4px 0 12px rgba(255,107,43,.15);}
+.card-cyan{border-left:2px solid var(--cyan);box-shadow:-4px 0 12px rgba(0,212,255,.15);}
+.card-green{border-left:2px solid var(--green);box-shadow:-4px 0 12px rgba(0,255,136,.12);}
+.card-red{border-left:2px solid var(--red);box-shadow:-4px 0 12px rgba(255,61,90,.12);}
+.card-yellow{border-left:2px solid var(--yellow);box-shadow:-4px 0 12px rgba(255,215,0,.12);}
+.callout{background:rgba(255,107,43,.06);border:1px solid rgba(255,107,43,.25);border-radius:6px;padding:1rem 1.25rem;margin:1.25rem 0;font-size:.92rem;}
+.callout strong{color:var(--orange);}
+.callout-cyan{background:rgba(0,212,255,.05);border-color:rgba(0,212,255,.25);}.callout-cyan strong{color:var(--cyan);}
+.callout-green{background:rgba(0,255,136,.05);border-color:rgba(0,255,136,.2);}.callout-green strong{color:var(--green);}
+.callout-red{background:rgba(255,61,90,.06);border-color:rgba(255,61,90,.25);}.callout-red strong{color:var(--red);}
+.callout-yellow{background:rgba(255,215,0,.05);border-color:rgba(255,215,0,.25);}.callout-yellow strong{color:var(--yellow);}
+p{margin:.9rem 0;color:var(--text3);font-size:.96rem;}
+p strong{color:var(--text);font-weight:600;}p em{color:var(--orange3);font-style:italic;}
+h3{font-size:1.12rem;font-weight:700;color:var(--text);margin:2rem 0 .75rem;padding-left:.85rem;border-left:2px solid var(--orange);}
+h4{font-size:.9rem;font-weight:700;color:var(--orange);margin:1.25rem 0 .5rem;font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;}
+ul,ol{margin:.75rem 0 .75rem 1.5rem;color:var(--text3);font-size:.94rem;}
+li{margin:.4rem 0;}li strong{color:var(--text);}
+code{font-family:var(--mono);font-size:.82em;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);border-radius:3px;padding:.1em .35em;color:var(--cyan2);}
+.table-wrap{overflow-x:auto;margin:1.25rem 0;border-radius:8px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:.86rem;}
+thead th{background:var(--panel2);color:var(--orange);font-family:var(--mono);font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.8rem 1rem;text-align:left;border-bottom:1px solid var(--border);}
+tbody tr{border-bottom:1px solid rgba(30,48,80,.6);transition:background .15s;}
+tbody tr:hover{background:rgba(255,107,43,.03);}
+tbody td{padding:.7rem 1rem;color:var(--text3);vertical-align:top;}
+tbody td:first-child{color:var(--text);font-weight:500;}
+.tag-orange{display:inline-block;background:rgba(255,107,43,.12);color:var(--orange);border-radius:3px;padding:.1em .5em;font-family:var(--mono);font-size:.78em;}
+.tag-cyan{display:inline-block;background:rgba(0,212,255,.1);color:var(--cyan);border-radius:3px;padding:.1em .5em;font-family:var(--mono);font-size:.78em;}
+.tag-green{display:inline-block;background:rgba(0,255,136,.1);color:var(--green);border-radius:3px;padding:.1em .5em;font-family:var(--mono);font-size:.78em;}
+.tag-red{display:inline-block;background:rgba(255,61,90,.1);color:var(--red);border-radius:3px;padding:.1em .5em;font-family:var(--mono);font-size:.78em;}
+.code-block{background:#020508;border:1px solid var(--border);border-radius:8px;margin:1.5rem 0;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.4);}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:.65rem 1.1rem;background:var(--panel2);border-bottom:1px solid var(--border);}
+.code-header-left{display:flex;align-items:center;gap:.75rem;}
+.code-dots{display:flex;gap:5px;}.code-dots span{width:10px;height:10px;border-radius:50%;}
+.code-dots .d1{background:#ff5f57;}.code-dots .d2{background:#febc2e;}.code-dots .d3{background:#28c840;}
+.code-lang{font-family:var(--mono);font-size:.68rem;color:var(--text2);font-weight:600;letter-spacing:.06em;}
+.code-label{font-family:var(--mono);font-size:.65rem;color:var(--orange);font-weight:700;background:rgba(255,107,43,.1);padding:.2rem .55rem;border-radius:3px;letter-spacing:.06em;}
+.copy-btn{font-family:var(--mono);font-size:.65rem;color:var(--text2);background:none;border:1px solid var(--border);border-radius:3px;padding:.22rem .55rem;cursor:pointer;transition:all .2s;}
+.copy-btn:hover{color:var(--orange);border-color:rgba(255,107,43,.5);}
+pre{padding:1.4rem 1.5rem;overflow-x:auto;font-family:var(--mono);font-size:.8rem;line-height:1.7;color:#cdd9e5;}
+.kw{color:#ff7b72;}.fn{color:#c9a6ff;}.str{color:#a5d6ff;}.cm{color:#485e78;font-style:italic;}.num{color:#ff9156;}.cls{color:#ffa657;}.op{color:#79c0ff;}.dec{color:#00ff88;}
+.collapse-toggle{width:100%;background:var(--panel2);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;color:var(--text2);font-family:var(--mono);font-size:.73rem;padding:.6rem 1rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:.5rem;transition:all .2s;letter-spacing:.03em;}
+.collapse-toggle:hover{color:var(--orange);background:rgba(255,107,43,.05);}
+.collapsible{overflow:hidden;transition:max-height .45s ease;max-height:0;}
+.collapsible.expanded{max-height:8000px;}
+.demo-block{border:1px solid rgba(255,107,43,.35);border-radius:10px;overflow:hidden;margin:2rem 0;box-shadow:0 0 30px rgba(255,107,43,.08);}
+.demo-header{background:rgba(255,107,43,.07);border-bottom:1px solid rgba(255,107,43,.2);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;}
+.demo-header-left{display:flex;align-items:center;gap:.75rem;}
+.demo-icon{font-size:1.5rem;}
+.demo-title{font-weight:700;font-size:1rem;color:var(--text);}
+.demo-subtitle{font-size:.76rem;color:var(--text2);margin-top:.1rem;font-family:var(--mono);}
+.colab-badge{display:inline-flex;align-items:center;gap:.4rem;background:var(--orange);color:var(--void);font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.06em;padding:.4rem .9rem;border-radius:4px;text-decoration:none;transition:all .2s;text-transform:uppercase;}
+.colab-badge:hover{background:var(--orange2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(255,107,43,.4);}
+.demo-body{padding:1.25rem 1.5rem;}
+.demo-body .takeaway{background:rgba(0,255,136,.05);border:1px solid rgba(0,255,136,.2);border-radius:6px;padding:.85rem 1rem;margin-top:1rem;font-size:.87rem;}
+.demo-body .takeaway strong{color:var(--green);}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;}
+@media(max-width:720px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}}
+@media(max-width:900px){.grid-3,.grid-4{grid-template-columns:1fr 1fr;}}
+.metric-panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1.1rem;text-align:center;position:relative;overflow:hidden;}
+.metric-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--orange);}
+.metric-panel.cyan::before{background:var(--cyan);}.metric-panel.green::before{background:var(--green);}
+.metric-panel .metric-val{font-family:var(--mono);font-size:1.8rem;font-weight:700;color:var(--orange);display:block;line-height:1.15;}
+.metric-panel.cyan .metric-val{color:var(--cyan);}.metric-panel.green .metric-val{color:var(--green);}
+.metric-panel .metric-name{font-size:.72rem;color:var(--text2);margin-top:.25rem;font-family:var(--mono);letter-spacing:.06em;}
+.metric-panel .metric-sub{font-size:.7rem;color:var(--text2);margin-top:.2rem;}
+.pipeline{display:flex;align-items:stretch;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:1.25rem 0;}
+.pipeline-stage{flex:1;padding:.9rem .75rem;text-align:center;border-right:1px solid var(--border);background:var(--panel);position:relative;}
+.pipeline-stage:last-child{border-right:none;}
+.pipeline-stage.active{background:rgba(255,107,43,.07);}
+.pipeline-stage.active2{background:rgba(0,212,255,.06);}
+.ps-label{font-family:var(--mono);font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
+.ps-sub{font-size:.73rem;color:var(--text2);margin-top:.3rem;}
+.ps-badge{font-family:var(--mono);font-size:.6rem;margin-top:.3rem;padding:.15rem .4rem;border-radius:3px;display:inline-block;}
+.ps-orange{color:var(--orange);background:rgba(255,107,43,.12);}.ps-cyan{color:var(--cyan);background:rgba(0,212,255,.1);}
+.nasa-block{background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(255,107,43,.04));border:1px solid rgba(0,212,255,.25);border-radius:10px;padding:1.5rem;margin:1.5rem 0;position:relative;overflow:hidden;}
+.nasa-block::before{content:'NASA C-MAPSS';position:absolute;top:.7rem;right:1rem;font-family:var(--mono);font-size:.62rem;color:var(--cyan);opacity:.5;letter-spacing:.12em;text-transform:uppercase;font-weight:700;}
+.nasa-block h4{color:var(--cyan);}
+.roadmap{display:grid;grid-template-columns:repeat(8,1fr);gap:0;border-radius:8px;overflow:hidden;border:1px solid var(--border);margin:2rem 0;}
+@media(max-width:800px){.roadmap{grid-template-columns:repeat(4,1fr);}}
+.roadmap-item{padding:.85rem .5rem;text-align:center;border-right:1px solid var(--border);cursor:pointer;transition:all .2s;}
+.roadmap-item:last-child{border-right:none;}
+.roadmap-item:hover{background:rgba(255,107,43,.07);}
+.roadmap-item.active{background:rgba(255,107,43,.1);border-top:2px solid var(--orange);}
+.roadmap-emoji{font-size:1.2rem;display:block;}
+.roadmap-label{font-size:.63rem;color:var(--text2);margin-top:.3rem;line-height:1.3;}
+.roadmap-time{font-family:var(--mono);font-size:.58rem;color:var(--orange);margin-top:.2rem;}
+.calculator{background:var(--panel);border:1px solid rgba(0,212,255,.25);border-radius:10px;padding:1.5rem;margin:1.5rem 0;box-shadow:0 0 30px rgba(0,212,255,.05);}
+.calc-title{font-family:var(--mono);font-size:.8rem;color:var(--cyan);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.25rem;display:flex;align-items:center;gap:.6rem;}
+.calc-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:640px){.calc-grid{grid-template-columns:1fr;}}
+.calc-input-group{display:flex;flex-direction:column;gap:.35rem;}
+.calc-label{font-family:var(--mono);font-size:.7rem;color:var(--text2);letter-spacing:.06em;}
+.calc-input{background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:.85rem;padding:.55rem .85rem;width:100%;transition:border-color .2s;}
+.calc-input:focus{outline:none;border-color:var(--cyan);}
+.calc-range{width:100%;accent-color:var(--orange);}
+.calc-results{margin-top:1.25rem;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;}
+@media(max-width:640px){.calc-results{grid-template-columns:1fr;}}
+.calc-result-item{text-align:center;}
+.calc-result-val{font-family:var(--mono);font-size:1.25rem;font-weight:700;display:block;line-height:1.2;}
+.calc-result-label{font-size:.68rem;color:var(--text2);margin-top:.2rem;font-family:var(--mono);}
+.accordion{border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.acc-item{border-bottom:1px solid var(--border);}
+.acc-item:last-child{border-bottom:none;}
+.acc-header{width:100%;background:none;padding:.9rem 1.1rem;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:.9rem;font-weight:600;color:var(--text);transition:background .2s;}
+.acc-header:hover{background:rgba(255,107,43,.04);}
+.acc-header .acc-arrow{transition:transform .3s;color:var(--orange);font-size:.8rem;}
+.acc-header.open{color:var(--orange);}.acc-header.open .acc-arrow{transform:rotate(90deg);}
+.acc-body{display:none;padding:.5rem 1.1rem 1rem;font-size:.875rem;color:var(--text3);}
+.acc-body.show{display:block;}
+.section-divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:3rem 0;position:relative;}
+.section-divider::after{content:'⬡';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--void);color:var(--orange);padding:0 .75rem;font-size:.65rem;}
+footer{margin-top:5rem;border-top:1px solid var(--border);padding:2.5rem 2rem;text-align:center;background:var(--panel);}
+footer p{font-size:.78rem;color:var(--text2);margin:.3rem 0;}
+footer a{color:var(--orange);text-decoration:none;}
+footer a:hover{text-decoration:underline;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.anim{animation:fadeUp .5s ease both;animation-play-state:paused;}
+.anim.visible{animation-play-state:running;}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<nav>
+  <span class="nav-brand">ISE ∕ AI-ENABLED INFORMATICS ∕ WEEK 06</span>
+  <ul class="nav-links">
+    <li><a href="#part1">Reality Check</a></li>
+    <li><a href="#part2">Bottlenecks</a></li>
+    <li><a href="#part3">Metrics + Demo 1</a></li>
+    <li><a href="#part4">Model Opts</a></li>
+    <li><a href="#part5">Service Opts + Demo 2</a></li>
+    <li><a href="#part6">Cost Calc + Demo 3</a></li>
+    <li><a href="#part7">Your Bottleneck</a></li>
+    <li><a href="#part8">M3 + A3</a></li>
+  </ul>
+</nav>
+<header class="hero">
+  <div class="hero-bg"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="week-badge"><span class="blink">▶</span> WEEK 06 · CHAPTER 9 · SPRING 2026</div>
+    <h1>Inference <span class="accent">Optimization</span><br>+ <span class="accent2">Operational</span> Constraints</h1>
+    <p class="subtitle">Making AI faster, cheaper, and actually fit for production</p>
+    <div class="hero-meta">
+      <div class="hero-badge"><span class="hb-dot"></span>Chip Huyen — Chapter 9</div>
+      <div class="hero-badge"><span class="hb-dot" style="background:var(--cyan)"></span>NASA C-MAPSS Dataset</div>
+      <div class="hero-badge"><span class="hb-dot" style="background:var(--green)"></span>Assignment 3 + M3 Due</div>
+      <div class="hero-badge"><span class="hb-dot" style="background:var(--purple)"></span>~60 Minutes · 3 Colab Demos</div>
+    </div>
+  </div>
+</header>
+<div class="container">
+<div class="section-block anim">
+  <div class="card card-orange">
+    <h4>📡 Course Arc — Where We Are</h4>
+    <div class="pipeline" style="margin-top:1rem;">
+      <div class="pipeline-stage"><div class="ps-label" style="color:var(--text2);">Wk 3</div><div class="ps-sub">Dataset Engineering</div><div class="ps-badge ps-orange">What goes IN</div></div>
+      <div class="pipeline-stage"><div class="ps-label" style="color:var(--text2);">Wk 4</div><div class="ps-sub">Evaluation</div><div class="ps-badge ps-orange">How we MEASURE</div></div>
+      <div class="pipeline-stage"><div class="ps-label" style="color:var(--text2);">Wk 5</div><div class="ps-sub">Prompt Engineering</div><div class="ps-badge ps-orange">How we CONTROL</div></div>
+      <div class="pipeline-stage active"><div class="ps-label" style="color:var(--orange);">Wk 6 ← HERE</div><div class="ps-sub">Inference Optimization</div><div class="ps-badge ps-orange">How we SCALE</div></div>
+      <div class="pipeline-stage"><div class="ps-label" style="color:var(--text2);">Wk 7+</div><div class="ps-sub">RAG Systems</div><div class="ps-badge ps-cyan">How we RETRIEVE</div></div>
+    </div>
+    <p style="font-size:.87rem;margin-top:1rem;">Last week: <em>How do we tell the AI what to do?</em> This week: <em>Once it works, can we actually afford to run it?</em> At production scale, a system that is technically correct but too slow, too expensive, or too unreliable is not a system — it is a demo.</p>
+  </div>
+</div>
+<div class="section-block anim">
+  <div class="roadmap" id="roadmap">
+    <div class="roadmap-item active" onclick="scrollToSection('part1')"><span class="roadmap-emoji">🚨</span><div class="roadmap-label">Reality Check</div><div class="roadmap-time">~5 min</div></div>
+    <div class="roadmap-item" onclick="scrollToSection('part2')"><span class="roadmap-emoji">⚡</span><div class="roadmap-label">Bottlenecks</div><div class="roadmap-time">~8 min</div></div>
+    <div class="roadmap-item" onclick="scrollToSection('part3')"><span class="roadmap-emoji">📊</span><div class="roadmap-label">Metrics + Demo 1</div><div class="roadmap-time">~10 min</div></div>
+    <div class="roadmap-item" onclick="scrollToSection('part4')"><span class="roadmap-emoji">🔧</span><div class="roadmap-label">Model Opts</div><div class="roadmap-time">~8 min</div></div>
+    <div class="roadmap-item" onclick="scrollToSection('part5')"><span class="roadmap-emoji">🚌</span><div class="roadmap-label">Service Opts + Demo 2</div><div class="roadmap-time">~10 min</div></div>
+    <div class="roadmap-item" onclick="scrollToSection('part6')"><span class="roadmap-emoji">💰</span><div class="roadmap-label">Cost + Demo 3</div><div class="roadmap-time">~10 min</div></div>
+    <div class="roadmap-item" onclick="scrollToSection('part7')"><span class="roadmap-emoji">🎯</span><div class="roadmap-label">Your Bottleneck</div><div class="roadmap-time">~5 min</div></div>
+    <div class="roadmap-item" onclick="scrollToSection('part8')"><span class="roadmap-emoji">🚀</span><div class="roadmap-label">M3 + A3</div><div class="roadmap-time">~4 min</div></div>
+  </div>
+</div>
+<div class="section-divider"></div>
+<!-- PART 1 -->
+<section id="part1" class="section-block anim">
+  <div class="part-header">
+    <div class="part-number">PART 01</div>
+    <div><h2>The Production Reality Check</h2><div class="timing">⏱ ~5 minutes</div></div>
+  </div>
+  <p>Huyen opens Chapter 9 with a deceptively simple statement: <strong>"No matter how good your model is, if it's too slow, your users might lose patience — or worse, its predictions might become useless."</strong></p>
+  <p>She gives the example of a next-day stock price prediction model that takes two days to compute. A prediction that arrives after the decision window has closed is not late — it is wrong. <em>Latency is a form of quality failure.</em></p>
+  <div class="callout">
+    <strong>The ISE Version of This:</strong> A predictive maintenance model that detects a bearing failure in 45 seconds — but the operator's decision window is 30 seconds before cascade failure — is not a maintenance tool. It is a post-failure analysis tool. The insight is correct. The timing renders it useless.
+  </div>
+  <h3>Three Dimensions Every Production System Must Satisfy Simultaneously</h3>
+  <div class="grid-3" style="margin:1.5rem 0;">
+    <div class="metric-panel"><span class="metric-val">⚡</span><div class="metric-name">Latency</div><div class="metric-sub">Can it respond fast enough for the use case? Every operator decision has a time window.</div></div>
+    <div class="metric-panel cyan"><span class="metric-val">💲</span><div class="metric-name">Cost</div><div class="metric-sub">Can you afford to run it at production volume? $2/query × 1M queries/day = $2M/day.</div></div>
+    <div class="metric-panel green"><span class="metric-val">🔁</span><div class="metric-name">Reliability</div><div class="metric-sub">Can it handle burst loads, concurrent users, and variable input lengths without degradation?</div></div>
+  </div>
+  <div class="nasa-block">
+    <h4>NASA C-MAPSS: Our Running Dataset for This Week</h4>
+    <p style="font-size:.87rem;">The C-MAPSS (Commercial Modular Aero-Propulsion System Simulation) dataset simulates jet engine degradation across multiple operational cycles. It contains time-series sensor readings from 21 sensors per engine, across 4 operational conditions and 6 fault modes. The task: predict Remaining Useful Life (RUL) before failure — a canonical ISE prognostics problem.</p>
+    <div class="grid-3" style="margin-top:.75rem;">
+      <div style="background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:.85rem;font-size:.82rem;">
+        <div style="color:var(--cyan);font-family:var(--mono);font-size:.68rem;font-weight:700;margin-bottom:.3rem;">DECISION WINDOW</div>
+        Engine overhaul window: 50–100 flight cycles before predicted failure. Predictions must arrive before maintenance scheduling locks in.
+      </div>
+      <div style="background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:.85rem;font-size:.82rem;">
+        <div style="color:var(--orange);font-family:var(--mono);font-size:.68rem;font-weight:700;margin-bottom:.3rem;">SCALE</div>
+        A commercial airline monitors 300+ engines simultaneously. Each query: 21 sensor features × 30-cycle window = ~1,800 data points per engine per query.
+      </div>
+      <div style="background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:.85rem;font-size:.82rem;">
+        <div style="color:var(--green);font-family:var(--mono);font-size:.68rem;font-weight:700;margin-bottom:.3rem;">COST IF WRONG</div>
+        CFM56 engine replacement: ~$12M. Unplanned removal: ~$500K in delays and crew disruption. Missing RUL by 10 cycles is real money.
+      </div>
+    </div>
+  </div>
+  <div class="callout callout-cyan">
+    <strong>Huyen's Archery Analogy:</strong> Model-level optimization = crafting better arrows. Hardware-level optimization = training a stronger archer. Service-level optimization = refining the entire shooting process — bow, stance, timing, conditions. This week covers all three layers.
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- PART 2 -->
+<section id="part2" class="section-block anim">
+  <div class="part-header">
+    <div class="part-number">PART 02</div>
+    <div><h2>Computational Bottlenecks</h2><div class="timing">⏱ ~8 minutes</div></div>
+  </div>
+  <p>Before you can optimize anything, you need to know what is actually slow. Optimization without diagnosis is guessing. There are two fundamental computational bottleneck types — and understanding them determines which optimization toolkit even applies to your problem.</p>
+  <div class="grid-2" style="margin:1.5rem 0;">
+    <div class="card card-orange">
+      <h4>⚡ Compute-Bound</h4>
+      <p style="font-size:.86rem;">The bottleneck is the <em>number of calculations</em> required. Fix: more FLOP/s. Examples: password decryption, image generation, the <strong>prefill phase</strong> of LLM inference — processing all input tokens simultaneously in parallel.</p>
+      <div style="margin-top:.75rem;font-family:var(--mono);font-size:.75rem;color:var(--orange);">Fix → more chips, higher FLOP/s, better parallelization</div>
+    </div>
+    <div class="card card-cyan">
+      <h4>📡 Memory Bandwidth-Bound</h4>
+      <p style="font-size:.86rem;">The bottleneck is <em>data transfer speed</em> — moving data between memory and processors. Fix: higher bandwidth. The <strong>decode phase</strong> of LLM inference is the textbook example: the entire model weights must be loaded from GPU memory for every single token generated.</p>
+      <div style="margin-top:.75rem;font-family:var(--mono);font-size:.75rem;color:var(--cyan);">Fix → HBM chips, quantization (fewer bytes/param), KV cache optimization</div>
+    </div>
+  </div>
+  <div class="callout callout-red">
+    <strong>Critical fact for 2026:</strong> Due to transformer architecture dominance and current hardware limitations, most AI workloads are <em>memory bandwidth-bound</em>. The autoregressive decode loop — loading the entire model's weights for every single token — is the textbook case. This one fact drives most of the optimization techniques we will cover today.
+  </div>
+  <h3>The LLM Two-Phase Split</h3>
+  <p>LLM inference has two phases with completely different computational profiles. This asymmetry is why optimization is hard and why treating them identically is inefficient.</p>
+  <div class="pipeline" style="margin:1.5rem 0;">
+    <div class="pipeline-stage active" style="flex:2;">
+      <div class="ps-label" style="color:var(--orange);">PREFILL</div>
+      <div class="ps-sub">All input tokens processed in parallel. Context-length driven. Fast.</div>
+      <div class="ps-badge ps-orange" style="margin-top:.4rem;">Compute-bound ⚡</div>
+    </div>
+    <div class="pipeline-stage active2" style="flex:3;">
+      <div class="ps-label" style="color:var(--cyan);">DECODE</div>
+      <div class="ps-sub">One token generated at a time. Sequential. Loads full model weights per token.</div>
+      <div class="ps-badge ps-cyan" style="margin-top:.4rem;">Memory bandwidth-bound 📡</div>
+    </div>
+  </div>
+  <div class="callout callout-cyan">
+    <strong>For your C-MAPSS system:</strong> A query processes the 21-sensor window + system prompt in prefill (fast, one-shot). Then generates the 80–120 token RUL explanation word-by-word in decode. That's where your operator waits. That's where to optimize.
+  </div>
+  <h3>Memory Hierarchy — Where the Data Lives</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Memory</th><th>Location</th><th>Bandwidth</th><th>Typical Size</th><th>Role in Inference</th></tr></thead>
+      <tbody>
+        <tr><td>CPU DRAM</td><td>System memory</td><td>25–50 GB/s</td><td>16 GB–1 TB+</td><td>Cold storage — model weights before loading to GPU</td></tr>
+        <tr><td>GPU HBM</td><td>On the GPU card</td><td>256 GB/s – 1.5+ TB/s</td><td>24–80 GB</td><td>Active inference — weights and KV cache live here</td></tr>
+        <tr><td>GPU SRAM (on-chip)</td><td>Inside the GPU die</td><td>10+ TB/s</td><td>~40 MB</td><td>Hot cache for current computation. FlashAttention exploits this.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <strong>The ISE Operations Analogy:</strong> Think: warehouse (CPU DRAM — huge, slow), production floor (GPU HBM — medium size, fast), workbench (SRAM — tiny, instant). You want active work on the workbench. Moving material from warehouse to floor is the bottleneck — that is memory bandwidth.
+  </div>
+  <h3>Online vs. Batch API — The Routing Decision</h3>
+  <div class="grid-2" style="margin:1.25rem 0;">
+    <div class="card card-orange">
+      <h4>Online API — Optimize for Latency</h4>
+      <p style="font-size:.85rem;">Requests processed as they arrive. Streaming mode returns tokens as generated. Use when: operator chatbots, real-time alerts, interactive dashboards requiring immediate response. Cost: full price.</p>
+      <p style="font-family:var(--mono);font-size:.73rem;color:var(--orange);margin-top:.5rem;">→ Real-time C-MAPSS alert: "Engine 47 RUL critical"</p>
+    </div>
+    <div class="card card-cyan">
+      <h4>Batch API — Optimize for Cost</h4>
+      <p style="font-size:.85rem;">Requests processed in bulk with hours of turnaround. Use when: nightly fleet analysis, weekly reports, model migration reprocessing, scheduled summaries. Cost: <strong>50% discount</strong> (OpenAI, Gemini as of 2024).</p>
+      <p style="font-family:var(--mono);font-size:.73rem;color:var(--cyan);margin-top:.5rem;">→ Weekly C-MAPSS fleet health summary</p>
+    </div>
+  </div>
+  <div class="callout callout-green">
+    <strong>Design principle:</strong> Every use case has a different latency tolerance. Route accordingly. Operator asking "is this engine safe to fly tonight?" needs online API. Maintenance planner scheduling next quarter's fleet overhauls can use batch API and cut that workload's cost in half. One system, two endpoints, significant savings.
+  </div>
+</section>
+<div class="section-divider"></div>
+<!-- PART 3 — METRICS + DEMO 1 -->
+<section id="part3" class="section-block anim">
+  <div class="part-header">
+    <div class="part-number">PART 03</div>
+    <div><h2>Performance Metrics — What to Actually Measure</h2><div class="timing">⏱ ~10 minutes + Demo 1</div></div>
+  </div>
+  <p>You cannot optimize what you do not measure. Before changing anything, instrument your system with the right metrics. Huyen defines a precise vocabulary — and each metric changes what you optimize for.</p>
+  <h3>The Latency Decomposition</h3>
+  <div class="grid-3" style="margin:1.5rem 0;">
+    <div class="metric-panel"><span class="metric-val">TTFT</span><div class="metric-name">Time to First Token</div><div class="metric-sub">Duration of prefill. Driven by input length. For a chatbot: should feel instant. For a long document: users tolerate a few seconds.</div></div>
+    <div class="metric-panel cyan"><span class="metric-val">TPOT</span><div class="metric-name">Time Per Output Token</div><div class="metric-sub">Speed of the decode loop. Target: ~120ms/token (human reading speed). Total latency = TTFT + TPOT × (output tokens).</div></div>
+    <div class="metric-panel green"><span class="metric-val">p99</span><div class="metric-name">Tail Latency</div><div class="metric-sub">Your worst 1% of users. Average latency hides outliers. Always report p50, p90, p99. One 3,000ms request in 10 skews your average to 390ms.</div></div>
+  </div>
+  <div class="callout callout-cyan">
+    <strong>The TTFT/TPOT tradeoff:</strong> Two systems with identical total latency offer different user experiences. An operator waiting for a C-MAPSS recommendation prefers instant first token (low TTFT) even if subsequent tokens arrive slightly slower — they can start reading while the rest generates. Design for the actual user experience, not just the aggregate number.
+  </div>
+  <h3>Throughput vs. Goodput</h3>
+  <div class="grid-2" style="margin:1.25rem 0;">
+    <div class="card card-orange">
+      <h4>Throughput (tokens/s)</h4>
+      <p style="font-size:.85rem;">Raw generation rate across all users. Higher = lower cost per token. Directly linked to dollars. Can be 2–3× higher if you sacrifice some TTFT/TPOT. Useful for capacity planning but misleading as a user experience metric.</p>
+    </div>
+    <div class="card card-cyan">
+      <h4>Goodput (requests/s meeting SLO)</h4>
+      <p style="font-size:.85rem;">Requests per second that actually satisfy your latency SLO. If you handle 100 RPS but only 30 meet TTFT &lt; 500ms, goodput = 30 RPS. <strong>The only metric that genuinely reflects user experience.</strong></p>
+    </div>
+  </div>
+  <div class="callout callout-red">
+    <strong>The optimization trap:</strong> You doubled throughput — but your p99 TTFT tripled because the batch got bigger. Net result: worse user experience. Always track goodput alongside throughput. A system that looks efficient on dashboards and fails operators in the field is not a success.
+  </div>
+  <h3>Utilization: MFU and MBU</h3>
+  <div class="callout callout-yellow">
+    <strong>The nvidia-smi gotcha:</strong> <code>nvidia-smi</code>'s GPU utilization metric shows the percentage of time the GPU is doing <em>something</em>. A GPU doing 1 operation/second out of a possible 100 reports 100% utilization. This metric is nearly useless for inference optimization. Use MFU and MBU instead.
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Metric</th><th>Definition</th><th>Key insight</th></tr></thead>
+      <tbody>
+        <tr><td>MFU — Model FLOP/s Utilization</td><td>Actual FLOP/s ÷ Peak FLOP/s of the chip</td><td>Low during decode (memory-bound). High during prefill. During training, &gt;50% is considered good.</td></tr>
+        <tr><td>MBU — Model Bandwidth Utilization</td><td>Actual bandwidth used ÷ Peak bandwidth</td><td>High means you are memory-bound. Calculate: <code>param_count × bytes/param × tokens/s</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <strong>MBU math example:</strong> 7B parameter model, FP16 (2 bytes/param), 100 tokens/s → bandwidth used = 7B × 2 × 100 = <strong>700 GB/s</strong>. On an A100 with 2 TB/s peak: MBU = 700/2000 = <strong>35%</strong>. Room to improve. Now quantize to INT8 (1 byte/param): bandwidth halves → MBU drops → throughput roughly doubles. That is exactly why quantization works.
+  </div>
+
+  <!-- DEMO 1 -->
+  <div class="demo-block">
+    <div class="demo-header">
+      <div class="demo-header-left">
+        <span class="demo-icon">📊</span>
+        <div>
+          <div class="demo-title">Demo 1 — Inference Profiling on NASA C-MAPSS RUL Queries</div>
+          <div class="demo-subtitle">Google Colab · TTFT / TPOT / Goodput · Latency percentile analysis · Normal vs. overload comparison</div>
+        </div>
+      </div>
+      <span class="colab-badge">▶ Open in Colab</span>
+    </div>
+    <div class="demo-body">
+      <p style="font-size:.87rem;">Simulates an inference service responding to 100 C-MAPSS RUL prediction requests with realistic latency distributions including tail events. Measures TTFT, TPOT, throughput, and goodput under two SLO targets, then plots latency percentile curves to reveal tail behavior that averages hide.</p>
+      <button class="collapse-toggle" onclick="toggleCollapse(this)"><span>▶</span> View Full Demo Code (Python)</button>
+      <div class="collapsible">
+      <div class="code-block" style="border-top:none;border-radius:0 0 8px 8px;">
+        <div class="code-header">
+          <div class="code-header-left"><div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div><div class="code-lang">python</div></div>
+          <div class="code-label">DEMO 1</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="cm"># ============================================================
+# DEMO 1: Inference Profiling — NASA C-MAPSS RUL Predictions
+# Week 6 — AI-Enabled Informatics for Engineers (Rutgers ISE)
+# Metrics: TTFT, TPOT, Throughput, Goodput, Latency Percentiles
+# ============================================================</span>
+
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+
+np.random.seed(<span class="num">42</span>)
+
+<span class="cm"># ── C-MAPSS Engine Query Simulation ──────────────────────────</span>
+@dataclass
+<span class="kw">class</span> <span class="cls">EngineQuery</span>:
+    engine_id: <span class="fn">str</span>
+    input_tokens: <span class="fn">int</span>   <span class="cm"># 21 sensors × window + system prompt tokens</span>
+    expected_rul: <span class="fn">float</span>
+
+<span class="kw">def</span> <span class="fn">generate_queries</span>(n=<span class="num">100</span>):
+    <span class="kw">return</span> [<span class="cls">EngineQuery</span>(
+        engine_id=<span class="str">f"ENG-{i+1:03d}"</span>,
+        input_tokens=<span class="fn">int</span>(np.random.normal(<span class="num">21</span> * np.random.choice([<span class="num">20</span>,<span class="num">30</span>,<span class="num">50</span>]) + <span class="num">350</span>, <span class="num">80</span>)),
+        expected_rul=np.random.uniform(<span class="num">10</span>, <span class="num">150</span>)
+    ) <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(n)]
+
+<span class="cm"># ── Inference Simulator ──────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">simulate_inference</span>(q, output_tokens=<span class="num">85</span>, overload=<span class="op">False</span>):
+    ttft = (q.input_tokens / <span class="num">500</span>) * <span class="num">120</span> + np.random.exponential(<span class="num">20</span>)
+    <span class="kw">if</span> np.random.random() < (<span class="num">0.25</span> <span class="kw">if</span> overload <span class="kw">else</span> <span class="num">0.05</span>):
+        ttft *= np.random.uniform(<span class="num">8</span>, <span class="num">25</span>)   <span class="cm"># tail latency spike</span>
+    tpot = <span class="fn">max</span>(<span class="num">10</span>, <span class="num">30</span> + np.random.normal(<span class="num">0</span>, <span class="num">5</span>))
+    total = ttft + tpot * output_tokens
+    <span class="kw">return</span> {<span class="str">"ttft_ms"</span>: ttft, <span class="str">"tpot_ms"</span>: tpot,
+            <span class="str">"total_ms"</span>: total, <span class="str">"tps"</span>: output_tokens / (total / <span class="num">1000</span>)}
+
+<span class="cm"># ── Run + Evaluate ───────────────────────────────────────────</span>
+queries  = <span class="fn">generate_queries</span>(<span class="num">100</span>)
+SLO_TTFT, SLO_TOTAL = <span class="num">500</span>, <span class="num">5000</span>
+
+<span class="kw">def</span> <span class="fn">profile</span>(results):
+    ttfts  = [r[<span class="str">"ttft_ms"</span>]  <span class="kw">for</span> r <span class="kw">in</span> results]
+    totals = [r[<span class="str">"total_ms"</span>] <span class="kw">for</span> r <span class="kw">in</span> results]
+    meets  = [r[<span class="str">"ttft_ms"</span>] < SLO_TTFT <span class="kw">and</span> r[<span class="str">"total_ms"</span>] < SLO_TOTAL <span class="kw">for</span> r <span class="kw">in</span> results]
+    <span class="kw">return</span> {<span class="str">"ttft_p50"</span>: np.percentile(ttfts,<span class="num">50</span>), <span class="str">"ttft_p99"</span>: np.percentile(ttfts,<span class="num">99</span>),
+            <span class="str">"total_p99"</span>: np.percentile(totals,<span class="num">99</span>), <span class="str">"slo_pct"</span>: np.mean(meets)*<span class="num">100</span>,
+            <span class="str">"avg_tps"</span>: np.mean([r[<span class="str">"tps"</span>] <span class="kw">for</span> r <span class="kw">in</span> results]),
+            <span class="str">"goodput"</span>: <span class="fn">sum</span>(meets)/<span class="num">60</span>, <span class="str">"ttfts"</span>: ttfts, <span class="str">"totals"</span>: totals}
+
+r_norm = [<span class="fn">simulate_inference</span>(q) <span class="kw">for</span> q <span class="kw">in</span> queries]
+r_over = [<span class="fn">simulate_inference</span>(q, overload=<span class="op">True</span>) <span class="kw">for</span> q <span class="kw">in</span> queries]
+m_n, m_o = <span class="fn">profile</span>(r_norm), <span class="fn">profile</span>(r_over)
+
+<span class="fn">print</span>(<span class="str">"\nC-MAPSS INFERENCE PROFILING RESULTS"</span>)
+<span class="fn">print</span>(<span class="str">f"{'Metric':<25} {'Normal':>10} {'Overload':>10}"</span>)
+<span class="fn">print</span>(<span class="str">"-"</span>*<span class="num">48</span>)
+<span class="kw">for</span> lbl, key <span class="kw">in</span> [(<span class="str">"TTFT p50 (ms)"</span>,<span class="str">"ttft_p50"</span>),(<span class="str">"TTFT p99 (ms)"</span>,<span class="str">"ttft_p99"</span>),
+                    (<span class="str">"Total p99 (ms)"</span>,<span class="str">"total_p99"</span>),(<span class="str">"Avg TPS"</span>,<span class="str">"avg_tps"</span>),
+                    (<span class="str">"Goodput (req/s)"</span>,<span class="str">"goodput"</span>),(<span class="str">"SLO Pass %"</span>,<span class="str">"slo_pct"</span>)]:
+    <span class="fn">print</span>(<span class="str">f"{lbl:<25} {m_n[key]:>10.1f} {m_o[key]:>10.1f}"</span>)
+
+<span class="cm"># ── Visualization ────────────────────────────────────────────</span>
+fig, axes = plt.subplots(<span class="num">1</span>,<span class="num">3</span>,figsize=(<span class="num">15</span>,<span class="num">5</span>))
+fig.suptitle(<span class="str">"NASA C-MAPSS — Inference Service Profiling\nNormal vs. Overload Conditions"</span>, fontweight=<span class="str">"bold"</span>)
+<span class="cm"># TTFT histogram</span>
+axes[<span class="num">0</span>].hist(m_n[<span class="str">"ttfts"</span>], bins=<span class="num">25</span>, alpha=<span class="num">.7</span>, label=<span class="str">"Normal"</span>, color=<span class="str">"#00d4ff"</span>)
+axes[<span class="num">0</span>].hist(m_o[<span class="str">"ttfts"</span>], bins=<span class="num">25</span>, alpha=<span class="num">.6</span>, label=<span class="str">"Overload"</span>, color=<span class="str">"#ff6b2b"</span>)
+axes[<span class="num">0</span>].axvline(SLO_TTFT, color=<span class="str">"#ff3d5a"</span>, ls=<span class="str">"--"</span>, lw=<span class="num">2</span>, label=<span class="str">f"SLO {SLO_TTFT}ms"</span>)
+axes[<span class="num">0</span>].set_xlabel(<span class="str">"TTFT (ms)"</span>); axes[<span class="num">0</span>].set_title(<span class="str">"Time to First Token Distribution"</span>)
+axes[<span class="num">0</span>].legend(); axes[<span class="num">0</span>].grid(alpha=<span class="num">.3</span>)
+<span class="cm"># Latency CDF</span>
+pcts = np.arange(<span class="num">1</span>,<span class="num">101</span>)
+axes[<span class="num">1</span>].plot(pcts, np.percentile(m_n[<span class="str">"totals"</span>],pcts), label=<span class="str">"Normal"</span>, color=<span class="str">"#00d4ff"</span>, lw=<span class="num">2</span>)
+axes[<span class="num">1</span>].plot(pcts, np.percentile(m_o[<span class="str">"totals"</span>],pcts), label=<span class="str">"Overload"</span>, color=<span class="str">"#ff6b2b"</span>, lw=<span class="num">2</span>)
+axes[<span class="num">1</span>].axhline(SLO_TOTAL, color=<span class="str">"#ff3d5a"</span>, ls=<span class="str">"--"</span>, lw=<span class="num">2</span>, label=<span class="str">f"SLO {SLO_TOTAL}ms"</span>)
+axes[<span class="num">1</span>].axvline(<span class="num">99</span>, color=<span class="str">"#ffd700"</span>, ls=<span class="str">":"</span>, lw=<span class="num">1.5</span>, label=<span class="str">"p99"</span>)
+axes[<span class="num">1</span>].set_xlabel(<span class="str">"Percentile"</span>); axes[<span class="num">1</span>].set_title(<span class="str">"Total Latency CDF"</span>)
+axes[<span class="num">1</span>].legend(); axes[<span class="num">1</span>].grid(alpha=<span class="num">.3</span>)
+<span class="cm"># SLO + Goodput bars</span>
+ax = axes[<span class="num">2</span>]
+x = np.arange(<span class="num">2</span>); lbls=[<span class="str">"Normal"</span>,<span class="str">"Overload"</span>]
+ax.bar(x-<span class="num">.2</span>,[m_n[<span class="str">"slo_pct"</span>],m_o[<span class="str">"slo_pct"</span>]],.35,label=<span class="str">"SLO Pass %"</span>,color=<span class="str">"#00ff88"</span>)
+ax.bar(x+<span class="num">.2</span>,[m_n[<span class="str">"goodput"</span>]*<span class="num">20</span>,m_o[<span class="str">"goodput"</span>]*<span class="num">20</span>],.35,label=<span class="str">"Goodput ×20"</span>,color=<span class="str">"#ff6b2b"</span>)
+ax.set_xticks(x); ax.set_xticklabels(lbls); ax.set_title(<span class="str">"SLO Rate vs Goodput"</span>)
+ax.legend(); ax.grid(axis=<span class="str">"y"</span>,alpha=<span class="num">.3</span>)
+<span class="kw">for</span> c <span class="kw">in</span> ax.containers: ax.bar_label(c, fmt=<span class="str">"%.1f"</span>, padding=<span class="num">2</span>)
+plt.tight_layout(); plt.savefig(<span class="str">"cmapss_profile.png"</span>,dpi=<span class="num">150</span>,bbox_inches=<span class="str">"tight"</span>); plt.show()
+<span class="fn">print</span>(<span class="str">"✅ Demo 1 complete"</span>)</pre>
+      </div>
+      </div>
+      <div class="takeaway">
+        <strong>What to look for:</strong> Under normal load, tail latency (p99) reveals whether individual operators experience outlier slowdowns while averages look fine. Under overload, watch the SLO pass rate collapse and goodput drop — not because throughput dropped, but because more requests missed the latency target. The gap between throughput and goodput is your production safety margin.
+      </div>
+    </div>
+  </div>
+</section>
+<div class="section-divider"></div>
+<!-- PART 4 — MODEL OPTIMIZATION -->
+<section id="part4" class="section-block anim">
+  <div class="part-header">
+    <div class="part-number">PART 04</div>
+    <div><h2>Model-Level Optimization</h2><div class="timing">⏱ ~8 minutes</div></div>
+  </div>
+  <p>Model-level optimization modifies the model itself to make it faster or cheaper. The key tradeoff: some of these techniques change model behavior. Unlike service-level optimizations, they require direct model engineering, not just infrastructure changes.</p>
+  <div class="accordion" style="margin:1.5rem 0;">
+    <div class="acc-item">
+      <button class="acc-header open" onclick="toggleAcc(this)"><span>① Quantization — The Most Practical Technique</span><span class="acc-arrow">▶</span></button>
+      <div class="acc-body show">
+        <p>Reduce numerical precision to shrink the model and increase throughput. The most popular approach — easy, works out of the box for most models, extremely effective. The MBU math explains exactly why it works: halving bytes/param halves bandwidth consumption, which doubles throughput on memory-bound decode.</p>
+        <div class="table-wrap" style="margin:.75rem 0;">
+          <table>
+            <thead><tr><th>Precision</th><th>Bytes/param</th><th>7B model size</th><th>Memory reduction</th><th>Typical decode speedup</th></tr></thead>
+            <tbody>
+              <tr><td>FP32</td><td>4</td><td>28 GB</td><td>baseline</td><td>1×</td></tr>
+              <tr><td>FP16 / BF16</td><td>2</td><td>14 GB</td><td>50%</td><td>~2×</td></tr>
+              <tr><td>INT8</td><td>1</td><td>7 GB</td><td>75%</td><td>~3–4×</td></tr>
+              <tr><td>INT4</td><td>0.5</td><td>3.5 GB</td><td>87%</td><td>~6–8× (some quality loss)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout callout-green" style="margin-top:.75rem;">
+          <strong>For your C-MAPSS system:</strong> FP16 quantization halves memory footprint, doubles throughput, and fits the model on a cheaper GPU tier. INT8 pushes further but requires validation that RUL prediction precision is maintained — a safety-critical concern worth careful evaluation.
+        </div>
+      </div>
+    </div>
+    <div class="acc-item">
+      <button class="acc-header" onclick="toggleAcc(this)"><span>② Speculative Decoding — The Draft-and-Verify Trick</span><span class="acc-arrow">▶</span></button>
+      <div class="acc-body">
+        <p>Use a small, fast "draft model" to propose K tokens at a time. The large target model verifies the entire batch in parallel (verification is parallelizable, unlike generation). If draft tokens are accepted — you generated K tokens in the time it takes to generate 1.</p>
+        <p style="margin-top:.5rem;"><strong>DeepMind's implementation for Chinchilla-70B:</strong> 4B draft model, 8× faster per token, cut overall latency by more than half, zero quality loss. Can be done in 50 lines of PyTorch. Now built into vLLM, TensorRT-LLM, llama.cpp.</p>
+        <div class="callout callout-green" style="margin-top:.75rem;">
+          <strong>ISE fit:</strong> Your structured JSON work order generations are ideal for speculative decoding. The draft model correctly predicts field names and common values. High acceptance rates. Significant TPOT improvement on structured outputs.
+        </div>
+        <div class="callout callout-red" style="margin-top:.5rem;">
+          <strong>When it does not work:</strong> Creative or unpredictable text — low acceptance rates mean verification overhead with no benefit. Also: if your MFU is already maxed, the idle FLOPs assumption breaks down.
+        </div>
+      </div>
+    </div>
+    <div class="acc-item">
+      <button class="acc-header" onclick="toggleAcc(this)"><span>③ KV Cache — Stop Recomputing What You Already Know</span><span class="acc-arrow">▶</span></button>
+      <div class="acc-body">
+        <p>Every attention computation requires key and value vectors for all previous tokens. Without caching, you recompute them from scratch at every decode step. The KV cache stores them for reuse — you only compute KV vectors for the newest token each step. Essential for any sequence longer than a few dozen tokens.</p>
+        <div class="callout callout-cyan" style="margin:.75rem 0;">
+          <strong>The memory cost:</strong> KV cache size = <code>2 × B × S × L × H × M</code> (batch × sequence × layers × dimension × bytes). For Llama 2-13B, batch=32, context=2048: the KV cache alone is <strong>54 GB</strong> — three times the model weights. Character.AI reduced their KV cache by 20× using attention redesign, removing memory as their primary bottleneck.
+        </div>
+        <p style="font-size:.85rem;"><strong>PagedAttention</strong> (vLLM): manages KV cache in non-contiguous memory blocks like OS virtual memory paging. Reduces fragmentation, enables flexible sharing, enables much larger effective batch sizes. This is why vLLM became dominant.</p>
+      </div>
+    </div>
+    <div class="acc-item">
+      <button class="acc-header" onclick="toggleAcc(this)"><span>④ Distillation and Pruning — Precision Tools</span><span class="acc-arrow">▶</span></button>
+      <div class="acc-body">
+        <p><strong>Distillation:</strong> Train a small "student" model to mimic a large "teacher" model. The student matches the teacher's performance on your specific task domain with far fewer parameters. Ideal for ISE use cases requiring a narrow capability at edge-device cost — a distilled bearing-failure classifier running on facility hardware, no cloud required.</p>
+        <p style="margin-top:.5rem;"><strong>Pruning:</strong> Remove weights or entire nodes contributing least to predictions. In research: 90%+ parameter reduction while maintaining accuracy. In practice as of 2024: less common than quantization — harder to implement, requires deep architecture knowledge, sparse results not efficiently exploited by all hardware.</p>
+        <div class="callout callout-yellow" style="margin-top:.75rem;">
+          <strong>PyTorch case study:</strong> Llama-7B optimization stack on A100 80GB — compile → INT8 → INT4 → speculative decoding. Each step multiplicative on the previous. Combined: dramatically higher throughput. Real production reference from the PyTorch team, not a benchmark.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- PART 5 — SERVICE OPTIMIZATION + DEMO 2 -->
+<section id="part5" class="section-block anim">
+  <div class="part-header">
+    <div class="part-number">PART 05</div>
+    <div><h2>Service-Level Optimization</h2><div class="timing">⏱ ~10 minutes + Demo 2</div></div>
+  </div>
+  <p>Service-level optimization leaves model weights untouched. Quality does not change — only how efficiently you serve requests. This is where most application developers operate, and where the highest-ROI improvements are available right now.</p>
+  <h3>Batching — The Bus System of Inference</h3>
+  <p>If every request gets its own GPU time, you are running a fleet of single-occupancy taxis when you could be running buses. Batching is the most accessible cost-reduction technique.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Strategy</th><th>How it works</th><th>Best For</th><th>Key Tradeoff</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag-red">Static</span></td><td>Wait until batch is full, then process</td><td>Offline jobs, dev workflows</td><td>First request waits for last — unbounded wait</td></tr>
+        <tr><td><span class="tag-orange">Dynamic</span></td><td>Send on timeout OR when batch fills</td><td>Production with mixed traffic</td><td>Occasional half-full batches waste compute</td></tr>
+        <tr><td><span class="tag-green">Continuous</span></td><td>Eject done requests, insert new immediately (Orca method)</td><td>High-volume LLM serving</td><td>Complex implementation — use vLLM or TRT-LLM</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>Prefill / Decode Decoupling</h3>
+  <p>Prefill (compute-bound) and decode (memory-bound) compete for the same GPU resources. Mixing a new prefill job into an active decode batch drains compute from ongoing decodes, spiking TPOT for all active users. Solution: dedicate separate GPU instances to each phase.</p>
+  <div class="callout callout-cyan">
+    <strong>Practical ratio for ISE:</strong> C-MAPSS queries have medium-length inputs (~500–800 tokens) and medium outputs (~80–120 tokens). A 1:2 prefill-to-decode ratio is a reasonable starting point. Monitor observed TTFT vs. TPOT and adjust. DistServe and "Inference Without Interference" both demonstrate significant improvements from decoupling even with the communication overhead of transferring intermediate states between instances.
+  </div>
+  <h3>Prompt Caching — Pay Once, Reuse Forever</h3>
+  <p>If many queries share overlapping text — like a long system prompt — prompt caching stores the processed version so you compute it only once. The savings compound dramatically at scale.</p>
+  <div class="grid-2" style="margin:1.25rem 0;">
+    <div class="card card-red">
+      <h4>Without Prompt Cache</h4>
+      <p style="font-size:.85rem;font-family:var(--mono);">500-token system prompt × 10,000 queries/day = <strong>5 million tokens/day</strong> computing the same instructions repeatedly.</p>
+    </div>
+    <div class="card card-green">
+      <h4>With Prompt Cache</h4>
+      <p style="font-size:.85rem;font-family:var(--mono);">System prompt computed once. Anthropic: up to <strong>90% cost savings</strong>, 75% latency reduction. Gemini: <strong>75% discount</strong> on cached input tokens.</p>
+    </div>
+  </div>
+  <div class="callout callout-green">
+    <strong>Enable this before anything else.</strong> If your maintenance advisory chatbot has a 500-token system prompt and handles 10,000 queries/day, prompt caching saves 4.5M input tokens/day. At $15/M for GPT-4o: that is <strong>$67/day or ~$24,500/year</strong> saved from one configuration change. No model changes. No infrastructure changes.
+  </div>
+
+  <!-- DEMO 2 -->
+  <div class="demo-block">
+    <div class="demo-header">
+      <div class="demo-header-left">
+        <span class="demo-icon">🚌</span>
+        <div>
+          <div class="demo-title">Demo 2 — Batching Strategy Comparison: C-MAPSS 300-Engine Fleet</div>
+          <div class="demo-subtitle">Google Colab · Static vs Dynamic vs Continuous · Prompt cache savings · Cost and latency tradeoffs</div>
+        </div>
+      </div>
+      <span class="colab-badge">▶ Open in Colab</span>
+    </div>
+    <div class="demo-body">
+      <p style="font-size:.87rem;">Simulates 900 engine monitoring queries arriving with Poisson inter-arrival times over one hour. Compares three batching strategies on SLO pass rate, goodput, and cost per 1,000 queries. Includes a prompt cache savings calculator showing annual dollar impact.</p>
+      <button class="collapse-toggle" onclick="toggleCollapse(this)"><span>▶</span> View Full Batching Demo Code (Python)</button>
+      <div class="collapsible">
+      <div class="code-block" style="border-top:none;border-radius:0 0 8px 8px;">
+        <div class="code-header">
+          <div class="code-header-left"><div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div><div class="code-lang">python</div></div>
+          <div class="code-label">DEMO 2</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="cm"># ============================================================
+# DEMO 2: Batching Strategy Comparison — C-MAPSS Fleet
+# Week 6 — AI-Enabled Informatics for Engineers (Rutgers ISE)
+# 300-engine fleet, Poisson arrivals, 3 batching strategies
+# ============================================================</span>
+
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+np.random.seed(<span class="num">2026</span>)
+
+<span class="cm"># ── Parameters ────────────────────────────────────────────────</span>
+SYS_TOKENS  = <span class="num">480</span>    <span class="cm"># Maintenance AI system prompt</span>
+USER_TOKENS = <span class="num">650</span>    <span class="cm"># 21 sensors × 30 cycles + context</span>
+OUT_TOKENS  = <span class="num">90</span>     <span class="cm"># RUL + explanation</span>
+IN_COST     = <span class="num">15.0</span>   <span class="cm"># $/1M input tokens</span>
+OUT_COST    = <span class="num">60.0</span>   <span class="cm"># $/1M output tokens  (4× input — Anyscale finding)</span>
+N_QUERIES   = <span class="num">900</span>    <span class="cm"># 3 queries/engine/hour × 300 engines</span>
+SLO_MS      = <span class="num">5000</span>
+
+<span class="cm"># ── Poisson Arrivals ──────────────────────────────────────────</span>
+arrivals = np.cumsum(np.random.exponential(<span class="num">3600</span>/N_QUERIES, N_QUERIES))
+in_toks  = np.clip(np.random.normal(SYS_TOKENS+USER_TOKENS, <span class="num">80</span>, N_QUERIES),<span class="num">400</span>,<span class="num">1500</span>)
+
+<span class="cm"># ── Cost Functions ────────────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">cost_no_cache</span>(it): <span class="kw">return</span> (it*IN_COST + OUT_TOKENS*OUT_COST)/<span class="num">1e6</span>
+<span class="kw">def</span> <span class="fn">cost_cached</span>(it):
+    <span class="kw">return</span> (SYS_TOKENS*IN_COST*<span class="num">0.1</span> + (it-SYS_TOKENS)*IN_COST + OUT_TOKENS*OUT_COST)/<span class="num">1e6</span>
+
+<span class="cm"># ── Static Batching ───────────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">static_batch</span>(sz=<span class="num">8</span>):
+    lats, costs = [], []
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">0</span>, N_QUERIES, sz):
+        batch_a = arrivals[i:i+sz]; batch_t = in_toks[i:i+sz]
+        proc = np.mean(batch_t)/<span class="num">150</span>*<span class="num">1000</span>
+        <span class="kw">for</span> j <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(batch_a)):
+            wait = (batch_a[-<span class="num">1</span>] - batch_a[j])*<span class="num">1000</span>
+            lats.append(wait + proc + np.random.exponential(<span class="num">100</span>))
+            costs.append(<span class="fn">cost_no_cache</span>(batch_t[j]))
+    <span class="kw">return</span> np.array(lats), np.array(costs)
+
+<span class="cm"># ── Dynamic Batching ──────────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">dynamic_batch</span>(win_ms=<span class="num">500</span>, max_sz=<span class="num">8</span>):
+    lats, costs = [], []; i=<span class="num">0</span>
+    <span class="kw">while</span> i < N_QUERIES:
+        t0=arrivals[i]; j=i
+        <span class="kw">while</span> j<N_QUERIES <span class="kw">and</span> (arrivals[j]-t0)*<span class="num">1000</span><win_ms <span class="kw">and</span> j-i<max_sz: j+=<span class="num">1</span>
+        bt=in_toks[i:j]; proc=np.mean(bt)/<span class="num">150</span>*<span class="num">1000</span>
+        <span class="kw">for</span> k <span class="kw">in</span> <span class="fn">range</span>(j-i):
+            lats.append(<span class="fn">min</span>((arrivals[<span class="fn">min</span>(i+k+<span class="num">1</span>,j-<span class="num">1</span>)]-arrivals[i])*<span class="num">1000</span>,win_ms)+proc+np.random.exponential(<span class="num">80</span>))
+            costs.append(<span class="fn">cost_no_cache</span>(bt[k]))
+        i=j
+    <span class="kw">return</span> np.array(lats), np.array(costs)
+
+<span class="cm"># ── Continuous Batching ───────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">continuous_batch</span>(cache=<span class="op">False</span>):
+    lats=[]; costs=[]
+    <span class="kw">for</span> it <span class="kw">in</span> in_toks:
+        lats.append(np.random.exponential(<span class="num">50</span>)+it/<span class="num">200</span>*<span class="num">1000</span>+np.random.exponential(<span class="num">60</span>))
+        costs.append(<span class="fn">cost_cached</span>(it) <span class="kw">if</span> cache <span class="kw">else</span> <span class="fn">cost_no_cache</span>(it))
+    <span class="kw">return</span> np.array(lats), np.array(costs)
+
+strategies={
+    <span class="str">"Static Batch (sz=8)"</span>: <span class="fn">static_batch</span>(),
+    <span class="str">"Dynamic Batch (500ms)"</span>: <span class="fn">dynamic_batch</span>(),
+    <span class="str">"Continuous (no cache)"</span>: <span class="fn">continuous_batch</span>(<span class="op">False</span>),
+    <span class="str">"Continuous + Cache"</span>: <span class="fn">continuous_batch</span>(<span class="op">True</span>),
+}
+
+<span class="fn">print</span>(<span class="str">f"\n{'Strategy':<28} {'p50 ms':>8} {'p99 ms':>8} {'SLO%':>7} {'$/1Kq':>8}"</span>)
+<span class="fn">print</span>(<span class="str">"-"</span>*<span class="num">64</span>)
+<span class="kw">for</span> name,(lats,costs) <span class="kw">in</span> strategies.items():
+    <span class="fn">print</span>(<span class="str">f"{name:<28} {np.percentile(lats,50):>8.0f} {np.percentile(lats,99):>8.0f}"</span>
+          <span class="str">f" {np.mean(lats<SLO_MS)*100:>7.1f} {np.mean(costs)*1000:>8.4f}"</span>
+          + (<span class="str">" ⭐"</span> <span class="kw">if</span> <span class="str">"Cache"</span> <span class="kw">in</span> name <span class="kw">else</span> <span class="str">""</span>))
+
+<span class="cm"># ── Annual prompt cache savings ───────────────────────────────</span>
+daily_q = N_QUERIES * <span class="num">16</span>
+save_per_q = <span class="fn">cost_no_cache</span>(np.mean(in_toks)) - <span class="fn">cost_cached</span>(np.mean(in_toks))
+<span class="fn">print</span>(<span class="str">f"\nPrompt Cache Annual Savings: ${save_per_q*daily_q*365:,.0f}/year"</span>)
+<span class="fn">print</span>(<span class="str">f"  (based on {int(daily_q):,} queries/day, {SYS_TOKENS}-token system prompt)"</span>)
+
+<span class="cm"># ── Plot ─────────────────────────────────────────────────────</span>
+fig,axes=plt.subplots(<span class="num">1</span>,<span class="num">3</span>,figsize=(<span class="num">15</span>,<span class="num">5</span>))
+fig.suptitle(<span class="str">"Batching Strategy Comparison — C-MAPSS 300-Engine Fleet\n"</span>
+             <span class="str">"NASA Jet Engine Simulation"</span>, fontweight=<span class="str">"bold"</span>)
+names=[n <span class="kw">for</span> n <span class="kw">in</span> strategies]; clrs=[<span class="str">"#ff3d5a"</span>,<span class="str">"#ffd700"</span>,<span class="str">"#00d4ff"</span>,<span class="str">"#00ff88"</span>]
+axes[<span class="num">0</span>].boxplot([[strategies[n][<span class="num">0</span>]] <span class="kw">for</span> n <span class="kw">in</span> names],
+               labels=[n.split(<span class="str">"("</span>)[<span class="num">0</span>].strip() <span class="kw">for</span> n <span class="kw">in</span> names],patch_artist=<span class="op">True</span>)
+axes[<span class="num">0</span>].axhline(SLO_MS,color=<span class="str">"#ff3d5a"</span>,ls=<span class="str">"--"</span>); axes[<span class="num">0</span>].set_title(<span class="str">"Latency (ms)"</span>)
+axes[<span class="num">0</span>].tick_params(axis=<span class="str">"x"</span>,rotation=<span class="num">15</span>); axes[<span class="num">0</span>].grid(axis=<span class="str">"y"</span>,alpha=<span class="num">.3</span>)
+s=[np.mean(strategies[n][<span class="num">0</span>]<SLO_MS)*<span class="num">100</span> <span class="kw">for</span> n <span class="kw">in</span> names]
+b1=axes[<span class="num">1</span>].bar([n.split(<span class="str">"("</span>)[<span class="num">0</span>].strip() <span class="kw">for</span> n <span class="kw">in</span> names],s,color=clrs)
+axes[<span class="num">1</span>].set_title(<span class="str">"SLO Pass Rate %"</span>); axes[<span class="num">1</span>].set_ylim(<span class="num">0</span>,<span class="num">105</span>)
+axes[<span class="num">1</span>].tick_params(axis=<span class="str">"x"</span>,rotation=<span class="num">15</span>); axes[<span class="num">1</span>].grid(axis=<span class="str">"y"</span>,alpha=<span class="num">.3</span>)
+axes[<span class="num">1</span>].bar_label(b1,fmt=<span class="str">"%.1f%%"</span>,padding=<span class="num">2</span>)
+c=[np.mean(strategies[n][<span class="num">1</span>])*<span class="num">1000</span> <span class="kw">for</span> n <span class="kw">in</span> names]
+b2=axes[<span class="num">2</span>].bar([n.split(<span class="str">"("</span>)[<span class="num">0</span>].strip() <span class="kw">for</span> n <span class="kw">in</span> names],c,color=clrs)
+axes[<span class="num">2</span>].set_title(<span class="str">"Cost per 1,000 queries ($)"</span>)
+axes[<span class="num">2</span>].tick_params(axis=<span class="str">"x"</span>,rotation=<span class="num">15</span>); axes[<span class="num">2</span>].grid(axis=<span class="str">"y"</span>,alpha=<span class="num">.3</span>)
+axes[<span class="num">2</span>].bar_label(b2,fmt=<span class="str">"$%.4f"</span>,padding=<span class="num">2</span>)
+plt.tight_layout(); plt.savefig(<span class="str">"cmapss_batching.png"</span>,dpi=<span class="num">150</span>,bbox_inches=<span class="str">"tight"</span>); plt.show()
+<span class="fn">print</span>(<span class="str">"✅ Demo 2 complete"</span>)</pre>
+      </div>
+      </div>
+      <div class="takeaway">
+        <strong>Engineering Takeaway:</strong> Continuous batching + prompt caching is the dominant strategy — better latency AND lower cost. The annual savings from prompt caching alone often justifies the engineering effort to implement it. Static batching is only viable for truly offline workloads with no latency SLO. Every production system handling repeated queries against a fixed system prompt should enable prompt caching on day one.
+      </div>
+    </div>
+  </div>
+</section>
+<div class="section-divider"></div>
+<!-- PART 6 — COST CALCULATOR + DEMO 3 -->
+<section id="part6" class="section-block anim">
+  <div class="part-header">
+    <div class="part-number">PART 06</div>
+    <div><h2>The Cost Engineering Perspective</h2><div class="timing">⏱ ~10 minutes + Demo 3</div></div>
+  </div>
+  <p>Everything in inference optimization ultimately converts to dollars. Build the cost intuition now — before your system is in production and the bill is already running.</p>
+
+  <h3>The Output Token Cost Surprise</h3>
+  <div class="callout callout-red">
+    <strong>From Anyscale's production data:</strong> A single output token has approximately the same impact on latency as 100 input tokens. Across API providers, output tokens cost 2–4× more than input tokens. Every word your AI <em>generates</em> costs significantly more than every word it <em>reads</em>. This has direct design implications: verbose outputs are not just bad UX — they are expensive.
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Prompt Design Decision</th><th>Token Impact</th><th>Cost Direction</th><th>ISE Action</th></tr></thead>
+      <tbody>
+        <tr><td>Long system prompt (1,000 tokens)</td><td>+1,000 input/query</td><td class="tag-red">↑↑ cost</td><td>Enable prompt caching → 90% discount on repeated tokens</td></tr>
+        <tr><td>Few-shot examples (3 × 100 tokens)</td><td>+300 input/query</td><td class="tag-orange">↑ cost</td><td>Measure accuracy gain — is the improvement worth the cost?</td></tr>
+        <tr><td>"Be detailed and thorough"</td><td>+100–300 output</td><td class="tag-red">↑↑↑ cost</td><td>Specify exact length: "respond in max 3 sentences"</td></tr>
+        <tr><td>Chain-of-thought reasoning</td><td>+50–200 output</td><td class="tag-orange">↑ cost</td><td>Use for safety-critical decisions only; skip for classification</td></tr>
+        <tr><td>Structured JSON output</td><td>~neutral or less</td><td class="tag-green">→ same</td><td>Often more concise than prose; enables downstream parsing</td></tr>
+        <tr><td>Task decomposition (4 smaller prompts)</td><td>Varies</td><td class="tag-green">Often ↓ cost</td><td>GoDaddy: 1,500-token prompt decomposed → better + cheaper</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Interactive Cost Estimator</h3>
+  <p>Model your project's inference economics before writing a line of code. Adjust parameters to match your system design.</p>
+  <div class="calculator">
+    <div class="calc-title">⚙️ ISE Inference Cost Estimator</div>
+    <div class="calc-grid">
+      <div class="calc-input-group">
+        <label class="calc-label">Queries per day</label>
+        <input type="number" class="calc-input" id="queries" value="1000" oninput="calcCost()">
+      </div>
+      <div class="calc-input-group">
+        <label class="calc-label">System prompt (tokens)</label>
+        <input type="number" class="calc-input" id="sys_tokens" value="500" oninput="calcCost()">
+      </div>
+      <div class="calc-input-group">
+        <label class="calc-label">User input (tokens/query)</label>
+        <input type="number" class="calc-input" id="user_tokens" value="650" oninput="calcCost()">
+      </div>
+      <div class="calc-input-group">
+        <label class="calc-label">Output tokens/query</label>
+        <input type="number" class="calc-input" id="out_tokens" value="100" oninput="calcCost()">
+      </div>
+      <div class="calc-input-group">
+        <label class="calc-label">Input cost ($/1M tokens)</label>
+        <input type="number" class="calc-input" id="in_cost" value="15.0" step="0.5" oninput="calcCost()">
+      </div>
+      <div class="calc-input-group">
+        <label class="calc-label">Output cost ($/1M tokens)</label>
+        <input type="number" class="calc-input" id="out_cost" value="60.0" step="0.5" oninput="calcCost()">
+      </div>
+    </div>
+    <div style="margin-top:1rem;">
+      <label class="calc-label">Prompt cache discount: <span id="cache-pct-label" style="color:var(--cyan);">90%</span></label>
+      <input type="range" class="calc-range" id="cache_pct" min="0" max="95" value="90" oninput="updateCacheLabel();calcCost()">
+    </div>
+    <div class="calc-results">
+      <div class="calc-result-item">
+        <span class="calc-result-val" id="r-daily" style="color:var(--red);">$0.00</span>
+        <div class="calc-result-label">Daily Cost (no cache)</div>
+      </div>
+      <div class="calc-result-item">
+        <span class="calc-result-val" id="r-cached" style="color:var(--green);">$0.00</span>
+        <div class="calc-result-label">Daily Cost (with cache)</div>
+      </div>
+      <div class="calc-result-item">
+        <span class="calc-result-val" id="r-annual" style="color:var(--cyan);">$0.00</span>
+        <div class="calc-result-label">Annual Savings</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Build vs. Buy — The Hosting Decision</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Dimension</th><th>Model API (OpenAI / Anthropic / Google)</th><th>Self-Hosted (vLLM + open-source model)</th></tr></thead>
+      <tbody>
+        <tr><td>Upfront cost</td><td>Zero — pay as you go</td><td>GPU infrastructure + engineering time investment</td></tr>
+        <tr><td>Per-query cost</td><td>Per-token pricing, predictable</td><td>Fixed hardware cost → much cheaper at scale</td></tr>
+        <tr><td>Optimization control</td><td>Provider handles it; you cannot tune the serving layer</td><td>Full control: batching, quantization, caching, model selection</td></tr>
+        <tr><td>Data privacy</td><td>Data leaves your infrastructure</td><td>Data never leaves your environment</td></tr>
+        <tr><td>Regulated industry</td><td>Check compliance requirements — ITAR, HIPAA, CUI, etc.</td><td>Preferred when data cannot leave the facility</td></tr>
+        <tr><td>Breakeven</td><td>Better below ~$10K–$50K/month</td><td>Better above ~$10K–$50K/month (model and hardware dependent)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- DEMO 3 -->
+  <div class="demo-block">
+    <div class="demo-header">
+      <div class="demo-header-left">
+        <span class="demo-icon">💰</span>
+        <div>
+          <div class="demo-title">Demo 3 — Full Cost Model + ROI: C-MAPSS Predictive Maintenance System</div>
+          <div class="demo-subtitle">Google Colab · Optimization stack analysis · Cost vs latency · ROI vs. unplanned removal cost</div>
+        </div>
+      </div>
+      <span class="colab-badge">▶ Open in Colab</span>
+    </div>
+    <div class="demo-body">
+      <p style="font-size:.87rem;">Builds a complete cost model for a 300-engine C-MAPSS fleet. Compares four optimization stacks (baseline → cache+batch → +INT8 → +speculative decode). Calculates full ROI against the cost of unplanned engine removals — showing that the value of predictions almost always dwarfs the cost of running the AI system.</p>
+      <button class="collapse-toggle" onclick="toggleCollapse(this)"><span>▶</span> View Full Cost Model Code (Python)</button>
+      <div class="collapsible">
+      <div class="code-block" style="border-top:none;border-radius:0 0 8px 8px;">
+        <div class="code-header">
+          <div class="code-header-left"><div class="code-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div><div class="code-lang">python</div></div>
+          <div class="code-label">DEMO 3</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="cm"># ============================================================
+# DEMO 3: Full Cost Model + ROI — C-MAPSS Predictive Maintenance
+# Week 6 — AI-Enabled Informatics for Engineers (Rutgers ISE)
+# Optimization stacks + ROI vs. unplanned engine removal cost
+# NASA C-MAPSS: 21 sensors, 4 operating conditions, 6 fault modes
+# ============================================================</span>
+
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+
+<span class="cm"># ── Fleet + Cost Specification ────────────────────────────────</span>
+@dataclass
+<span class="kw">class</span> <span class="cls">FleetSpec</span>:
+    n_engines:              <span class="fn">int</span>   = <span class="num">300</span>
+    queries_per_day:        <span class="fn">int</span>   = <span class="num">4800</span>   <span class="cm"># 16/engine/day</span>
+    sys_prompt_tokens:      <span class="fn">int</span>   = <span class="num">480</span>
+    user_tokens:            <span class="fn">int</span>   = <span class="num">650</span>
+    output_tokens:          <span class="fn">int</span>   = <span class="num">95</span>
+    cost_per_1m_in:         <span class="fn">float</span> = <span class="num">15.0</span>
+    cost_per_1m_out:        <span class="fn">float</span> = <span class="num">60.0</span>
+    unplanned_removal_cost: <span class="fn">float</span> = <span class="num">500_000</span>  <span class="cm"># $ per event</span>
+    planned_removal_cost:   <span class="fn">float</span> = <span class="num">120_000</span>  <span class="cm"># $ scheduled overhaul</span>
+    unplanned_per_year_no_ai: <span class="fn">int</span> = <span class="num">8</span>
+    unplanned_per_year_ai:    <span class="fn">int</span> = <span class="num">2</span>         <span class="cm"># conservative estimate</span>
+
+spec = <span class="cls">FleetSpec</span>()
+
+<span class="cm"># ── Optimization Stacks ───────────────────────────────────────</span>
+stacks = {
+    <span class="str">"Baseline\n(No optimization)"</span>: {
+        <span class="str">"cache_discount"</span>:   <span class="num">0.0</span>,
+        <span class="str">"throughput_mult"</span>:  <span class="num">1.0</span>,
+        <span class="str">"ttft_factor"</span>:      <span class="num">1.0</span>,
+        <span class="str">"color"</span>: <span class="str">"#ff3d5a"</span>,
+        <span class="str">"desc"</span>: <span class="str">"Raw API calls, no caching, no batching"</span>
+    },
+    <span class="str">"Stack 1\n(Cache + Batch)"</span>: {
+        <span class="str">"cache_discount"</span>:   <span class="num">0.90</span>,
+        <span class="str">"throughput_mult"</span>:  <span class="num">2.5</span>,
+        <span class="str">"ttft_factor"</span>:      <span class="num">0.75</span>,
+        <span class="str">"color"</span>: <span class="str">"#ffd700"</span>,
+        <span class="str">"desc"</span>: <span class="str">"Prompt caching + continuous batching"</span>
+    },
+    <span class="str">"Stack 2\n(+INT8 Quant)"</span>: {
+        <span class="str">"cache_discount"</span>:   <span class="num">0.90</span>,
+        <span class="str">"throughput_mult"</span>:  <span class="num">4.5</span>,
+        <span class="str">"ttft_factor"</span>:      <span class="num">0.55</span>,
+        <span class="str">"color"</span>: <span class="str">"#00d4ff"</span>,
+        <span class="str">"desc"</span>: <span class="str">"+ INT8 weight quantization (2× bandwidth)"</span>
+    },
+    <span class="str">"Stack 3\n(+Speculative)"</span>: {
+        <span class="str">"cache_discount"</span>:   <span class="num">0.90</span>,
+        <span class="str">"throughput_mult"</span>:  <span class="num">7.0</span>,
+        <span class="str">"ttft_factor"</span>:      <span class="num">0.40</span>,
+        <span class="str">"color"</span>: <span class="str">"#00ff88"</span>,
+        <span class="str">"desc"</span>: <span class="str">"+ Speculative decoding (structured JSON output)"</span>
+    },
+}
+
+<span class="kw">def</span> <span class="fn">daily_cost</span>(s):
+    cached_in = spec.sys_prompt_tokens * (<span class="num">1</span> - s[<span class="str">"cache_discount"</span>])
+    fresh_in  = spec.user_tokens
+    in_cost   = (cached_in + fresh_in) * spec.cost_per_1m_in / <span class="num">1e6</span>
+    out_cost  = spec.output_tokens * spec.cost_per_1m_out / <span class="num">1e6</span>
+    <span class="kw">return</span> (in_cost + out_cost) * spec.queries_per_day
+
+<span class="kw">def</span> <span class="fn">est_ttft_ms</span>(s, base=<span class="num">350</span>): <span class="kw">return</span> base * s[<span class="str">"ttft_factor"</span>]
+<span class="kw">def</span> <span class="fn">est_tpot_ms</span>(s, base=<span class="num">28</span>):  <span class="kw">return</span> base / (s[<span class="str">"throughput_mult"</span>] / <span class="num">2</span>)
+
+<span class="cm"># ── Print Results ─────────────────────────────────────────────</span>
+<span class="fn">print</span>(<span class="str">"\nC-MAPSS FLEET OPTIMIZATION STACK ANALYSIS"</span>)
+<span class="fn">print</span>(<span class="str">f"{'Stack':<26} {'Daily $':>9} {'Annual $':>10} {'TTFT ms':>8} {'TPOT ms':>9}"</span>)
+<span class="fn">print</span>(<span class="str">"-"</span>*<span class="num">65</span>)
+annual_costs = {}
+<span class="kw">for</span> name, s <span class="kw">in</span> stacks.items():
+    dc = <span class="fn">daily_cost</span>(s); ac = dc * <span class="num">365</span>
+    annual_costs[name] = ac
+    <span class="fn">print</span>(<span class="str">f"{name.replace(chr(10),' '):<26} {dc:>9.2f} {ac:>10.0f} "</span>
+          <span class="str">f"{est_ttft_ms(s):>8.0f} {est_tpot_ms(s):>9.1f}"</span>)
+
+<span class="cm"># ── ROI Analysis ──────────────────────────────────────────────</span>
+prevented  = spec.unplanned_per_year_no_ai - spec.unplanned_per_year_ai
+avoidance  = prevented * (spec.unplanned_removal_cost - spec.planned_removal_cost)
+best_stack = <span class="fn">list</span>(annual_costs.values())[-<span class="num">1</span>]
+net_roi    = avoidance - best_stack
+roi_ratio  = avoidance / best_stack <span class="kw">if</span> best_stack > <span class="num">0</span> <span class="kw">else</span> <span class="num">0</span>
+
+<span class="fn">print</span>(<span class="str">f"\nROI ANALYSIS — PREDICTIVE MAINTENANCE VALUE"</span>)
+<span class="fn">print</span>(<span class="str">f"  Prevented unplanned removals/year:  {prevented}"</span>)
+<span class="fn">print</span>(<span class="str">f"  Cost avoidance (unplanned→planned): ${avoidance:>12,.0f}"</span>)
+<span class="fn">print</span>(<span class="str">f"  AI system cost (Stack 3/year):      ${best_stack:>12,.0f}"</span>)
+<span class="fn">print</span>(<span class="str">f"  Net annual ROI:                     ${net_roi:>12,.0f}"</span>)
+<span class="fn">print</span>(<span class="str">f"  ROI ratio: {roi_ratio:.0f}:1 — every $1 in AI returns ${roi_ratio:.0f}"</span>)
+
+<span class="cm"># ── Visualization ─────────────────────────────────────────────</span>
+fig, axes = plt.subplots(<span class="num">1</span>, <span class="num">3</span>, figsize=(<span class="num">15</span>, <span class="num">5</span>))
+fig.suptitle(<span class="str">"Optimization Stack Analysis — C-MAPSS Predictive Maintenance\n"</span>
+             <span class="str">"Cost, Latency, and ROI at 300-Engine Scale"</span>, fontweight=<span class="str">"bold"</span>)
+names  = <span class="fn">list</span>(stacks.keys())
+colors = [s[<span class="str">"color"</span>] <span class="kw">for</span> s <span class="kw">in</span> stacks.values()]
+lbls   = [n.replace(<span class="str">"\n"</span>, <span class="str">" "</span>) <span class="kw">for</span> n <span class="kw">in</span> names]
+
+<span class="cm"># Annual cost waterfall</span>
+b1 = axes[<span class="num">0</span>].bar(lbls, [<span class="fn">daily_cost</span>(s)*<span class="num">365</span> <span class="kw">for</span> s <span class="kw">in</span> stacks.values()], color=colors)
+axes[<span class="num">0</span>].set_title(<span class="str">"Annual Inference Cost ($)"</span>)
+axes[<span class="num">0</span>].tick_params(axis=<span class="str">"x"</span>, rotation=<span class="num">12</span>); axes[<span class="num">0</span>].grid(axis=<span class="str">"y"</span>, alpha=<span class="num">.3</span>)
+axes[<span class="num">0</span>].bar_label(b1, fmt=<span class="str">"$%.0f"</span>, padding=<span class="num">2</span>, fontsize=<span class="num">8</span>)
+
+<span class="cm"># TTFT comparison</span>
+ttfts = [<span class="fn">est_ttft_ms</span>(s) <span class="kw">for</span> s <span class="kw">in</span> stacks.values()]
+b2 = axes[<span class="num">1</span>].bar(lbls, ttfts, color=colors)
+axes[<span class="num">1</span>].axhline(<span class="num">500</span>, color=<span class="str">"#ff3d5a"</span>, ls=<span class="str">"--"</span>, label=<span class="str">"SLO 500ms"</span>)
+axes[<span class="num">1</span>].set_title(<span class="str">"Estimated TTFT (ms)"</span>); axes[<span class="num">1</span>].legend()
+axes[<span class="num">1</span>].tick_params(axis=<span class="str">"x"</span>, rotation=<span class="num">12</span>); axes[<span class="num">1</span>].grid(axis=<span class="str">"y"</span>, alpha=<span class="num">.3</span>)
+axes[<span class="num">1</span>].bar_label(b2, fmt=<span class="str">"%.0fms"</span>, padding=<span class="num">2</span>, fontsize=<span class="num">8</span>)
+
+<span class="cm"># ROI breakdown</span>
+roi_cats = [<span class="str">"Unplanned Removal\nSavings"</span>, <span class="str">"AI System\nCost (Stack 3)"</span>, <span class="str">"Net Annual\nROI"</span>]
+roi_vals = [avoidance, best_stack, net_roi]
+roi_clrs = [<span class="str">"#00ff88"</span>, <span class="str">"#ff3d5a"</span>, <span class="str">"#00d4ff"</span>]
+b3 = axes[<span class="num">2</span>].bar(roi_cats, roi_vals, color=roi_clrs)
+axes[<span class="num">2</span>].set_title(<span class="str">"Annual ROI Analysis ($)"</span>)
+axes[<span class="num">2</span>].grid(axis=<span class="str">"y"</span>, alpha=<span class="num">.3</span>)
+axes[<span class="num">2</span>].bar_label(b3, labels=[<span class="str">f"${v:,.0f}"</span> <span class="kw">for</span> v <span class="kw">in</span> roi_vals], padding=<span class="num">2</span>, fontsize=<span class="num">9</span>)
+
+plt.tight_layout()
+plt.savefig(<span class="str">"cmapss_roi.png"</span>, dpi=<span class="num">150</span>, bbox_inches=<span class="str">"tight"</span>)
+plt.show()
+<span class="fn">print</span>(<span class="str">"✅ Demo 3 complete"</span>)</pre>
+      </div>
+      </div>
+      <div class="takeaway">
+        <strong>The Business Case Takeaway:</strong> For safety-critical ISE systems, ROI is almost always dominated by cost avoidance from better decisions — not by reduction in API costs. Preventing one additional unplanned engine removal ($500K) vs. a planned overhaul ($120K) generates $380K in cost avoidance. Your entire year of optimized AI inference typically costs a fraction of that. Optimize to keep the system fast enough to be used. The value of the predictions justifies everything else.
+      </div>
+    </div>
+  </div>
+</section>
+<div class="section-divider"></div>
+<!-- PART 7 — YOUR BOTTLENECK -->
+<section id="part7" class="section-block anim">
+  <div class="part-header">
+    <div class="part-number">PART 07</div>
+    <div><h2>Diagnosing Your System's Tightest Bottleneck</h2><div class="timing">⏱ ~5 minutes</div></div>
+  </div>
+  <p>This week's discussion question: <em>"What is your system's tightest bottleneck — cost, latency, or reliability?"</em> By now you have the vocabulary to answer it with precision, not guesswork. Here is the diagnostic framework.</p>
+
+  <h3>The Bottleneck Decision Matrix</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Symptom you observe</th><th>Most Likely Bottleneck</th><th>Primary Fix</th></tr></thead>
+      <tbody>
+        <tr><td>Operators wait &gt;5s for first token on interactive queries</td><td><span class="tag-red">Latency — TTFT</span></td><td>Prefill optimization, shorter inputs, prefill/decode decoupling</td></tr>
+        <tr><td>Recommendation text streams slowly after first token appears</td><td><span class="tag-orange">Latency — TPOT</span></td><td>Quantization, speculative decoding, KV cache optimization</td></tr>
+        <tr><td>Monthly API bill growing faster than query volume</td><td><span class="tag-red">Cost</span></td><td>Prompt caching, output length constraints, batch API for non-urgent workloads</td></tr>
+        <tr><td>System degrades during shift-change traffic spikes</td><td><span class="tag-orange">Reliability</span></td><td>Continuous batching, replica parallelism, autoscaling, rate limiting</td></tr>
+        <tr><td>Works in dev, crashes in production with long documents</td><td><span class="tag-red">Memory — KV cache</span></td><td>KV cache quantization, windowed attention, smaller batch size</td></tr>
+        <tr><td>p50 latency is great but p99 is catastrophic</td><td><span class="tag-orange">Tail latency</span></td><td>Timeout policies, goodput SLO enforcement, queue depth limits, outlier investigation</td></tr>
+        <tr><td>System is accurate but operators don't use it</td><td><span class="tag-red">Latency or UX</span></td><td>May be a design issue, not just technical — revisit human-in-the-loop placement</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout callout-cyan">
+    <strong>The ISE Bottleneck Test — answer these three questions:</strong><br>
+    1. If my system responded instantly but cost 10× more, would my stakeholders accept it? <em>If yes → latency is tighter than cost.</em><br>
+    2. If my system was free but took 30 seconds per response, would operators use it? <em>If no → latency is the binding constraint.</em><br>
+    3. Does the system perform identically under 5 concurrent users and 50? <em>If not → reliability is where to look first.</em>
+  </div>
+
+  <h3>Parallelism for Reliability and Scale</h3>
+  <p>When optimization techniques at the model and service level are not enough, you scale horizontally. The most impactful and practical strategy for most ISE teams: <strong>replica parallelism</strong> — multiple independent copies of your model serving different requests simultaneously. More copies means more concurrent requests handled means lower latency per user at peak load. The tradeoff is proportional hardware cost.</p>
+  <div class="grid-2" style="margin:1.25rem 0;">
+    <div class="card card-cyan">
+      <h4>Tensor Parallelism</h4>
+      <p style="font-size:.85rem;">Splits the model's weight matrices across multiple GPUs — enables models that do not fit on one GPU, and reduces per-request latency. The most common approach for inference. Implemented via vLLM, TensorRT-LLM — select via configuration, no manual implementation required for most teams.</p>
+    </div>
+    <div class="card card-orange">
+      <h4>Pipeline Parallelism</h4>
+      <p style="font-size:.85rem;">Splits model computation into stages across machines. Enables very large models. Adds communication overhead per request — typically avoided for latency-critical inference, preferred for training throughput. If your system is latency-bound, use replica or tensor parallelism first.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-green">
+    <strong>For most ISE project teams right now:</strong> The correct answer to "which parallelism strategy?" is "none yet." Optimize at the service level first (caching, batching, routing). Only reach for parallelism when you have measured that service-level techniques have been exhausted and you still cannot meet your SLO at your target query volume. Pre-optimization parallelism is expensive, complex, and often masks problems that cheaper fixes would solve.
+  </div>
+</section>
+<div class="section-divider"></div>
+
+<!-- PART 8 — M3 + A3 -->
+<section id="part8" class="section-block anim">
+  <div class="part-header">
+    <div class="part-number">PART 08</div>
+    <div><h2>Assignment 3 + Milestone M3 — MVP Build</h2><div class="timing">⏱ ~4 minutes</div></div>
+  </div>
+
+  <div class="grid-2" style="margin:1rem 0;">
+    <div class="card card-orange">
+      <h4>📋 Assignment 3 — Graded (due end of week)</h4>
+      <ul style="font-size:.88rem;margin-top:.5rem;">
+        <li>Build and demonstrate a working MVP of your ISE AI system</li>
+        <li>Execute at least one <strong>real API call</strong> against actual (not simulated) data</li>
+        <li>Document your prompts with version numbers (continuing from M2 convention)</li>
+        <li>Report your actual <strong>TTFT or total latency</strong> for a real query</li>
+        <li>Identify your tightest bottleneck with evidence — measurement, not intuition</li>
+        <li>Implement at least one optimization technique from this week</li>
+      </ul>
+    </div>
+    <div class="card card-cyan">
+      <h4>🚀 Milestone M3 — MVP Demo Checkpoint</h4>
+      <ul style="font-size:.88rem;margin-top:.5rem;">
+        <li><strong>Live demo:</strong> System running with real data. Doesn't need to be perfect — needs to be real.</li>
+        <li><strong>Cost projection:</strong> Monthly API cost at target production volume (use the estimator above)</li>
+        <li><strong>Bottleneck ID:</strong> Cost, latency, or reliability — with supporting measurement</li>
+        <li><strong>One optimization:</strong> Prompt caching, batch routing, output length control, or quantization</li>
+        <li><strong>Evaluation snapshot:</strong> Min 10 test cases from M2 eval plan, run against your MVP</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card card-green">
+    <h4>💬 Canvas Discussion — respond to 2 classmates by Thursday</h4>
+    <p style="font-size:.88rem;margin-top:.5rem;">"What is your system's tightest bottleneck — cost, latency, or reliability?" Describe a <em>specific scenario</em> where your bottleneck would cause a user-visible failure. What is your first optimization move and why? Use the diagnostic framework from Part 7 and reference the relevant technique from Chapter 9.</p>
+  </div>
+
+  <div class="card card-yellow">
+    <h4>👀 Looking Ahead — Week 7: RAG Systems (Chapter 10)</h4>
+    <p style="font-size:.88rem;margin-top:.5rem;">Everything this week feeds directly into Retrieval-Augmented Generation. Prompt length is your main RAG cost driver — you retrieve documents and include them in every query, dramatically increasing input token counts. Latency doubles because retrieval + inference are now sequential in your critical path. Start thinking: <strong>what data source would make your system dramatically better if the AI could query it at inference time?</strong> That is your RAG use case.</p>
+  </div>
+</section>
+
+<!-- SUMMARY -->
+<section class="section-block anim">
+  <div class="part-header">
+    <div class="part-number">SUMMARY</div>
+    <div><h2>Five Things to Carry Out of Week 6</h2></div>
+  </div>
+  <div class="grid-2" style="margin:1.5rem 0;">
+    <div class="card card-orange">
+      <h4>① Diagnose Before You Optimize</h4>
+      <p style="font-size:.87rem;">Profile first. Are you compute-bound or memory-bound? Measure TTFT, TPOT, goodput, MBU. The bottleneck determines the fix. Applying the wrong technique wastes engineering time and sometimes makes things worse.</p>
+    </div>
+    <div class="card card-cyan">
+      <h4>② Decode is the Bottleneck</h4>
+      <p style="font-size:.87rem;">For most LLM applications, autoregressive decode (memory bandwidth-bound, sequential) is slower and more expensive per token than prefill. Quantization, speculative decoding, and KV cache optimization all target this phase. This is where your operator is waiting.</p>
+    </div>
+    <div class="card card-green">
+      <h4>③ Enable Prompt Caching First</h4>
+      <p style="font-size:.87rem;">If you have a system prompt (you do), prompt caching is the single highest-ROI optimization available with zero model changes. Anthropic: 90% cost savings. Gemini: 75% discount. Takes hours to implement. Saves thousands per year at production scale.</p>
+    </div>
+    <div class="card card-yellow">
+      <h4>④ Route by Latency Tolerance</h4>
+      <p style="font-size:.87rem;">Every query does not need the same API tier. Real-time alerts → online API. Nightly fleet reports → batch API at 50% cost. Designing explicit routing between these two endpoints is one configuration change that can cut your monthly batch workload cost in half immediately.</p>
+    </div>
+  </div>
+  <div class="callout callout-cyan" style="margin-top:1rem;">
+    <strong>⑤ The ROI of ISE AI is in the Decisions, Not the API Bill:</strong> For safety-critical industrial systems, the value of accurate, timely predictions almost always exceeds the cost of running the AI system by an order of magnitude or more. Optimize to keep the system fast enough to be used. The cost of inference is a rounding error next to the cost of a missed failure or an unplanned shutdown.
+  </div>
+</section>
+
+<!-- APPENDICES TOGGLE -->
+<section class="section-block anim">
+  <div class="part-header">
+    <div class="part-number">APPENDICES</div>
+    <div><h2>Instructor Reference Material</h2></div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-item">
+      <button class="acc-header" onclick="toggleAcc(this)"><span>📋 Appendix A — Whiteboard Drawing Guide</span><span class="acc-arrow">▶</span></button>
+      <div class="acc-body">
+        <p><strong>Sketch 1 — The Two-Phase Split (Part 2):</strong> Draw a horizontal bar divided 30% (PREFILL) / 70% (DECODE). Label PREFILL: "compute-bound, parallel, fast." Label DECODE: "memory-bound, sequential, expensive per token." Add arrow: "This is where your operator waits."</p>
+        <p><strong>Sketch 2 — Memory Hierarchy Pyramid (Part 2):</strong> Three stacked rectangles. Top (tiny): SRAM — 40MB, 10+ TB/s. Middle: HBM — 24–80GB, 1.5 TB/s. Bottom (large): CPU DRAM — 1TB+, 50 GB/s. ISE label: "warehouse → production floor → workbench."</p>
+        <p><strong>Sketch 3 — Latency Decomposition (Part 3):</strong> Timeline: [query sent] → [TTFT arrow] → [first token] → [TPOT × N arrow, repeating] → [last token]. Total = TTFT + TPOT × output_tokens. Add: "p50 is your median operator. p99 is your worst operator on the worst shift."</p>
+        <p><strong>Sketch 4 — Batching Bus Diagram (Part 5):</strong> Three rows of buses. Row 1: four single buses (no batching). Row 2: one full bus that waits (static). Row 3: one bus leaving on schedule with seats filled and empty (dynamic). Row 4: bus drops a passenger, picks up new one immediately (continuous).</p>
+        <p><strong>Sketch 5 — Optimization Stack Tower (Part 6):</strong> Four blocks stacked vertically, each adding to the one below. Block 1: Baseline. Block 2: +Cache+Batch (highlight in yellow — most accessible). Block 3: +INT8. Block 4: +Speculative. Arrow on right: "Each step multiplicative on the previous."</p>
+      </div>
+    </div>
+    <div class="acc-item">
+      <button class="acc-header" onclick="toggleAcc(this)"><span>⏱ Appendix B — Time Check Guide</span><span class="acc-arrow">▶</span></button>
+      <div class="acc-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Checkpoint</th><th>You Should Be At…</th><th>If Behind — Cut</th></tr></thead>
+            <tbody>
+              <tr><td>After Part 1</td><td>5 min</td><td>Skip C-MAPSS context detail, go straight to the three dimensions</td></tr>
+              <tr><td>After Part 2</td><td>13 min</td><td>Skip online/batch API section — mention it exists, refer to slides</td></tr>
+              <tr><td>After Demo 1</td><td>23 min</td><td>Walk through Demo 1 output without running live — show screenshot</td></tr>
+              <tr><td>After Part 4</td><td>31 min</td><td>Cover quantization only from the accordion — skip speculative and KV cache</td></tr>
+              <tr><td>After Demo 2</td><td>41 min</td><td>Skip demo code — show the printed comparison table only</td></tr>
+              <tr><td>After Part 6</td><td>51 min</td><td>Skip Demo 3 code — walk through the ROI numbers verbally using the table</td></tr>
+              <tr><td>After Part 7</td><td>56 min</td><td>Skip parallelism section entirely — it's supplemental</td></tr>
+              <tr><td>After Part 8</td><td>60 min</td><td>Deliver A3/M3 bullets verbally, post full slide deck to Canvas</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="margin-top:.75rem;font-size:.85rem;"><strong>Emergency cut (5+ minutes behind after Demo 1):</strong> Skip Demo 2 live execution. Present the printed table results. Skip speculative decoding from Part 4. Keep Demo 3 ROI analysis — the business case is the most impactful content for M3 preparation.</p>
+      </div>
+    </div>
+    <div class="acc-item">
+      <button class="acc-header" onclick="toggleAcc(this)"><span>🧠 Appendix C — Common Student Confusions</span><span class="acc-arrow">▶</span></button>
+      <div class="acc-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Common Mix-Up</th><th>The Correct Distinction</th></tr></thead>
+            <tbody>
+              <tr><td>"nvidia-smi says 95% GPU utilization, we're good"</td><td>nvidia-smi % measures time active, not efficiency. A GPU doing 1 op/s out of 100 possible reports 95% if it's "active." Use MFU and MBU instead. 95% nvidia-smi utilization means nothing without knowing the theoretical peak.</td></tr>
+              <tr><td>"Throughput went up, so the system improved"</td><td>Throughput and goodput are different. Higher throughput with larger batches often means more requests violate your latency SLO. Goodput (requests/s meeting SLO) is what matters for user experience. Always check both.</td></tr>
+              <tr><td>"We're compute-bound so we need more GPUs"</td><td>More GPUs helps if you're compute-bound. But most LLM decode workloads are memory bandwidth-bound — adding more compute does not help if data cannot be moved fast enough. Diagnose which you are before buying hardware.</td></tr>
+              <tr><td>"Quantization will hurt my model quality"</td><td>FP16 and INT8 weight-only quantization typically show negligible quality degradation for most tasks. Quality degradation becomes significant below INT4. Always validate against your specific task and evaluation set — do not assume degradation without measuring it.</td></tr>
+              <tr><td>"The batch API is slower so it's worse"</td><td>For workloads where latency does not matter (nightly reports, offline analysis), batch API at 50% cost is strictly better. Slower is only worse when your use case requires real-time response. Design explicit routing between online and batch for different query types.</td></tr>
+              <tr><td>"Prompt caching saves input tokens — but output is what's expensive"</td><td>Both matter. System prompt caching primarily reduces repeated input token costs. But by lowering TTFT (the prefill takes less work), it also helps throughput — allowing the decode phase to start sooner and the GPU to begin the expensive output generation step more quickly.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="acc-item">
+      <button class="acc-header" onclick="toggleAcc(this)"><span>🚀 Appendix D — NASA C-MAPSS Quick Reference</span><span class="acc-arrow">▶</span></button>
+      <div class="acc-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Dataset Property</th><th>Detail</th><th>ISE Inference Implication</th></tr></thead>
+            <tbody>
+              <tr><td>Sensors</td><td>21 time-series sensor readings per engine per cycle</td><td>Input size scales with window length: 21 × 30 cycles = 630 numeric values per query</td></tr>
+              <tr><td>Subsets</td><td>FD001–FD004 with increasing operational complexity</td><td>FD004 (multiple conditions + fault modes) produces longer, harder inputs → higher TTFT</td></tr>
+              <tr><td>Task</td><td>Predict remaining useful life (RUL) in cycles before failure</td><td>Output: structured JSON with RUL prediction, confidence interval, recommended action</td></tr>
+              <tr><td>Train engines</td><td>100 training engines per subset</td><td>Fine-tuning dataset size — affects whether distillation is viable</td></tr>
+              <tr><td>Max RUL</td><td>Typically capped at 125 cycles for training labels</td><td>Output length constrained — speculative decoding acceptance rate should be high</td></tr>
+              <tr><td>Data URL</td><td>data.nasa.gov/dataset/cmapss-jet-engine-simulated-data</td><td>Free download, no registration required, CSV format</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout callout-cyan" style="margin-top:.75rem;">
+          <strong>Connecting C-MAPSS to your project:</strong> Even if your project uses a completely different domain, the inference architecture decisions are the same. Replace "engine sensor window" with your input data format. Replace "RUL prediction" with your target output. The optimization stack analysis from Demo 3 applies directly — just plug in your actual token counts and query volume.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- end .container -->
+
+<footer>
+  <p><strong style="color:var(--orange);">ISE — AI-Enabled Informatics for Engineers</strong> · Week 6 · Spring 2026</p>
+  <p>Primary text: Chip Huyen, <em>AI Engineering</em>, Chapter 9 — Inference Optimization</p>
+  <p>Dataset: <a href="https://data.nasa.gov/dataset/cmapss-jet-engine-simulated-data" target="_blank">NASA C-MAPSS Jet Engine Simulated Data</a></p>
+  <p style="margin-top:.75rem;color:var(--border2);">← <a href="../week05/lecture05.html">Week 5: Prompt Engineering</a> &nbsp;|&nbsp; <a href="../week07/lecture07.html">Week 7: RAG Systems →</a></p>
+</footer>
+<script>
+// ── Progress bar ──────────────────────────────────────────────
+window.addEventListener('scroll', () => {
+  const scrollTop = document.documentElement.scrollTop;
+  const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+  const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+  document.getElementById('progress-bar').style.width = progress + '%';
+});
+
+// ── Entrance animations ───────────────────────────────────────
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.anim').forEach(el => observer.observe(el));
+
+// ── Roadmap scroll ────────────────────────────────────────────
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Collapsible toggle ────────────────────────────────────────
+function toggleCollapse(btn) {
+  const coll = btn.nextElementSibling;
+  const isOpen = coll.classList.contains('expanded');
+  coll.classList.toggle('expanded', !isOpen);
+  btn.querySelector('span').textContent = isOpen ? '▶' : '▼';
+}
+
+// ── Accordion ─────────────────────────────────────────────────
+function toggleAcc(header) {
+  const body = header.nextElementSibling;
+  const isOpen = header.classList.contains('open');
+  // close all
+  document.querySelectorAll('.acc-header').forEach(h => {
+    h.classList.remove('open');
+    h.nextElementSibling.classList.remove('show');
+  });
+  if (!isOpen) {
+    header.classList.add('open');
+    body.classList.add('show');
+  }
+}
+
+// ── Copy code ─────────────────────────────────────────────────
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    btn.textContent = 'Copied!';
+    btn.style.color = 'var(--green)';
+    setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = ''; }, 2000);
+  });
+}
+
+// ── Interactive Cost Calculator ───────────────────────────────
+function updateCacheLabel() {
+  document.getElementById('cache-pct-label').textContent =
+    document.getElementById('cache_pct').value + '%';
+}
+
+function calcCost() {
+  const queries    = parseFloat(document.getElementById('queries').value) || 0;
+  const sysTok     = parseFloat(document.getElementById('sys_tokens').value) || 0;
+  const userTok    = parseFloat(document.getElementById('user_tokens').value) || 0;
+  const outTok     = parseFloat(document.getElementById('out_tokens').value) || 0;
+  const inCost     = parseFloat(document.getElementById('in_cost').value) || 0;
+  const outCostVal = parseFloat(document.getElementById('out_cost').value) || 0;
+  const cachePct   = parseFloat(document.getElementById('cache_pct').value) / 100;
+
+  const totalIn    = sysTok + userTok;
+  const perQNoCache = (totalIn * inCost + outTok * outCostVal) / 1e6;
+  const cachedSysTok = sysTok * (1 - cachePct);
+  const perQCached   = ((cachedSysTok + userTok) * inCost + outTok * outCostVal) / 1e6;
+
+  const dailyNoCache = perQNoCache * queries;
+  const dailyCached  = perQCached  * queries;
+  const annualSavings = (dailyNoCache - dailyCached) * 365;
+
+  document.getElementById('r-daily').textContent  = '$' + dailyNoCache.toFixed(2);
+  document.getElementById('r-cached').textContent = '$' + dailyCached.toFixed(2);
+  document.getElementById('r-annual').textContent = '$' + annualSavings.toLocaleString('en-US', {maximumFractionDigits: 0});
+}
+
+// Run once on load
+calcCost();
+
+// ── Roadmap highlight on scroll ───────────────────────────────
+const sections = ['part1','part2','part3','part4','part5','part6','part7','part8'];
+const roadmapItems = document.querySelectorAll('.roadmap-item');
+window.addEventListener('scroll', () => {
+  let current = 0;
+  sections.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el && el.getBoundingClientRect().top < window.innerHeight * 0.5) current = i;
+  });
+  roadmapItems.forEach((item, i) => item.classList.toggle('active', i === current));
+});
+</script>
+</body>
+</html>
