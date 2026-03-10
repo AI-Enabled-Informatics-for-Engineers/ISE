@@ -15,8 +15,7 @@
 - See lecture and course repo resources for this week.
 
 ## Coding lab (Colab)
-- Notebook stub
-  - Notebook: `notebooks/week07/00_stub.ipynb`
+  - labs embedded in lecture at https://ai-enabled-informatics-for-engineers.github.io/ISE/notebooks/week07/lecture07
   - Open in Colab: https://colab.research.google.com/github/AI-Enabled-Informatics-for-Engineers/ISE/blob/main/notebooks/week07/00_stub.ipynb
 
 ## Canvas discussion prompt
