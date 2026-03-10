@@ -2,6 +2,7 @@
 
 **Dates:** Mar 3–9
 **Primary text:** Chip Huyen, *AI Engineering* — Chapter 10
+**Lecture Visualizations & Labs at:  https://ai-enabled-informatics-for-engineers.github.io/ISE/notebooks/week07/lecture07
 
 ## Checklist (do these in order)
 1. Read the required materials
