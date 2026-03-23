@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 8 · AI Engineering Midterm</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--s2:#22263a;--border:#2e3352;--accent:#6366f1;--cyan:#22d3ee;--amber:#f59e0b;--green:#10b981;--red:#ef4444;--text:#e2e8f0;--muted:#94a3b8;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+nav{display:flex;align-items:center;gap:8px;padding:12px 28px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.nav-logo{font-weight:800;font-size:1.05rem;color:var(--accent)}
+.nav-tabs{display:flex;gap:4px;margin-left:12px}
+.tb{padding:5px 14px;border-radius:8px;border:none;cursor:pointer;font-size:.82rem;font-weight:600;transition:all .2s;background:transparent;color:var(--muted)}
+.tb.active{background:var(--accent);color:#fff}
+.tb:hover:not(.active){background:var(--s2);color:var(--text)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+#timer{font-family:'Courier New',monospace;font-size:1.05rem;font-weight:700;padding:5px 12px;border-radius:8px;background:var(--s2);border:1px solid var(--border);color:var(--cyan);display:none}
+#timer.warn{color:var(--amber)}
+#timer.danger{color:var(--red);animation:pulse 1s infinite}
+#student-pill{padding:5px 12px;border-radius:20px;background:var(--s2);border:1px solid var(--border);font-size:.8rem;color:var(--muted);display:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.page{display:none;padding:28px;max-width:960px;margin:0 auto}
+.page.active{display:block}
+.hero{background:linear-gradient(135deg,#1a1d27,#1e1b4b 50%,#0c1a2e);border:1px solid var(--border);border-radius:var(--r);padding:40px 36px;text-align:center;margin-bottom:28px}
+.badge{display:inline-flex;align-items:center;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:var(--accent);padding:3px 12px;border-radius:20px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px}
+.hero h1{font-size:2rem;font-weight:800;margin-bottom:8px}
+.hero h1 span{color:var(--accent)}
+.hero p{color:var(--muted);font-size:.92rem;max-width:560px;margin:0 auto 22px;line-height:1.6}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:22px}
+.chip{display:flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border);padding:5px 12px;border-radius:20px;font-size:.78rem;color:var(--muted)}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{padding:10px 22px;border-radius:9px;border:none;cursor:pointer;font-weight:700;font-size:.88rem;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+.btn-p{background:var(--accent);color:#fff}
+.btn-p:hover{background:#4f46e5;transform:translateY(-1px)}
+.btn-s{background:var(--s2);color:var(--text);border:1px solid var(--border)}
+.btn-s:hover{border-color:var(--accent);color:var(--accent)}
+.btn-g{background:var(--green);color:#fff}
+.btn-g:hover{background:#059669}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:18px}
+.card-h{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.ci{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;background:rgba(99,102,241,.15)}
+.card-title{font-size:1rem;font-weight:700}
+.gb{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:16px 0}
+.gb-item{background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border);text-align:center}
+.gb-item.hl{border-color:var(--accent);background:rgba(99,102,241,.1)}
+.gb-pct{font-size:1.6rem;font-weight:800;display:block}
+.gb-item.hl .gb-pct{color:var(--accent)}
+.gb-lbl{font-size:.75rem;color:var(--muted);margin-top:4px}
+.gb-pts{font-size:.78rem;color:var(--muted);margin-top:2px}
+.nbox{background:var(--s2);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:14px 18px;font-size:.87rem;color:var(--muted);line-height:1.6;margin:14px 0}
+.nbox strong{color:var(--amber);display:block;margin-bottom:4px;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em}
+.nbox-c{border-color:var(--cyan)}
+.nbox-c strong{color:var(--cyan)}
+#identity-gate{background:var(--surface);border:2px solid var(--accent);border-radius:var(--r);padding:36px;max-width:500px;margin:0 auto}
+#identity-gate h3{font-size:1.2rem;font-weight:800;margin-bottom:8px;text-align:center}
+#identity-gate p{color:var(--muted);font-size:.87rem;text-align:center;margin-bottom:24px;line-height:1.6}
+.idf{margin-bottom:16px}
+.idf label{display:block;font-size:.78rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.idinp{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-size:.92rem;font-family:inherit;transition:border-color .2s}
+.idinp:focus{outline:none;border-color:var(--accent)}
+.honor{display:flex;align-items:flex-start;gap:10px;font-size:.82rem;color:var(--muted);line-height:1.5;margin:16px 0 22px}
+.honor input{margin-top:3px;flex-shrink:0;accent-color:var(--accent)}
+.ls{margin-bottom:26px}
+.ls h2{font-size:1.2rem;font-weight:700;color:var(--cyan);border-bottom:1px solid var(--border);padding-bottom:9px;margin-bottom:16px}
+.ls h3{font-size:.95rem;font-weight:700;color:var(--amber);margin:14px 0 7px}
+.ls p{color:var(--muted);line-height:1.7;margin-bottom:10px;font-size:.9rem}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:14px 0}
+.cc{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px}
+.cc:hover{border-color:var(--accent)}
+.cc-lbl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:5px}
+.cc-t{font-weight:700;font-size:.88rem;margin-bottom:5px}
+.cc-d{font-size:.79rem;color:var(--muted);line-height:1.5}
+.hl-box{border-left:3px solid var(--accent);background:rgba(99,102,241,.08);border-radius:0 8px 8px 0;padding:13px 16px;margin:11px 0;font-size:.87rem;color:var(--muted);line-height:1.6}
+.hl-box strong{color:var(--text)}
+.flow{display:flex;flex-direction:column;gap:9px;margin:13px 0}
+.fs{display:flex;align-items:flex-start;gap:12px;background:var(--s2);border-radius:10px;padding:13px}
+.fn{background:var(--accent);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:.77rem;font-weight:800;flex-shrink:0}
+.fb2 strong{font-size:.88rem;display:block;margin-bottom:3px}
+.fb2 p{font-size:.8rem;color:var(--muted);margin:0;line-height:1.5}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:13px 0}
+.cmp-col{background:var(--s2);border-radius:10px;padding:14px}
+.cmp-col h4{font-size:.85rem;font-weight:700;margin-bottom:9px}
+.cmp-col.open h4{color:var(--green)}
+.cmp-col.api h4{color:var(--cyan)}
+.cmp-col ul{list-style:none}
+.cmp-col li{font-size:.79rem;color:var(--muted);padding:3px 0;display:flex;gap:7px}
+.pro::before{content:"✓";color:var(--green)}
+.con::before{content:"✗";color:var(--red)}
+.ct{width:100%;border-collapse:collapse;font-size:.85rem}
+.ct th{background:var(--s2);color:var(--accent);font-weight:700;padding:9px 13px;text-align:left;border-bottom:1px solid var(--border)}
+.ct td{padding:8px 13px;border-bottom:1px solid var(--border);color:var(--muted)}
+.ct tr:last-child td{border-bottom:none}
+code{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:'Courier New',monospace;font-size:.82em;color:var(--cyan)}
+.eh{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 22px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.eh-l h3{font-size:1rem;font-weight:800;margin-bottom:4px}
+.eh-l p{font-size:.82rem;color:var(--muted)}
+.sbw{flex:1;max-width:320px}
+.sb{height:6px;background:var(--s2);border-radius:3px;overflow:hidden}
+.sf{height:100%;background:linear-gradient(90deg,var(--accent),var(--cyan));border-radius:3px;transition:width .4s}
+.sbt{display:flex;justify-content:space-between;font-size:.76rem;color:var(--muted);margin-bottom:5px}
+.qdots{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+.qdot{width:9px;height:9px;border-radius:50%;background:var(--s2);border:1px solid var(--border);cursor:pointer;transition:background .2s}
+.qdot.answered{background:var(--green);border-color:var(--green)}
+.qdot.current{background:var(--accent);border-color:var(--accent)}
+.qdot.skipped{background:var(--amber);border-color:var(--amber)}
+.qblock{display:none}
+.qblock.active{display:block}
+.sbadge{display:inline-flex;align-items:center;padding:3px 11px;border-radius:20px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px}
+.qcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-bottom:16px}
+.qnum{font-size:.7rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.qtext{font-size:.98rem;font-weight:600;line-height:1.55;margin-bottom:5px}
+.qsub{font-size:.82rem;color:var(--muted);margin-bottom:17px;line-height:1.5}
+.scen{background:var(--s2);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:16px;font-size:.85rem;color:var(--muted);line-height:1.6}
+.scen strong{color:var(--amber);display:block;margin-bottom:3px;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+.mco{display:flex;flex-direction:column;gap:9px}
+.mo{display:flex;align-items:flex-start;gap:11px;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;cursor:pointer;transition:all .2s;font-size:.87rem;line-height:1.5}
+.mo:hover{border-color:var(--accent);background:rgba(99,102,241,.08)}
+.mo.sel{border-color:var(--accent);background:rgba(99,102,241,.15)}
+.mo.ok{border-color:var(--green)!important;background:rgba(16,185,129,.12)!important;pointer-events:none}
+.mo.bad{border-color:var(--red)!important;background:rgba(239,68,68,.1)!important;pointer-events:none}
+.mo.dis{pointer-events:none}
+.mlbl{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;color:var(--muted);transition:all .2s}
+.mo.sel .mlbl{background:var(--accent);border-color:var(--accent);color:#fff}
+.mo.ok .mlbl{background:var(--green);border-color:var(--green);color:#fff}
+.mo.bad .mlbl{background:var(--red);border-color:var(--red);color:#fff}
+.sa{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:13px 16px;color:var(--text);font-size:.88rem;font-family:inherit;line-height:1.6;resize:vertical;min-height:110px;transition:border-color .2s}
+.sa:focus{outline:none;border-color:var(--accent)}
+.wc{font-size:.73rem;color:var(--muted);text-align:right;margin-top:5px}
+.ptb{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;background:rgba(99,102,241,.15);color:var(--accent);margin-left:8px}
+.fb{margin-top:14px;padding:13px 16px;border-radius:10px;font-size:.85rem;line-height:1.6;display:none}
+.fb.show{display:block}
+.fb.cor{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:#6ee7b7}
+.fb.wro{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#fca5a5}
+.fb.inf{background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:#67e8f9}
+.fb strong{display:block;margin-bottom:5px;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em}
+.qnav{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:10px}
+.res{display:none;text-align:center;padding:36px 0}
+.res.show{display:block}
+.sring{position:relative;display:inline-block;margin:16px 0}
+.sring svg{width:150px;height:150px;transform:rotate(-90deg)}
+.sring circle{fill:none;stroke:var(--s2);stroke-width:11}
+.ring-fill{stroke:var(--green);stroke-linecap:round;transition:stroke-dashoffset 1.4s ease}
+.ring-ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-n{font-size:2rem;font-weight:800}
+.ring-l{font-size:.72rem;color:var(--muted);font-weight:600}
+.gbadge{font-size:1.3rem;font-weight:800;margin:8px 0}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:11px;margin:22px 0;text-align:left}
+.ri{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px}
+.ri-l{font-size:.73rem;color:var(--muted);margin-bottom:5px}
+.ri-v{font-size:1.25rem;font-weight:800}
+.ri-s{font-size:.76rem;color:var(--muted)}
+.cbox{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:10px;padding:20px;margin:20px 0;text-align:left}
+.cbox h4{font-size:.88rem;font-weight:700;color:var(--green);margin-bottom:12px}
+.cbox p{font-size:.83rem;color:var(--muted);line-height:1.6;margin-bottom:8px}
+.cbox code{background:rgba(16,185,129,.1);color:var(--green);border-color:rgba(16,185,129,.3)}
+.exprev{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:'Courier New',monospace;font-size:.78rem;color:var(--muted);white-space:pre-wrap;text-align:left;margin-top:12px;max-height:180px;overflow-y:auto;display:none}
+.m4s{margin-bottom:28px}
+.m4s h2{font-size:1.15rem;font-weight:700;color:var(--cyan);margin-bottom:14px;display:flex;align-items:center;gap:9px}
+.m4s p{color:var(--muted);font-size:.88rem;line-height:1.7;margin-bottom:10px}
+.adrop{background:var(--s2);border:2px dashed var(--border);border-radius:var(--r);padding:22px;min-height:220px;cursor:pointer;transition:border-color .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-size:.88rem;color:var(--muted)}
+.adrop:hover{border-color:var(--accent)}
+.adrop.hi{min-height:auto;align-items:flex-start;justify-content:flex-start;padding:12px}
+.adrop img{max-width:100%;border-radius:8px;max-height:360px;object-fit:contain}
+.rhdr{display:grid;grid-template-columns:1fr 1fr 90px 44px;gap:9px;margin-bottom:7px}
+.rhdr span{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent)}
+.rrow{display:grid;grid-template-columns:1fr 1fr 90px 44px;gap:9px;margin-bottom:9px;align-items:start}
+.rin,.min{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-size:.85rem;font-family:inherit;width:100%;resize:none;min-height:56px;line-height:1.5}
+.rin:focus,.min:focus{outline:none;border-color:var(--accent)}
+.sev{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:.8rem;width:100%;cursor:pointer}
+.sev.shi{border-color:var(--red)!important}
+.sev.smd{border-color:var(--amber)!important}
+.sev.slo{border-color:var(--green)!important}
+.del{background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;padding:8px;border-radius:6px;transition:background .2s}
+.del:hover{background:rgba(239,68,68,.12)}
+.rtbl{width:100%;border-collapse:collapse;font-size:.85rem}
+.rtbl th{background:var(--s2);color:var(--amber);font-weight:700;padding:9px 13px;text-align:left;border-bottom:1px solid var(--border)}
+.rtbl td{padding:9px 13px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top}
+.rtbl tr:last-child td{border-bottom:none}
+.rtbl .pt{font-weight:800;color:var(--text);white-space:nowrap}
+.rtbl .ct2{font-weight:700;color:var(--cyan)}
+.chklist{list-style:none}
+.chklist li{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);font-size:.88rem}
+.chklist li:last-child{border-bottom:none}
+.chk{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;transition:all .2s}
+.chk.on{background:var(--green);border-color:var(--green);color:#fff}
+#toast{position:fixed;bottom:22px;right:22px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:.87rem;display:none;z-index:999;box-shadow:0 8px 28px rgba(0,0,0,.45);max-width:300px}
+#toast.on{display:block;animation:su .3s ease}
+@keyframes su{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.divider{border:none;border-top:1px solid var(--border);margin:22px 0}
+.text-muted{color:var(--muted)}.text-sm{font-size:.85rem}.mt3{margin-top:12px}.mt4{margin-top:18px}.mb4{margin-bottom:18px}
+@media(max-width:600px){.page{padding:14px}.hero{padding:24px 16px}.cmp{grid-template-columns:1fr}.rrow,.rhdr{grid-template-columns:1fr 1fr}}
+
+.code-block{background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:16px 18px;font-family:'Courier New',monospace;font-size:.79rem;color:#e6edf3;white-space:pre;overflow-x:auto;margin:14px 0;line-height:1.65;counter-reset:line}
+.cln{color:#484f58;user-select:none;display:inline-block;width:26px;margin-right:8px;text-align:right}
+.code-ta{width:100%;background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:13px 16px;color:#e6edf3;font-family:'Courier New',monospace;font-size:.82rem;line-height:1.65;resize:vertical;min-height:120px;transition:border-color .2s}
+.code-ta:focus{outline:none;border-color:#6366f1}
+.code-ta::placeholder{color:#484f58}
+</style>
+</head>
+<body>
+<nav>
+  <span class="nav-logo">AI Engineering</span>
+  <div class="nav-tabs">
+    <button class="tb active" onclick="showPage('home')">Home</button>
+    <button class="tb" onclick="showPage('lecture')">Lecture</button>
+    <button class="tb" onclick="gotoExam()">Exam (15pts)</button>
+    <button class="tb" onclick="showPage('m4')">M4 (4pts)</button>
+  </div>
+  <div class="nav-right">
+    <div id="student-pill"></div>
+    <div id="timer">60:00</div>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="badge">Week 8 · Mar 24-30 · Midterm</div>
+    <h1>Exam + <span>Architecture Checkpoint</span></h1>
+    <p>Halfway there. Timed exam covers Weeks 1-7. M4 is your architecture design milestone. Points count toward separate grade buckets.</p>
+    <div class="chips">
+      <div class="chip">Chip Huyen Ch.4</div>
+      <div class="chip">60-min timed exam</div>
+      <div class="chip">Exam = 15 pts (Midterm 15%)</div>
+      <div class="chip">M4 = 4 pts (Project 30%)</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-p" onclick="showPage('lecture')">Read Lecture</button>
+      <button class="btn btn-s" onclick="gotoExam()">Start Exam</button>
+      <button class="btn btn-s" onclick="showPage('m4')">M4 Packet</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="ci">&#127891;</div><div class="card-title">Course Grading — Where Week 8 Fits</div></div>
+    <div class="gb">
+      <div class="gb-item"><span class="gb-pct">10%</span><div class="gb-lbl">Discussions</div><div class="gb-pts">10 x 1pt = 10pts</div></div>
+      <div class="gb-item"><span class="gb-pct">30%</span><div class="gb-lbl">Labs/Assignments</div><div class="gb-pts">5 x 6pts = 30pts</div></div>
+      <div class="gb-item hl"><span class="gb-pct">15%</span><div class="gb-lbl">Midterm Exam</div><div class="gb-pts">This exam = 15pts</div></div>
+      <div class="gb-item"><span class="gb-pct">30%</span><div class="gb-lbl">Project Milestones</div><div class="gb-pts">M1-M6(4pt) + M7(6pt)</div></div>
+      <div class="gb-item hl"><span class="gb-pct">+4</span><div class="gb-lbl">M4 (Project)</div><div class="gb-pts">Also due this week</div></div>
+      <div class="gb-item"><span class="gb-pct">15%</span><div class="gb-lbl">Final Exam Wk14</div><div class="gb-pts">= 15pts</div></div>
+    </div>
+    <div class="nbox"><strong>Point Clarification</strong>
+      Exam (Part A) = <strong>15 pts</strong>, counts toward Midterm 15% bucket. M4 = <strong>4 pts</strong>, counts toward Project 30% bucket. Submit each separately in Canvas. Week 8 total possible: <strong>19 pts</strong>.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="ci">&#128274;</div><div class="card-title">Identity and Privacy — How It Works</div></div>
+    <div class="nbox nbox-c"><strong>What this app does vs. what Canvas does</strong>
+      This app captures your name and RUID before the exam, embeds them in every export, and timestamps your session. Canvas independently records your NetID login, IP address, and submission timestamp. Neither alone is sufficient — both together form the audit record.
+    </div>
+    <p class="text-muted text-sm" style="line-height:1.7;margin-top:10px">
+      <strong style="color:var(--text)">Three-layer identity system:</strong><br><br>
+      <strong style="color:var(--accent)">1. Canvas login (primary auth)</strong> — You must be logged into your Rutgers Canvas account to access and submit this assignment. Canvas logs your NetID, timestamp, IP, and browser fingerprint automatically. The instructor sees this in the submission record regardless of what the HTML file contains.<br><br>
+      <strong style="color:var(--accent)">2. In-app RUID capture</strong> — Name, RUID, and NetID entered at exam start are embedded in your answer export. This cross-references your Canvas identity with a second identifier and includes a session timestamp.<br><br>
+      <strong style="color:var(--accent)">3. Timestamped answer file (submission artifact)</strong> — After completing the exam you download a <code>.txt</code> file containing your identity, all answers, and a timestamp. Upload this file to Canvas. The Canvas submission log + answer file together form the complete grading record. Short answers are instructor-graded; MC is auto-scored in the app for immediate feedback.
+    </p>
+    <p class="text-muted text-sm mt3" style="line-height:1.6">
+      <strong style="color:var(--amber)">Academic integrity:</strong> Submitting another student's file, or having another person complete the exam, violates Rutgers Academic Integrity Policy and is detectable through Canvas login records, writing-style analysis of short answers, and IP geolocation.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="ci">&#9989;</div><div class="card-title">Week 8 Checklist</div></div>
+    <ul class="chklist">
+      <li><div class="chk" onclick="ck(this)"></div>Read Chapter 4 (Chip Huyen — Evaluate AI Systems)</li>
+      <li><div class="chk" onclick="ck(this)"></div>Watch recorded Zoom lecture (Canvas link)</li>
+      <li><div class="chk" onclick="ck(this)"></div>Run <code>notebooks/week08/00_stub.ipynb</code> in Google Colab</li>
+      <li><div class="chk" onclick="ck(this)"></div>Read Week 8 Lecture tab on this page</li>
+      <li><div class="chk" onclick="ck(this)"></div>Complete identity gate then take 60-min timed exam</li>
+      <li><div class="chk" onclick="ck(this)"></div>Download answer file and upload to Canvas (Midterm assignment)</li>
+      <li><div class="chk" onclick="ck(this)"></div>Complete M4 architecture packet and submit separately to Canvas (M4 milestone)</li>
+      <li><div class="chk" onclick="ck(this)"></div>Post Canvas discussion: Midterm Q&amp;A and reflections</li>
+    </ul>
+  </div>
+</div>
+
+<!-- LECTURE -->
+<div class="page" id="page-lecture">
+  <div class="hero">
+    <div class="badge">Week 8 Lecture</div>
+    <h1>Chapter 4: <span>Evaluate AI Systems</span></h1>
+    <p>A model is only useful if it works for its intended purpose. Build the evaluation toolkit — from criteria definition through model selection to production monitoring.</p>
+  </div>
+  <div class="ls">
+    <h2>Why Evaluation Comes First</h2>
+    <p>Huyen opens with: which is worse — an app never deployed, or one deployed that nobody can measure? Answer: the deployed-but-unevaluable one. It costs to maintain, might be harmful, and is hard to take down.</p>
+    <div class="hl-box"><strong>Evaluation-Driven Development (EDD)</strong> — Define evaluation criteria before you build. Mirrors test-driven development in software. If you cannot measure success, you cannot claim it. Huyen argues evaluation is the single biggest bottleneck to AI adoption.</div>
+    <p>Why do measurable use cases dominate enterprise AI? Recommender systems: click-through rates. Fraud detection: dollars saved. Code generation: functional correctness. Un-measurable use cases stay un-deployed — not because they are less valuable, but because orgs cannot justify them.</p>
+  </div>
+  <div class="ls">
+    <h2>The Four Evaluation Criteria Buckets</h2>
+    <div class="cgrid">
+      <div class="cc"><div class="cc-lbl">Bucket 1</div><div class="cc-t">Domain Capability</div><div class="cc-d">Can the model code, do math, parse legal text? Benchmarks: MMLU, HumanEval, BIRD-SQL. 75% of public benchmarks use MCQ format.</div></div>
+      <div class="cc"><div class="cc-lbl">Bucket 2</div><div class="cc-t">Generation Capability</div><div class="cc-d">Factual consistency (local vs global), safety/toxicity, fluency, coherence. Key benchmarks: TruthfulQA, RealToxicityPrompts, BOLD.</div></div>
+      <div class="cc"><div class="cc-lbl">Bucket 3</div><div class="cc-t">Instruction-Following</div><div class="cc-d">Does the model do what you asked? IFEval (25 auto-verifiable instruction types), INFOBench (content, style, linguistic constraints).</div></div>
+      <div class="cc"><div class="cc-lbl">Bucket 4</div><div class="cc-t">Cost &amp; Latency</div><div class="cc-d">Time to first token, time per token, total query time, cost per output token. Pareto optimization across quality-speed-cost.</div></div>
+    </div>
+  </div>
+  <div class="ls">
+    <h2>Factual Consistency — Three Detection Approaches</h2>
+    <p><strong>Local:</strong> output vs. provided context (RAG, summarization). <strong>Global:</strong> output vs. open-world knowledge (general chatbots).</p>
+    <div class="flow">
+      <div class="fs"><div class="fn">1</div><div class="fb2"><strong>AI-as-Judge</strong><p>Prompt an LLM to evaluate consistency. GPT-4 achieves 90-96% accuracy on TruthfulQA. Fast and flexible but subject to judge-model bias.</p></div></div>
+      <div class="fs"><div class="fn">2</div><div class="fb2"><strong>SelfCheckGPT</strong><p>Generate N additional responses. If they disagree with R, R is likely hallucinated. Effective but expensive — N x cost per evaluation.</p></div></div>
+      <div class="fs"><div class="fn">3</div><div class="fb2"><strong>SAFE (Google DeepMind)</strong><p>Decompose output into statements, make self-contained, query Google Search, verify each statement via AI. Scalable for global factual consistency.</p></div></div>
+    </div>
+    <div class="hl-box"><strong>Textual Entailment:</strong> formal framing of consistency as classification — Entailment / Contradiction / Neutral. Specialized models like DeBERTa-v3-mnli (184M params, 764K annotated pairs) beat general LLMs on speed and cost for this task.</div>
+  </div>
+  <div class="ls">
+    <h2>4-Step Model Selection Workflow</h2>
+    <div class="flow">
+      <div class="fs"><div class="fn">1</div><div class="fb2"><strong>Filter by Hard Attributes</strong><p>License, data privacy policies, min throughput, on-device requirements. These cut the candidate pool before any testing — non-negotiable.</p></div></div>
+      <div class="fs"><div class="fn">2</div><div class="fb2"><strong>Shortlist via Public Benchmarks</strong><p>MMLU, Chatbot Arena Elo, HumanEval, IFEval. Useful for relative ranking but treat with skepticism — leaderboard gaming is real.</p></div></div>
+      <div class="fs"><div class="fn">3</div><div class="fb2"><strong>Private Evaluation Pipeline</strong><p>Your own prompt dataset, your own metrics. Ground truth for your application. Soft attributes (accuracy, toxicity) can be improved via prompting and finetuning.</p></div></div>
+      <div class="fs"><div class="fn">4</div><div class="fb2"><strong>Monitor in Production</strong><p>Collect user feedback, detect distribution shift, watch for model update regressions. Re-evaluate model selection as scale and requirements change.</p></div></div>
+    </div>
+  </div>
+  <div class="ls">
+    <h2>Open Source vs. Model API — 7 Axes</h2>
+    <div class="cmp">
+      <div class="cmp-col open"><h4>Self-Hosted / Open Source</h4>
+        <ul>
+          <li class="pro">Data never leaves your network</li>
+          <li class="pro">Full control — finetune, quantize, modify</li>
+          <li class="pro">Access to logprobs (eval + classification)</li>
+          <li class="pro">Predictable cost at scale; version freezing</li>
+          <li class="con">Engineering burden: hosting, scaling, guardrails</li>
+          <li class="con">Best open models trail best proprietary ones</li>
+          <li class="con">License complexity (Llama 3, RAIL-M, Apache 2.0)</li>
+        </ul>
+      </div>
+      <div class="cmp-col api"><h4>Commercial Model APIs</h4>
+        <ul>
+          <li class="pro">Best-performing models (GPT-4o, Claude 3.5, Gemini)</li>
+          <li class="pro">Scalability, function calling, structured outputs built-in</li>
+          <li class="pro">Fast to start, low upfront engineering cost</li>
+          <li class="pro">Vendor contracts can provide data lineage protection</li>
+          <li class="con">Data leaves your org — privacy risk (Samsung/ChatGPT leak)</li>
+          <li class="con">No logprob access; censorship guardrails limit some use cases</li>
+          <li class="con">Cost scales linearly; model can change without notice</li>
+        </ul>
+      </div>
+    </div>
+    <div class="hl-box"><strong>Rule of thumb:</strong> Start with APIs (low barrier, best models). Migrate to self-hosting when token costs exceed hosting cost + engineering burden. Re-evaluate quarterly as token volume changes.</div>
+  </div>
+  <div class="ls">
+    <h2>Key Takeaways — Chapter 4</h2>
+    <table class="ct">
+      <tr><th>Concept</th><th>Why It Matters</th><th>How to Apply</th></tr>
+      <tr><td>Evaluation-Driven Development</td><td>Prevents deploying un-measurable systems</td><td>Define metrics before writing any prompt</td></tr>
+      <tr><td>Local vs. Global Factual Consistency</td><td>RAG needs local; general chatbots need global</td><td>Match verification to context availability</td></tr>
+      <tr><td>Hard vs. Soft Attributes</td><td>Hard cuts filter before any experimentation</td><td>List non-negotiables first in model selection</td></tr>
+      <tr><td>Private Evaluation Pipeline</td><td>Public benchmarks get gamed and miss your domain</td><td>Build your own prompt dataset from day 1</td></tr>
+      <tr><td>Pareto Optimization</td><td>Quality, cost, latency trade off — no free lunch</td><td>Fix hard floors first, optimize within constraints</td></tr>
+    </table>
+  </div>
+  <div class="btn-row mt4">
+    <button class="btn btn-p" onclick="gotoExam()">Take Exam (15 pts)</button>
+    <button class="btn btn-s" onclick="showPage('m4')">Go to M4</button>
+  </div>
+</div>
+
+<!-- EXAM -->
+<div class="page" id="page-exam">
+  <div id="identity-gate">
+    <h3>Identity Verification</h3>
+    <p>Enter your information before starting. This is embedded in your answer export and tied to your Canvas submission.</p>
+    <div class="idf"><label>Full Name</label><input class="idinp" id="id-name" placeholder="e.g., Jordan Lee"></div>
+    <div class="idf"><label>Rutgers RUID (9 digits)</label><input class="idinp" id="id-ruid" placeholder="123456789" maxlength="9"></div>
+    <div class="idf"><label>NetID</label><input class="idinp" id="id-netid" placeholder="e.g., jl1234"></div>
+    <div class="honor">
+      <input type="checkbox" id="honor-box">
+      <label for="honor-box">I pledge to uphold Rutgers Academic Integrity. This work is entirely my own, completed without unauthorized AI assistance or collaboration. I understand this exam is timed (60 minutes) and my Canvas submission will be tied to my login.</label>
+    </div>
+    <button class="btn btn-p" style="width:100%" onclick="beginExam()">Begin Exam — Start 60-Minute Timer</button>
+    <p style="font-size:.76rem;color:var(--muted);text-align:center;margin-top:12px">Canvas independently records your login timestamp, IP address, and browser fingerprint.</p>
+  </div>
+
+  <div id="exam-active" style="display:none">
+    <div class="eh">
+      <div class="eh-l"><h3>Midterm Exam — Weeks 1-7</h3><p id="exam-lbl">10 questions · 15 points · 60 minutes</p></div>
+      <div class="sbw">
+        <div class="sbt"><span id="prog-l">Q1 of 15</span><span id="prog-p" style="color:var(--accent)">0 answered</span></div>
+        <div class="sb"><div class="sf" id="prog-f" style="width:0%"></div></div>
+        <div class="qdots" id="qdots"></div>
+      </div>
+    </div>
+    <div id="qwrap"></div>
+  </div>
+
+  <div class="res" id="results">
+    <div class="badge">Exam Complete</div>
+    <h2 style="font-size:1.7rem;font-weight:800;margin:10px 0">Your Results</h2>
+    <div class="sring">
+      <svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="60"/><circle class="ring-fill" id="ring-fill" cx="75" cy="75" r="60" stroke-dasharray="377" stroke-dashoffset="377"/></svg>
+      <div class="ring-ctr"><div class="ring-n" id="ring-n">-</div><div class="ring-l">out of 15</div></div>
+    </div>
+    <div class="gbadge" id="gbadge"></div>
+    <p class="text-muted text-sm" style="margin-bottom:16px">MC auto-scored. Short answers are instructor-graded (5 x 1pt).</p>
+    <div class="rgrid" id="rgrid"></div>
+    <div style="background:rgba(16,185,129,.07);border:2px solid rgba(16,185,129,.4);border-radius:var(--r);padding:20px;margin:18px 0">
+      <h4 style="font-size:.95rem;font-weight:800;color:var(--green);margin-bottom:14px">&#128228; Canvas Submission &#8212; Upload ALL THREE Files Manually</h4>
+      <p style="font-size:.82rem;color:var(--amber);font-weight:600;margin-bottom:14px">&#9888;&#65039; Nothing is submitted automatically from this page. You must manually upload each file to Canvas.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:11px;margin-bottom:16px">
+        <div style="background:var(--s2);border-radius:10px;padding:13px;border:1px solid var(--border)">
+          <div style="font-size:.68rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">File 1 of 3</div>
+          <div style="font-weight:700;font-size:.88rem;margin-bottom:5px">&#128196; Part A Answer File</div>
+          <div style="font-size:.78rem;color:var(--muted);line-height:1.5">Download below. Filename: <code>midterm_RUID_Name.txt</code><br>Canvas: <strong>Assignments &gt; Mid-term &gt; Part A Upload</strong></div>
+        </div>
+        <div style="background:var(--s2);border-radius:10px;padding:13px;border:1px solid var(--border)">
+          <div style="font-size:.68rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">File 2 of 3</div>
+          <div style="font-weight:700;font-size:.88rem;margin-bottom:5px">&#128208; Architecture Diagram</div>
+          <div style="font-size:.78rem;color:var(--muted);line-height:1.5">Your diagram image or PDF from the M4 tab.<br>Canvas: <strong>Assignments &gt; Mid-term &gt; M4 Diagram Upload</strong></div>
+        </div>
+        <div style="background:var(--s2);border-radius:10px;padding:13px;border:1px solid var(--border)">
+          <div style="font-size:.68rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">File 3 of 3</div>
+          <div style="font-weight:700;font-size:.88rem;margin-bottom:5px">&#9888;&#65039; Risk Register</div>
+          <div style="font-size:.78rem;color:var(--muted);line-height:1.5">Export from M4 tab. Filename: <code>M4_RUID.txt</code><br>Canvas: <strong>Assignments &gt; Mid-term &gt; M4 Risk Register Upload</strong></div>
+        </div>
+      </div>
+      <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:11px 15px;font-size:.8rem;color:#fca5a5;line-height:1.6">
+        &#128274; Canvas independently records your NetID login, submission timestamp, and IP address. Your RUID is embedded in each downloaded file. Submitting another student's work is an Academic Integrity violation detectable through Canvas audit logs and writing-style analysis of short-answer responses.
+      </div>
+    </div>div>
+    <div id="exprev" class="exprev"></div>
+    <div class="btn-row" style="justify-content:center;margin-top:20px">
+      <button class="btn btn-g" onclick="downloadAnswers()">Download Answer File</button>
+      <button class="btn btn-s" onclick="reviewMode()">Review Answers</button>
+      <button class="btn btn-s" onclick="showPage('m4')">Continue to M4</button>
+    </div>
+  </div>
+</div>
+
+<!-- M4 -->
+<div class="page" id="page-m4">
+  <div class="hero">
+    <div class="badge">Project Milestone M4 · 4 pts</div>
+    <h1>Architecture <span>Packet</span></h1>
+    <p>Document your AI system design and operational risks. Submit separately to Canvas as M4 milestone — counts toward Project 30%, not Midterm 15%.</p>
+    <div class="chips"><div class="chip">4 pts (Project milestone)</div><div class="chip">Architecture diagram required</div><div class="chip">5-10 risks + mitigations</div></div>
+  </div>
+
+  <div style="background:rgba(245,158,11,.09);border:1px solid rgba(245,158,11,.35);border-radius:var(--r);padding:15px 18px;margin-bottom:20px;display:flex;align-items:flex-start;gap:12px">
+    <span style="font-size:1.3rem;flex-shrink:0">&#9888;&#65039;</span>
+    <div style="font-size:.85rem">
+      <div style="font-weight:700;color:var(--amber);margin-bottom:5px">Canvas Submission &#8212; Manual Upload Required for All 3 Files</div>
+      <div style="color:var(--muted);line-height:1.6">When complete, upload all three items to <strong style="color:var(--text)">Canvas &gt; Assignments &gt; Mid-term tab</strong>:
+        <span style="color:var(--text)"> (1) Part A answer file &nbsp;&middot;&nbsp; (2) Architecture diagram &nbsp;&middot;&nbsp; (3) Risk register export</span>.
+        Nothing is submitted automatically from this page.
+      </div>
+    </div>
+  </div>
+
+  <div class="m4s">
+    <h2>Architecture Diagram</h2>
+    <p>Upload your system architecture showing all major components: data ingestion, model inference, retrieval/RAG, guardrails, output delivery, monitoring, storage.</p>
+    <p><strong>Meets:</strong> Major parts shown. <strong>Exceeds:</strong> Real service names, explicit data flows, failure paths, monitoring endpoint.</p>
+    <div class="adrop" id="adrop" onclick="document.getElementById('fin').click()">
+      <span style="font-size:2.2rem">&#128208;</span>
+      <strong>Click to upload or drag and drop</strong>
+      <span class="text-muted text-sm">PNG, JPG, SVG or PDF</span>
+    </div>
+    <input type="file" id="fin" accept="image/*,.pdf,.svg" onchange="handleUpload(this)" style="display:none">
+    <div class="cgrid mt3">
+      <div class="cc"><div class="cc-lbl">Tip</div><div class="cc-t">Real service names</div><div class="cc-d">e.g., gpt-4o, Pinecone, FastAPI, pgvector, Llama Guard — not just "LLM" or "database"</div></div>
+      <div class="cc"><div class="cc-lbl">Tip</div><div class="cc-t">Label data flows</div><div class="cc-d">Show what payload moves between components: raw text, embeddings, JSON, tokens, decisions</div></div>
+      <div class="cc"><div class="cc-lbl">Tip</div><div class="cc-t">Show failure paths</div><div class="cc-d">What happens when the model API is down? Do you have a fallback or graceful degradation?</div></div>
+      <div class="cc"><div class="cc-lbl">Tip</div><div class="cc-t">Include monitoring</div><div class="cc-d">Where does logging happen? What alerts exist? Where does user feedback flow?</div></div>
+    </div>
+  </div>
+
+  <div class="m4s">
+    <h2>Risk Register</h2>
+    <p>5-10 risks specific to your system. Prioritized and concrete. <strong>Exceeds</strong> means: severity-rated, architecture-specific risks with concrete trade-off-aware mitigations.</p>
+    <div class="rhdr"><span>Risk Description</span><span>Mitigation</span><span>Severity</span><span></span></div>
+    <div id="risk-rows"></div>
+    <button class="btn btn-s mt3" onclick="addRisk()" style="font-size:.83rem">+ Add Risk</button>
+  </div>
+
+  <div class="m4s">
+    <h2>Rubric (4 pts)</h2>
+    <table class="rtbl">
+      <tr><th>Category</th><th>Points</th><th>Meets</th><th>Exceeds</th></tr>
+      <tr><td class="ct2">Architecture Clarity</td><td class="pt">1.5</td><td>Major parts shown; data flow implicit</td><td>Real service names, explicit flows, failure paths, monitoring visible</td></tr>
+      <tr><td class="ct2">Risk Analysis</td><td class="pt">1.25</td><td>Some risks; not all specific to system</td><td>5-10 prioritized, severity-rated, architecture-specific risks</td></tr>
+      <tr><td class="ct2">Mitigations</td><td class="pt">1.25</td><td>Generic responses ("add monitoring")</td><td>Concrete, trade-off-aware, 1:1 mapped with implementation detail</td></tr>
+      <tr><td style="font-weight:800">Total</td><td class="pt" style="font-size:1rem">4.0</td><td colspan="2">Submit: Canvas → Project Milestones → M4. Separate from midterm exam.</td></tr>
+    </table>
+  </div>
+
+  <hr class="divider">
+  <div style="text-align:center;padding:22px 0">
+    <ul class="chklist" style="max-width:420px;margin:0 auto 20px">
+      <li><div class="chk" onclick="ck(this)"></div>Architecture diagram uploaded with real service names</li>
+      <li><div class="chk" onclick="ck(this)"></div>At least 5 risk rows with severity ratings</li>
+      <li><div class="chk" onclick="ck(this)"></div>Each risk has a concrete (not generic) mitigation</li>
+      <li><div class="chk" onclick="ck(this)"></div>Part A exam answer file already submitted to Canvas</li>
+    </ul>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn btn-g" onclick="exportM4()">Export M4 Summary</button>
+      <button class="btn btn-s" onclick="window.print()">Print</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const S={name:'',ruid:'',netid:'',started:false,done:false,timer:null,left:3600,cur:0,ans:{},rev:{},ts0:null,ts1:null};
+
+const SECS=[
+  {label:'Section A — Applied Architecture (Weeks 1–2) · 1pt each',color:'#6366f1'},
+  {label:'Section B — Evaluation & Systems Analysis (Weeks 3–6) · 1pt each',color:'#22d3ee'},
+  {label:'Section C — Analytical Writing (Weeks 1–7) · 2pts each',color:'#f59e0b'},
+  {label:'Section D — Code & Debug Task (Weeks 3–6) · 3pts',color:'#10b981'}
+];
+
+const QS=[
+  {id:'q1',sec:0,type:'mc',pts:1,
+   scenario:'Your team is building an AI coding assistant for a fintech firm. Requirements: (1) outputs must be auditable — legal team needs to inspect every model response, (2) the model must support function calling, (3) you have a 100ms P90 TTFT budget, and (4) the InfoSec policy prohibits sending any source code to an external API.',
+   text:'Which single constraint is sufficient on its own to eliminate all commercial model APIs (e.g., GPT-4o, Claude 3.5)?',
+   opts:['Constraint 1 — auditability requires access to intermediate outputs commercial APIs do not expose.',
+         'Constraint 4 — the prohibition on sending source code externally rules out all third-party APIs by itself, regardless of other capabilities.',
+         'Constraint 3 — 100ms TTFT cannot be achieved via external network round-trips.',
+         'Constraints 2 and 3 together — no commercial API supports both function calling and sub-100ms TTFT simultaneously.'],
+   ans:1,
+   fb:'Constraint 4 is a hard attribute: a policy that prohibits data leaving the network eliminates every external API before evaluation begins. It does not matter how good latency, auditability, or function-calling support is — the data cannot leave the org. Constraints 1 and 3 could potentially be addressed through contractual audit agreements and model optimization; constraint 4 cannot. This is the clearest example of Huyen\'s hard vs. soft attribute distinction.'},
+  {id:'q2',sec:0,type:'mc',pts:1,
+   scenario:'A team deploys an LLM for a real-time customer chat interface. Profiling reveals: TTFT P90 = 380ms, total generation P90 = 1.8s, average output = 220 tokens. Users report the interface "feels slow."',
+   text:'Which optimization should be prioritized first?',
+   opts:['Reduce max_tokens to cut total generation time — this directly reduces the 1.8s end-to-end latency.',
+         'Optimize TTFT: with streaming enabled, users perceive responsiveness from first-token appearance; reducing TTFT from 380ms to under 200ms will feel dramatically faster even if total time stays at 1.8s.',
+         'Switch to a smaller model to improve both TTFT and total generation simultaneously.',
+         'Add response caching — if 30% of queries repeat, average latency drops without touching the model.'],
+   ans:1,
+   fb:'This is a UX perception problem. Autoregressive models generate token-by-token. With streaming enabled, users see text appearing after TTFT — making the interaction feel responsive even if total generation takes 1.8s. Reducing TTFT from 380ms to under 200ms would dramatically improve perceived responsiveness. Switching models or reducing max_tokens are valid secondary optimizations but address the wrong bottleneck. Caching is useful but orthogonal to the core perception issue.'},
+  {id:'q3',sec:0,type:'mc',pts:1,
+   scenario:'A health-tech startup wants to use Llama 3 70B to summarize patient intake forms on their own HIPAA-compliant infrastructure. Their legal team asks: (A) Is commercial use permitted? (B) Can Llama 3 outputs be used to fine-tune a smaller internal model for faster inference (distillation)?',
+   text:'What are the correct answers under Llama 3\'s actual license terms?',
+   opts:['(A) Yes, unrestricted commercial use. (B) Yes, distillation from outputs is permitted.',
+         '(A) Yes, commercial use is permitted for orgs under 700M MAU. (B) No — Llama 3 explicitly prohibits using its outputs to train or improve other models.',
+         '(A) No — Llama 3 is non-commercial only, like Llama 1.',
+         '(A) Yes, commercial use is unrestricted. (B) Yes, but only if the student model is also open-sourced.'],
+   ans:1,
+   fb:'Llama 3 permits commercial use for organizations under 700M monthly active users. However, it explicitly prohibits using model outputs to train or improve other models — blocking the common "distill a fast small model from a large one" pattern. This is a key license restriction Huyen highlights. The team would need an Apache 2.0 model like Mistral if distillation is required.'},
+  {id:'q4',sec:1,type:'mc',pts:1,
+   scenario:'A team fine-tunes a model on legal data. Results: MMLU = 91% (top 5% publicly). Private evaluation on real legal queries: factual consistency = 58%. The team is confused — the model looks excellent on the leaderboard but fails in production.',
+   text:'What is the most precise explanation?',
+   opts:['The private pipeline has bugs — a 91% MMLU guarantees strong real-world performance.',
+         'Fine-tuning always degrades general capability and should be avoided for legal tasks.',
+         'MMLU uses MCQ to test general knowledge; it does not measure open-ended legal-domain factual consistency. The model likely overfit to benchmark-format questions. High MMLU and low production factual consistency are not contradictory — they measure nearly orthogonal capabilities.',
+         'The private eval dataset is too small; MMLU with 14K questions is a more reliable signal.'],
+   ans:2,
+   fb:'Benchmark contamination + distribution mismatch. MMLU tests general knowledge via MCQ — the model can score well through pattern-matching or training data overlap with benchmark questions. Legal query answering requires open-ended factual generation grounded in specific documents. These measure almost orthogonal capabilities. This is exactly why Huyen insists Step 3 (private eval) is ground truth and Step 2 (public benchmarks) is for shortlisting only.'},
+  {id:'q5',sec:1,type:'mc',pts:1,
+   scenario:'A pharma RAG pipeline shows: Retrieval P@5 = 0.91 (excellent). Factual consistency = 0.54 (poor). System prompt: "You are a helpful pharmaceutical assistant. Answer based on the provided context."',
+   text:'Given high retrieval quality but poor factual consistency, where is the failure most likely occurring and what is the most targeted fix?',
+   opts:['Retrieval is still the bottleneck — 9% bad-chunk queries are enough to cause 0.54 consistency.',
+         'The failure is in generation: the model is not grounded to the retrieved context and mixes in parametric knowledge. Fix: add an explicit grounding constraint and a post-generation entailment checker.',
+         'The system prompt is too short — longer prompts always improve factual consistency in RAG.',
+         'GPT-4o is wrong here — an open-source model with logprob access would have higher factual consistency.'],
+   ans:1,
+   fb:'When retrieval P@5 is high but factual consistency is low, the bottleneck has shifted to generation. The model is generating beyond the retrieved context — the classic hallucination pattern in RAG. The prompt does not explicitly forbid using parametric knowledge. Fix 1: "Only use information from the provided context. If the answer is not there, say so." Fix 2: add a post-generation local factual consistency checker (entailment classifier or SAFE) before serving. This targeted diagnosis is only possible because the evaluation pipeline measures retrieval and generation separately.'},
+  {id:'q6',sec:1,type:'mc',pts:1,
+   scenario:'Alex: "We should use SelfCheckGPT — catches hallucinations without external resources." Brynn: "It costs 5x more per eval. We should use a fine-tuned DeBERTa entailment classifier instead — 100x cheaper per inference."\n\nThe chatbot answers open-ended questions across many topics. No fixed knowledge base exists — users can ask about anything.',
+   text:'Who is correct, and what is the key technical reason?',
+   opts:['Alex is correct. SelfCheckGPT works without any external context, which is essential for open-domain chatbots where no ground-truth context exists to evaluate against.',
+         'Brynn is correct. DeBERTa is always cheaper and more accurate for factual consistency.',
+         'Both approaches are equivalent — the choice is purely a cost decision.',
+         'Neither works — open-domain chatbots cannot be evaluated for factual consistency.'],
+   ans:0,
+   fb:'This is the local vs. global factual consistency distinction. DeBERTa entailment classifiers require a ground-truth premise (context) to evaluate a hypothesis against. They are ideal for RAG/local consistency but cannot be used for open-domain queries where no such context exists. SelfCheckGPT samples N additional responses and checks internal consistency — requiring no external context, making it the only viable option for global factual consistency. The cost is a real constraint to manage (selective application, batching) but Brynn\'s replacement is technically wrong for this use case.'},
+
+  {id:'q7',sec:2,type:'short',pts:2,
+   text:'A Series A startup ($400/month AI budget) is building a multi-tenant B2B analytics platform. Their AI feature generates executive summaries from uploaded CSVs. Expected: 500 reports/day at launch, scaling to 8,000/day in 6 months. Average input: 12,000 tokens. Average output: 800 tokens.',
+   sub:'Using Huyen\'s 7-axis build-vs-buy framework: (1) Calculate approximate monthly API cost at 500/day and 8,000/day — state your pricing assumption. (2) Identify the axis at which the decision flips to self-hosting. (3) Sketch the migration path technically. (~200 words)',
+   fb:'Full credit requires all three parts with sound reasoning. COST: At GPT-4o pricing (~$2.50/$10 per 1M tokens for input/output or similar published rates, state assumption): 500/day × 30 = 15,000 reports. Input: 15,000 × 12K = 180M tokens. Output: 15,000 × 800 = 12M tokens. Reasonable range $300-$3,000/month depending on model chosen — the key is showing the math. At 8,000/day it scales 16x. AXIS FLIP: Cost is the primary flip point; a secondary axis is control/data privacy for multi-tenant B2B data. MIGRATION: Start with a cheaper model (GPT-4o-mini or Claude Haiku) to reduce cost immediately; in parallel build self-hosting infrastructure using Mistral-7B or Llama 3 8B on spot GPU instances. Migration path: shadow traffic (run both in parallel), evaluate quality parity, then cutover. Note: accept any reasonable pricing assumption clearly stated.'},
+  {id:'q8',sec:2,type:'short',pts:2,
+   text:'You lead AI at a company with a deployed legal contract analysis chatbot (GPT-4o API, 6 months in production). You\'re asked to evaluate migrating to self-hosted Mistral-7B-Instruct.\n\nProduction data:\n• 3,200 queries/day | Avg input: 8,400 tokens | Avg output: 620 tokens\n• API cost: $4,100/month\n• Factual consistency: GPT-4o = 0.91 | Mistral-7B staging = 0.74\n• TTFT P90: GPT-4o = 140ms | Mistral-7B on A100 = 95ms\n• Requirement: structured JSON output, zero tolerance for clause misidentification',
+   sub:'Write a structured recommendation (migrate or stay) with: the cost case, the performance risk analysis, the instruction-following risk for JSON output, and one concrete mitigation you would implement before any migration. (~180 words)',
+   fb:'Full credit (2/2) for a well-reasoned recommendation with all four components — "stay" or "migrate with mitigations" both earn full credit if the analysis is rigorous. COST CASE: At $4,100/month API vs. ~$1,000-$2,000/month A100 self-hosting — meaningful savings exist. PERFORMANCE RISK: 0.74 vs 0.91 factual consistency is a 17-point gap. For legal contract analysis where errors have direct liability implications, this is a significant risk. "Zero tolerance" requirement makes this especially consequential. INSTRUCTION-FOLLOWING RISK: Mistral-7B-Instruct may produce less reliable structured JSON than GPT-4o; this needs explicit validation on your prompt format. MITIGATION: examples — (a) fine-tune on production (prompt, gold JSON output) pairs; (b) add JSON schema validation with retry logic; (c) A/B test at 5% traffic for 30 days before cutover; (d) add an entailment-based guardrail layer. The student does not need to recommend migration — a well-argued "the performance gap is too large for a legal application" is equally valid.'},
+  {id:'q9',sec:2,type:'short',pts:2,
+   text:'A colleague argues: "We just need better models — once capability is high enough, evaluation becomes trivial because everything works. GPT-5 and Claude 4 are almost superhuman on most benchmarks. Evaluation is becoming an outdated concern."\n\nConstruct a rigorous counter-argument.',
+   sub:'Reference at least two specific evaluation challenges that persist regardless of model capability, and explain why model capability and evaluation difficulty are distinct dimensions. (~175 words)',
+   fb:'Full credit (2/2) requires a structured argument with at least 2 distinct challenges. Strong answers include: (1) DOMAIN-SPECIFIC DISTRIBUTION MISMATCH — a superhuman-on-MMLU model still needs evaluation against your specific prompt distribution, user intents, and domain. General capability does not transfer to domain-specific production reliability. (2) SAFETY & CONTEXTUAL EVALUATION — more capable models can generate more sophisticated harmful or misleading content. Whether a model is safe for your specific deployment (a children\'s app vs. security research tool) requires application-specific evaluation that benchmark scores cannot replace. (3) REGRESSION DETECTION — models are updated continuously. A well-evaluated v1 can regress in v2. Evaluation is a continuous production requirement, not a one-time gate. (4) DISTRIBUTION SHIFT — user behavior changes over time; a model evaluated at launch may underperform 6 months later as query patterns evolve. KEY POINT: model capability (raw performance) and evaluation difficulty (measuring fit-for-purpose in context) are orthogonal dimensions. Higher capability does not reduce the need for application-specific, continuous evaluation.'},
+
+  {id:'q10',sec:3,type:'code',pts:3,
+   text:'The Python function below is intended to evaluate a RAG pipeline by computing Recall@K — the fraction of test queries where at least one relevant document appears in the top-K retrieved results — and log results to CSV. It contains <strong>exactly three bugs</strong>.',
+   code:'def evaluate_recall_at_k(queries, retrieved_docs, relevant_docs, k=5):\n    """\n    queries: list of str\n    retrieved_docs: dict mapping query -> list of doc_ids (ranked)\n    relevant_docs:  dict mapping query -> set of relevant doc_ids\n    Returns: float (recall@k, 0.0-1.0)\n    """\n    import csv\n\n    hits = 0\n    results_log = []\n\n    for query in queries:\n        top_k    = retrieved_docs[query][:k]          # LINE A\n        relevant = relevant_docs[query]               # LINE B\n        hit      = len(top_k & relevant) > 0          # LINE C\n        hits    += hit\n        results_log.append({"query": query, "hit": hit, "top_k_count": len(top_k)})\n\n    recall = hits / len(queries)                      # LINE D\n\n    with open("eval_results.csv", "a") as f:          # LINE E\n        writer = csv.DictWriter(f, fieldnames=["query","hit","top_k_count"])\n        writer.writerows(results_log)\n\n    return recall',
+   sub:'For each of the three bugs: (1) identify which line it is on, (2) explain the technical error precisely, (3) write the corrected line or lines. Do not rewrite the entire function.',
+   fb:'BUG 1 — LINE C: `hit = len(top_k & relevant) > 0`. The `&` set intersection operator requires BOTH operands to be sets. `top_k` is a list (sliced on Line A), not a set. This raises TypeError at runtime. Fix: `hit = len(set(top_k) & relevant) > 0`\n\nBUG 2 — LINE D: `recall = hits / len(queries)`. If queries is an empty list, this raises ZeroDivisionError. A production evaluation function must guard against empty input. Fix: `recall = hits / len(queries) if queries else 0.0`\n\nBUG 3 — LINE E: `open("eval_results.csv", "a")` — append mode without writing a header. On the first run the CSV will have no column headers; on subsequent runs it will accumulate results with no way to distinguish runs. Also missing `newline=""` argument required by the csv module on some platforms. Fix: `open("eval_results.csv", "w", newline="") as f:` and add `writer.writeheader()` before `writer.writerows(results_log)`. (Accept "w" mode correction + newline fix; accept header-writing logic as part of the fix.)\n\nGrading: 1pt per correctly identified + explained + fixed bug.'}
+];
+
+
+
+function showPage(p){
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.tb').forEach(e=>e.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const idx={home:0,lecture:1,exam:2,m4:3};
+  if(idx[p]!==undefined)document.querySelectorAll('.tb')[idx[p]].classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function gotoExam(){showPage('exam');}
+
+function startTimer(){
+  const el=document.getElementById('timer');el.style.display='block';
+  S.timer=setInterval(()=>{
+    S.left--;
+    el.textContent=String(Math.floor(S.left/60)).padStart(2,'0')+':'+String(S.left%60).padStart(2,'0');
+    el.className='';
+    if(S.left<=300)el.className='warn';
+    if(S.left<=60)el.className='danger';
+    if(S.left<=0){clearInterval(S.timer);finishExam();}
+  },1000);
+}
+
+function beginExam(){
+  const name=document.getElementById('id-name').value.trim();
+  const ruid=document.getElementById('id-ruid').value.trim();
+  const netid=document.getElementById('id-netid').value.trim();
+  if(!name){toast('Enter your full name.');return;}
+  if(!/^\d{9}$/.test(ruid)){toast('RUID must be exactly 9 digits.');return;}
+  if(!netid){toast('Enter your NetID.');return;}
+  if(!document.getElementById('honor-box').checked){toast('Accept the honor pledge to begin.');return;}
+  S.name=name;S.ruid=ruid;S.netid=netid;S.ts0=new Date().toISOString();S.started=true;
+  document.getElementById('identity-gate').style.display='none';
+  document.getElementById('exam-active').style.display='block';
+  const pill=document.getElementById('student-pill');pill.textContent=name+' · '+ruid;pill.style.display='block';
+  buildExam();startTimer();showQ(0);
+}
+
+function buildExam(){
+  document.getElementById('qdots').innerHTML=QS.map((_,i)=>`<div class="qdot" id="dot-${i}" title="Q${i+1}" onclick="showQ(${i})"></div>`).join('');
+  document.getElementById('qwrap').innerHTML=QS.map((q,i)=>{
+    const sc=SECS[q.sec];
+    return`<div class="qblock" id="qb-${i}">
+<div class="sbadge" style="background:${sc.color}18;color:${sc.color};border:1px solid ${sc.color}33">${sc.label}</div>
+<div class="qcard">
+<div class="qnum">Question ${i+1} of ${QS.length} <span class="ptb">+${q.pts}pt</span> &middot; ${q.type==='mc'?'Multiple Choice':q.type==='code'?'Code Task':'Short Answer'}</div>
+${q.scenario?`<div class="scen"><strong>Scenario</strong>${q.scenario}</div>`:''}
+<div class="qtext">${q.text}</div>
+${q.sub?`<div class="qsub">${q.sub}</div>`:''}
+${q.type==='mc'?`<div class="mco">${q.opts.map((o,oi)=>`<div class="mo" id="opt-${i}-${oi}" onclick="selMC(${i},${oi})"><div class="mlbl">${'ABCD'[oi]}</div><span>${o}</span></div>`).join('')}</div>`
+:q.type==='code'?buildCode(q,i)
+:`<textarea class="sa" id="sa-${i}" oninput="handleSA(${i},this)" placeholder="Type your answer here...">${S.ans[i]||''}</textarea><div class="wc" id="wc-${i}">0 words</div>`}
+<div class="fb" id="fb-${i}"></div>
+</div>
+<div class="qnav">
+<button class="btn btn-s" onclick="prevQ(${i})" style="font-size:.83rem" ${i===0?'disabled':''}>Prev</button>
+<button class="btn btn-s" onclick="skipQ(${i})" style="font-size:.83rem">Skip</button>
+${i<QS.length-1?`<button class="btn btn-p" onclick="nextQ(${i})" style="font-size:.83rem">Next</button>`:`<button class="btn btn-g" onclick="finishExam()" style="font-size:.83rem">Submit Exam</button>`}
+</div></div>`;
+  }).join('');
+}
+
+function selMC(qi,oi){
+  if(S.rev[qi])return;
+  QS[qi].opts.forEach((_,j)=>document.getElementById(`opt-${qi}-${j}`)?.classList.remove('sel'));
+  document.getElementById(`opt-${qi}-${oi}`)?.classList.add('sel');
+  S.ans[qi]=oi;updDot(qi,'answered');updProg();
+}
+function handleSA(qi,el){
+  S.ans[qi]=el.value;
+  const w=el.value.trim()?el.value.trim().split(/\s+/).length:0;
+  document.getElementById(`wc-${qi}`).textContent=w+' word'+(w===1?'':'s');
+  updDot(qi,'answered');updProg();
+}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function buildCode(q,i){
+  const lines=q.code.split('\n');
+  const rendered=lines.map((l,n)=>`<span class="cln">${n+1}</span>${escHtml(l)}`).join('\n');
+  return`<div class="code-block">${rendered}</div>
+<div style="font-size:.8rem;color:var(--muted);margin-bottom:10px">For each bug: identify the line number, explain the technical error precisely, and write the corrected line(s).</div>
+<textarea class="code-ta" id="sa-${i}" oninput="handleSA(${i},this)" placeholder="Bug 1 — Line [N]: [precise technical explanation of the error]&#10;Fix: [corrected line(s)]&#10;&#10;Bug 2 — Line [N]: ...&#10;Fix: ...&#10;&#10;Bug 3 — Line [N]: ...&#10;Fix: ...">${S.ans[i]||''}</textarea>
+<div class="wc" id="wc-${i}">0 words</div>`;
+}
+function revMC(qi){
+  if(S.rev[qi]||QS[qi].type!=='mc')return;S.rev[qi]=true;
+  const q=QS[qi],ua=S.ans[qi];
+  q.opts.forEach((_,j)=>{
+    const el=document.getElementById(`opt-${qi}-${j}`);if(!el)return;
+    el.classList.add('dis');
+    if(j===q.ans)el.classList.add('ok');
+    else if(j===ua&&j!==q.ans)el.classList.add('bad');
+  });
+  const fb=document.getElementById(`fb-${qi}`);const ok=ua===q.ans;
+  fb.className='fb show '+(ok?'cor':'wro');
+  fb.innerHTML=`<strong>${ok?'Correct':'Incorrect — correct answer: '+['A','B','C','D'][q.ans]}</strong>${q.fb}`;
+}
+function showQ(i){
+  document.querySelectorAll('.qblock').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.qdot').forEach(e=>e.classList.remove('current'));
+  document.getElementById(`qb-${i}`)?.classList.add('active');
+  const d=document.getElementById(`dot-${i}`);if(d){d.classList.add('current');d.classList.remove('skipped');}
+  S.cur=i;updProg();
+  if(QS[i].type==='mc'&&S.ans[i]!==undefined)setTimeout(()=>revMC(i),150);
+}
+function nextQ(i){if(QS[i].type==='mc')revMC(i);if(i<QS.length-1)showQ(i+1);}
+function prevQ(i){if(i>0)showQ(i-1);}
+function skipQ(i){updDot(i,'skipped');if(i<QS.length-1)showQ(i+1);}
+function updDot(i,c){const d=document.getElementById(`dot-${i}`);if(!d)return;d.classList.remove('answered','skipped');d.classList.add(c);}
+function updProg(){
+  const a=Object.keys(S.ans).length,pct=Math.round(a/QS.length*100);
+  document.getElementById('prog-l').textContent=`Q${S.cur+1} of ${QS.length}`;
+  document.getElementById('prog-p').textContent=`${a} answered`;
+  document.getElementById('prog-f').style.width=pct+'%';
+}
+
+function finishExam(){
+  if(S.done)return;S.done=true;S.ts1=new Date().toISOString();clearInterval(S.timer);
+  document.getElementById('exam-active').style.display='none';
+  QS.forEach((_,i)=>{if(QS[i].type==='mc')revMC(i);});
+  let mc=0;QS.forEach((q,i)=>{if(q.type==='mc'&&S.ans[i]===q.ans)mc++;});
+  const saMax=QS.filter(q=>q.type==='short').length;
+  const mcCount=QS.filter(q=>q.type==='mc').length;const pct=mc/mcCount;
+  document.getElementById('ring-n').textContent=mc+'/'+mcCount+'+'
+  setTimeout(()=>{document.getElementById('ring-fill').style.strokeDashoffset=377*(1-pct);},300);
+  let g='A',gc='#10b981';
+  if(pct<.7){g='B';gc='#22d3ee';}if(pct<.6){g='C';gc='#f59e0b';}if(pct<.5){g='D';gc='#ef4444';}
+  const gb=document.getElementById('gbadge');gb.textContent=g+' (MC portion)';gb.style.color=gc;
+  const used=3600-S.left,m=Math.floor(used/60),s=used%60;
+  document.getElementById('rgrid').innerHTML=`
+<div class="ri"><div class="ri-l">MC Score (auto)</div><div class="ri-v">${mc}/10</div><div class="ri-s">${Math.round(pct*100)}% accuracy</div></div>
+<div class="ri"><div class="ri-l">Short Answer (5x1pt)</div><div class="ri-v">?/${saMax}</div><div class="ri-s">Instructor-graded</div></div>
+<div class="ri"><div class="ri-l">Part A Total (15pts)</div><div class="ri-v">${mc}+ pts</div><div class="ri-s">Pending SA grading</div></div>
+<div class="ri"><div class="ri-l">Time Used</div><div class="ri-v">${m}m ${s}s</div><div class="ri-s">of 60 min</div></div>
+<div class="ri"><div class="ri-l">Student</div><div class="ri-v" style="font-size:.9rem">${S.name}</div><div class="ri-s">RUID: ${S.ruid}</div></div>
+<div class="ri"><div class="ri-l">Submitted</div><div class="ri-v" style="font-size:.78rem">${new Date().toLocaleString()}</div><div class="ri-s">Local time</div></div>`;
+  document.getElementById('results').classList.add('show');
+  document.getElementById('results').scrollIntoView({behavior:'smooth'});
+}
+
+function reviewMode(){
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('exam-active').style.display='block';
+  QS.forEach((q,i)=>{
+    if(q.type==='short'){const fb=document.getElementById(`fb-${i}`);if(fb){fb.className='fb show inf';fb.innerHTML=`<strong>Model Answer Elements (Instructor Reference)</strong>${q.fb}`;}}
+  });showQ(0);
+}
+
+function buildAnswerText(){
+  let t='AI ENGINEERING — WEEK 8 MIDTERM\n==============================\n\n';
+  t+=`Student Name: ${S.name}\nRUID: ${S.ruid}\nNetID: ${S.netid}\nExam Started: ${S.ts0}\nExam Submitted: ${S.ts1||new Date().toISOString()}\nTime Used: ${Math.floor((3600-S.left)/60)}m ${(3600-S.left)%60}s\n\n`;
+  let mc=0;QS.forEach((q,i)=>{if(q.type==='mc'&&S.ans[i]===q.ans)mc++;});
+  t+=`AUTO-SCORED MC: ${mc}/10\nSHORT ANSWER: pending instructor grading (5pts max)\n\n------------------------------\nANSWERS\n------------------------------\n\n`;
+  QS.forEach((q,i)=>{
+    t+=`Q${i+1} [${q.pts}pt · ${q.type==='mc'?'MC':q.type==='code'?'Code Task':'Short Answer'}]\n${q.text}\n`;
+    if(q.type==='mc'){
+      const ua=S.ans[i];
+      t+=`Your answer: ${ua!==undefined?`(${['A','B','C','D'][ua]}) ${q.opts[ua]}`:'[not answered]'}\n`;
+      t+=`Correct: (${['A','B','C','D'][q.ans]}) ${q.opts[q.ans]}\nResult: ${ua===q.ans?'CORRECT':'INCORRECT'}\n`;
+    }else{t+=`Your answer:\n${S.ans[i]||'[not answered]'}\n`;}
+    t+='\n';
+  });
+  t+='------------------------------\nSubmit this file to Canvas to complete submission.\n';
+  return t;
+}
+
+function downloadAnswers(){
+  const txt=buildAnswerText();
+  const prev=document.getElementById('exprev');
+  prev.textContent=txt.slice(0,500)+'...\n[full content in downloaded file]';prev.style.display='block';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain'}));
+  a.download=`midterm_${S.ruid}_${S.name.replace(/\s+/g,'_')}.txt`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  toast('Answer file downloaded — upload to Canvas to complete submission.',5000);
+}
+
+let rc=0;
+function addRisk(){
+  rc++;const d=document.createElement('div');d.className='rrow';d.id=`rr-${rc}`;
+  d.innerHTML=`<textarea class="rin" placeholder="e.g., LLM hallucinates drug dosages when context is ambiguous..."></textarea>
+<textarea class="min" placeholder="e.g., Add entailment scorer; flag dosage outputs for pharmacist review; audit weekly..."></textarea>
+<select class="sev" id="sev-${rc}" onchange="sevSt(${rc})"><option value="">Severity</option><option value="shi">HIGH</option><option value="smd">MED</option><option value="slo">LOW</option></select>
+<button class="del" onclick="document.getElementById('rr-${rc}').remove()">&#128465;</button>`;
+  document.getElementById('risk-rows').appendChild(d);
+}
+function sevSt(n){const s=document.getElementById(`sev-${n}`);s.className='sev';if(s.value)s.classList.add(s.value);}
+for(let i=0;i<5;i++)addRisk();
+
+function handleUpload(inp){
+  // accepts either a file input element or a raw File object
+  const f=(inp instanceof File)?inp:inp.files[0];
+  if(!f)return;const drop=document.getElementById('adrop');
+  if(f.type.startsWith('image/')){
+    const r=new FileReader();r.onload=e=>{drop.innerHTML=`<img src="${e.target.result}">`;drop.classList.add('hi');drop.style.minHeight='auto';toast('Diagram uploaded!');};r.readAsDataURL(f);
+  }else{drop.innerHTML=`<span style="font-size:2rem">&#128196;</span><strong>${f.name}</strong><span style="font-size:.8rem;color:var(--muted)">${(f.size/1024).toFixed(0)} KB</span>`;toast('File uploaded!');}
+}
+const ad=document.getElementById('adrop');
+ad.addEventListener('dragover',e=>{e.preventDefault();ad.style.borderColor='#6366f1';});
+ad.addEventListener('dragleave',()=>{ad.style.borderColor='';});
+// Fix: pass the File object directly — browsers block setting input.files from JS
+ad.addEventListener('drop',e=>{e.preventDefault();ad.style.borderColor='';const files=e.dataTransfer.files;if(files.length)handleUpload(files[0]);});
+
+function exportM4(){
+  const rows=document.querySelectorAll('.rrow');let t=`M4 ARCHITECTURE PACKET\nStudent: ${S.name||'[complete exam first]'} · RUID: ${S.ruid||'N/A'}\nExported: ${new Date().toLocaleString()}\n\nRISK REGISTER:\n\n`;
+  rows.forEach((r,i)=>{
+    const risk=r.querySelector('.rin')?.value||'',mit=r.querySelector('.min')?.value||'',sev=r.querySelector('.sev')?.value||'';
+    if(risk)t+=`Risk ${i+1} [${sev.replace('s','').toUpperCase()||'?'}]: ${risk}\nMitigation: ${mit}\n\n`;
+  });
+  t+='Submit to Canvas: Project Milestones > M4. Separate from midterm exam submission.';
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));
+  a.download=`M4_${S.ruid||'student'}.txt`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  toast('M4 summary exported — upload to Canvas M4 milestone.',4000);
+}
+
+function ck(el){el.classList.toggle('on');el.textContent=el.classList.contains('on')?'✓':'';}
+function toast(msg,dur=3000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),dur);}
+</script>
+</body>
+</html>
