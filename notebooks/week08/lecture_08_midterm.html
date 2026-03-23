@@ -117,21 +117,15 @@ code{background:var(--s2);border:1px solid var(--border);border-radius:4px;paddi
 .mo{display:flex;align-items:flex-start;gap:11px;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;cursor:pointer;transition:all .2s;font-size:.87rem;line-height:1.5}
 .mo:hover{border-color:var(--accent);background:rgba(99,102,241,.08)}
 .mo.sel{border-color:var(--accent);background:rgba(99,102,241,.15)}
-.mo.ok{border-color:var(--green)!important;background:rgba(16,185,129,.12)!important;pointer-events:none}
-.mo.bad{border-color:var(--red)!important;background:rgba(239,68,68,.1)!important;pointer-events:none}
 .mo.dis{pointer-events:none}
 .mlbl{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;color:var(--muted);transition:all .2s}
 .mo.sel .mlbl{background:var(--accent);border-color:var(--accent);color:#fff}
-.mo.ok .mlbl{background:var(--green);border-color:var(--green);color:#fff}
-.mo.bad .mlbl{background:var(--red);border-color:var(--red);color:#fff}
 .sa{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:13px 16px;color:var(--text);font-size:.88rem;font-family:inherit;line-height:1.6;resize:vertical;min-height:110px;transition:border-color .2s}
 .sa:focus{outline:none;border-color:var(--accent)}
 .wc{font-size:.73rem;color:var(--muted);text-align:right;margin-top:5px}
 .ptb{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;background:rgba(99,102,241,.15);color:var(--accent);margin-left:8px}
 .fb{margin-top:14px;padding:13px 16px;border-radius:10px;font-size:.85rem;line-height:1.6;display:none}
 .fb.show{display:block}
-.fb.cor{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:#6ee7b7}
-.fb.wro{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#fca5a5}
 .fb.inf{background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:#67e8f9}
 .fb strong{display:block;margin-bottom:5px;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em}
 .qnav{display:flex;justify-content:space-between;align-items:center;margin-top:20px;gap:10px}
@@ -158,10 +152,7 @@ code{background:var(--s2);border:1px solid var(--border);border-radius:4px;paddi
 .m4s{margin-bottom:28px}
 .m4s h2{font-size:1.15rem;font-weight:700;color:var(--cyan);margin-bottom:14px;display:flex;align-items:center;gap:9px}
 .m4s p{color:var(--muted);font-size:.88rem;line-height:1.7;margin-bottom:10px}
-.adrop{background:var(--s2);border:2px dashed var(--border);border-radius:var(--r);padding:22px;min-height:220px;cursor:pointer;transition:border-color .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-size:.88rem;color:var(--muted)}
-.adrop:hover{border-color:var(--accent)}
-.adrop.hi{min-height:auto;align-items:flex-start;justify-content:flex-start;padding:12px}
-.adrop img{max-width:100%;border-radius:8px;max-height:360px;object-fit:contain}
+
 .rhdr{display:grid;grid-template-columns:1fr 1fr 90px 44px;gap:9px;margin-bottom:7px}
 .rhdr span{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent)}
 .rrow{display:grid;grid-template-columns:1fr 1fr 90px 44px;gap:9px;margin-bottom:9px;align-items:start}
@@ -377,7 +368,7 @@ code{background:var(--s2);border:1px solid var(--border);border-radius:4px;paddi
       <label for="honor-box">I pledge to uphold Rutgers Academic Integrity. This work is entirely my own, completed without unauthorized AI assistance or collaboration. I understand this exam is timed (60 minutes) and my Canvas submission will be tied to my login.</label>
     </div>
     <button class="btn btn-p" style="width:100%" onclick="beginExam()">Begin Exam — Start 60-Minute Timer</button>
-    <p style="font-size:.76rem;color:var(--muted);text-align:center;margin-top:12px">Canvas independently records your login timestamp, IP address, and browser fingerprint.</p>
+    <p style="font-size:.76rem;color:var(--muted);text-align:center;margin-top:12px">Canvas independently records your login, timestamp, and IP. Canvas is set to <strong style="color:var(--text)">allow one submission only</strong> — that is the primary attempt-limit enforcement.</p>
   </div>
 
   <div id="exam-active" style="display:none">
@@ -397,10 +388,10 @@ code{background:var(--s2);border:1px solid var(--border);border-radius:4px;paddi
     <h2 style="font-size:1.7rem;font-weight:800;margin:10px 0">Your Results</h2>
     <div class="sring">
       <svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="60"/><circle class="ring-fill" id="ring-fill" cx="75" cy="75" r="60" stroke-dasharray="377" stroke-dashoffset="377"/></svg>
-      <div class="ring-ctr"><div class="ring-n" id="ring-n">-</div><div class="ring-l">out of 15</div></div>
+      <div class="ring-ctr"><div class="ring-n" id="ring-n">-</div><div class="ring-l">answered</div></div>
     </div>
     <div class="gbadge" id="gbadge"></div>
-    <p class="text-muted text-sm" style="margin-bottom:16px">MC auto-scored. Short answers are instructor-graded (5 x 1pt).</p>
+    <p class="text-muted text-sm" style="margin-bottom:16px">Grading is done by your instructor via Canvas. No scores are shown or stored here.</p>
     <div class="rgrid" id="rgrid"></div>
     <div style="background:rgba(16,185,129,.07);border:2px solid rgba(16,185,129,.4);border-radius:var(--r);padding:20px;margin:18px 0">
       <h4 style="font-size:.95rem;font-weight:800;color:var(--green);margin-bottom:14px">&#128228; Canvas Submission &#8212; Upload ALL THREE Files Manually</h4>
@@ -414,7 +405,7 @@ code{background:var(--s2);border:1px solid var(--border);border-radius:4px;paddi
         <div style="background:var(--s2);border-radius:10px;padding:13px;border:1px solid var(--border)">
           <div style="font-size:.68rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">File 2 of 3</div>
           <div style="font-weight:700;font-size:.88rem;margin-bottom:5px">&#128208; Architecture Diagram</div>
-          <div style="font-size:.78rem;color:var(--muted);line-height:1.5">Your diagram image or PDF from the M4 tab.<br>Canvas: <strong>Assignments &gt; Mid-term &gt; M4 Diagram Upload</strong></div>
+          <div style="font-size:.78rem;color:var(--muted);line-height:1.5">Your PNG or PDF from draw.io, Excalidraw, Miro, etc.<br>Canvas: <strong>Assignments &gt; Mid-term &gt; M4 Diagram Upload</strong></div>
         </div>
         <div style="background:var(--s2);border-radius:10px;padding:13px;border:1px solid var(--border)">
           <div style="font-size:.68rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">File 3 of 3</div>
@@ -429,7 +420,6 @@ code{background:var(--s2);border:1px solid var(--border);border-radius:4px;paddi
     <div id="exprev" class="exprev"></div>
     <div class="btn-row" style="justify-content:center;margin-top:20px">
       <button class="btn btn-g" onclick="downloadAnswers()">Download Answer File</button>
-      <button class="btn btn-s" onclick="reviewMode()">Review Answers</button>
       <button class="btn btn-s" onclick="showPage('m4')">Continue to M4</button>
     </div>
   </div>
@@ -456,20 +446,27 @@ code{background:var(--s2);border:1px solid var(--border);border-radius:4px;paddi
   </div>
 
   <div class="m4s">
-    <h2>Architecture Diagram</h2>
-    <p>Upload your system architecture showing all major components: data ingestion, model inference, retrieval/RAG, guardrails, output delivery, monitoring, storage.</p>
-    <p><strong>Meets:</strong> Major parts shown. <strong>Exceeds:</strong> Real service names, explicit data flows, failure paths, monitoring endpoint.</p>
-    <div class="adrop" id="adrop" onclick="document.getElementById('fin').click()">
-      <span style="font-size:2.2rem">&#128208;</span>
-      <strong>Click to upload or drag and drop</strong>
-      <span class="text-muted text-sm">PNG, JPG, SVG or PDF</span>
+    <h2>&#128208; Architecture Diagram</h2>
+    <p>Create your diagram in an external tool, then upload the file <strong>directly to Canvas</strong>. There is no upload widget here — this page cannot submit to Canvas on your behalf.</p>
+    <div style="background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:20px">
+      <div style="font-weight:700;font-size:.9rem;color:var(--accent);margin-bottom:14px">Recommended Diagramming Tools (all free)</div>
+      <div class="cgrid" style="margin:0 0 16px">
+        <div class="cc"><div class="cc-t">draw.io / diagrams.net</div><div class="cc-d">Free browser-based. File &rarr; Export as PNG or PDF. <strong>Recommended.</strong></div></div>
+        <div class="cc"><div class="cc-t">Excalidraw</div><div class="cc-d">excalidraw.com &mdash; quick sketches, exports PNG. Great for hand-drawn style.</div></div>
+        <div class="cc"><div class="cc-t">Miro (free tier)</div><div class="cc-d">Real-time whiteboard. Export frame as image or PDF.</div></div>
+        <div class="cc"><div class="cc-t">Google Slides / PPT</div><div class="cc-d">Use shapes and connectors. Export the slide as PNG or PDF.</div></div>
+      </div>
+      <div style="font-weight:700;font-size:.88rem;color:var(--text);margin-bottom:10px">Your diagram must show:</div>
+      <div style="display:flex;flex-direction:column;gap:7px;font-size:.83rem;color:var(--muted)">
+        <div>&#10003; All components with <strong style="color:var(--text)">real service names</strong> (e.g., <code>gpt-4o</code>, <code>Pinecone</code>, <code>pgvector</code>, <code>FastAPI</code>)</div>
+        <div>&#10003; <strong style="color:var(--text)">Labeled data flows</strong> between components</div>
+        <div>&#10003; <strong style="color:var(--text)">Failure / fallback paths</strong></div>
+        <div>&#10003; <strong style="color:var(--text)">Monitoring / logging endpoint</strong></div>
+      </div>
     </div>
-    <input type="file" id="fin" accept="image/*,.pdf,.svg" onchange="handleUpload(this)" style="display:none">
-    <div class="cgrid mt3">
-      <div class="cc"><div class="cc-lbl">Tip</div><div class="cc-t">Real service names</div><div class="cc-d">e.g., gpt-4o, Pinecone, FastAPI, pgvector, Llama Guard — not just "LLM" or "database"</div></div>
-      <div class="cc"><div class="cc-lbl">Tip</div><div class="cc-t">Label data flows</div><div class="cc-d">Show what payload moves between components: raw text, embeddings, JSON, tokens, decisions</div></div>
-      <div class="cc"><div class="cc-lbl">Tip</div><div class="cc-t">Show failure paths</div><div class="cc-d">What happens when the model API is down? Do you have a fallback or graceful degradation?</div></div>
-      <div class="cc"><div class="cc-lbl">Tip</div><div class="cc-t">Include monitoring</div><div class="cc-d">Where does logging happen? What alerts exist? Where does user feedback flow?</div></div>
+    <div style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);border-radius:10px;padding:13px 17px;margin-top:14px;font-size:.85rem">
+      <strong style="color:var(--accent)">&#128228; Canvas upload path:</strong>
+      <span style="color:var(--muted)"> Log in &rarr; <strong style="color:var(--text)">Assignments &rarr; Mid-term tab &rarr; M4 Diagram</strong> &rarr; upload your PNG or PDF file there.</span>
     </div>
   </div>
 
@@ -495,7 +492,7 @@ code{background:var(--s2);border:1px solid var(--border);border-radius:4px;paddi
   <hr class="divider">
   <div style="text-align:center;padding:22px 0">
     <ul class="chklist" style="max-width:420px;margin:0 auto 20px">
-      <li><div class="chk" onclick="ck(this)"></div>Architecture diagram uploaded with real service names</li>
+      <li><div class="chk" onclick="ck(this)"></div>Architecture diagram created in draw.io or similar and uploaded directly to Canvas</li>
       <li><div class="chk" onclick="ck(this)"></div>At least 5 risk rows with severity ratings</li>
       <li><div class="chk" onclick="ck(this)"></div>Each risk has a concrete (not generic) mitigation</li>
       <li><div class="chk" onclick="ck(this)"></div>Part A exam answer file already submitted to Canvas</li>
@@ -628,6 +625,15 @@ function beginExam(){
   if(!/^\d{9}$/.test(ruid)){toast('RUID must be exactly 9 digits.');return;}
   if(!netid){toast('Enter your NetID.');return;}
   if(!document.getElementById('honor-box').checked){toast('Accept the honor pledge to begin.');return;}
+  // Session lock: prevents restarting exam in same browser session
+  const lockKey='exam_started_'+ruid;
+  if(sessionStorage.getItem(lockKey)){
+    const startedAt=sessionStorage.getItem('exam_ts_'+ruid)||'unknown time';
+    const ok=confirm('Browser records that RUID '+ruid+' already started this exam at '+startedAt+'.\n\nOne attempt is permitted. Starting again is not allowed.\n\nClick Cancel to exit, or OK only if continuing an interrupted session on the same device.');
+    if(!ok)return;
+  }
+  sessionStorage.setItem(lockKey,'1');
+  sessionStorage.setItem('exam_ts_'+ruid,new Date().toLocaleString());
   S.name=name;S.ruid=ruid;S.netid=netid;S.ts0=new Date().toISOString();S.started=true;
   document.getElementById('identity-gate').style.display='none';
   document.getElementById('exam-active').style.display='block';
@@ -681,17 +687,16 @@ function buildCode(q,i){
 <div class="wc" id="wc-${i}">0 words</div>`;
 }
 function revMC(qi){
-  if(S.rev[qi]||QS[qi].type!=='mc')return;S.rev[qi]=true;
-  const q=QS[qi],ua=S.ans[qi];
-  q.opts.forEach((_,j)=>{
-    const el=document.getElementById(`opt-${qi}-${j}`);if(!el)return;
-    el.classList.add('dis');
-    if(j===q.ans)el.classList.add('ok');
-    else if(j===ua&&j!==q.ans)el.classList.add('bad');
+  // Lock selection only. Answer key is never shown in this client.
+  if(QS[qi].type!=='mc'||S.rev[qi])return;
+  S.rev[qi]=true;
+  QS[qi].opts.forEach((_,j)=>{
+    const el=document.getElementById(`opt-${qi}-${j}`);
+    if(el)el.classList.add('dis');
   });
-  const fb=document.getElementById(`fb-${qi}`);const ok=ua===q.ans;
-  fb.className='fb show '+(ok?'cor':'wro');
-  fb.innerHTML=`<strong>${ok?'Correct':'Incorrect — correct answer: '+['A','B','C','D'][q.ans]}</strong>${q.fb}`;
+  const fb=document.getElementById(`fb-${qi}`);
+  fb.className='fb show inf';
+  fb.innerHTML='<strong>Answer Recorded</strong>Your selection has been saved and will appear in your downloaded answer file.';
 }
 function showQ(i){
   document.querySelectorAll('.qblock').forEach(e=>e.classList.remove('active'));
@@ -699,7 +704,7 @@ function showQ(i){
   document.getElementById(`qb-${i}`)?.classList.add('active');
   const d=document.getElementById(`dot-${i}`);if(d){d.classList.add('current');d.classList.remove('skipped');}
   S.cur=i;updProg();
-  if(QS[i].type==='mc'&&S.ans[i]!==undefined)setTimeout(()=>revMC(i),150);
+  if(QS[i].type==='mc'&&S.ans[i]!==undefined&&!S.rev[i])setTimeout(()=>revMC(i),150);
 }
 function nextQ(i){if(QS[i].type==='mc')revMC(i);if(i<QS.length-1)showQ(i+1);}
 function prevQ(i){if(i>0)showQ(i-1);}
@@ -715,46 +720,34 @@ function updProg(){
 function finishExam(){
   if(S.done)return;S.done=true;S.ts1=new Date().toISOString();clearInterval(S.timer);
   document.getElementById('exam-active').style.display='none';
-  QS.forEach((_,i)=>{if(QS[i].type==='mc')revMC(i);});
-  let mc=0;QS.forEach((q,i)=>{if(q.type==='mc'&&S.ans[i]===q.ans)mc++;});
-  const saMax=QS.filter(q=>q.type==='short').length;
-  const mcCount=QS.filter(q=>q.type==='mc').length;const pct=mc/mcCount;
-  document.getElementById('ring-n').textContent=mc+'/'+mcCount+'+'
-  setTimeout(()=>{document.getElementById('ring-fill').style.strokeDashoffset=377*(1-pct);},300);
-  let g='A',gc='#10b981';
-  if(pct<.7){g='B';gc='#22d3ee';}if(pct<.6){g='C';gc='#f59e0b';}if(pct<.5){g='D';gc='#ef4444';}
-  const gb=document.getElementById('gbadge');gb.textContent=g+' (MC portion)';gb.style.color=gc;
+  const answered=Object.keys(S.ans).length;
   const used=3600-S.left,m=Math.floor(used/60),s=used%60;
+  document.getElementById('ring-n').textContent=answered;
+  setTimeout(()=>{
+    document.getElementById('ring-fill').style.stroke='var(--accent)';
+    document.getElementById('ring-fill').style.strokeDashoffset=377*(1-answered/QS.length);
+  },300);
+  document.getElementById('gbadge').style.display='none';
   document.getElementById('rgrid').innerHTML=`
-<div class="ri"><div class="ri-l">MC Score (auto)</div><div class="ri-v">${mc}/10</div><div class="ri-s">${Math.round(pct*100)}% accuracy</div></div>
-<div class="ri"><div class="ri-l">Short Answer (5x1pt)</div><div class="ri-v">?/${saMax}</div><div class="ri-s">Instructor-graded</div></div>
-<div class="ri"><div class="ri-l">Part A Total (15pts)</div><div class="ri-v">${mc}+ pts</div><div class="ri-s">Pending SA grading</div></div>
-<div class="ri"><div class="ri-l">Time Used</div><div class="ri-v">${m}m ${s}s</div><div class="ri-s">of 60 min</div></div>
+<div class="ri"><div class="ri-l">Questions Answered</div><div class="ri-v">${answered} / ${QS.length}</div><div class="ri-s">Saved in your answer file</div></div>
+<div class="ri"><div class="ri-l">Time Used</div><div class="ri-v">${m}m ${s}s</div><div class="ri-s">of 60 minutes</div></div>
 <div class="ri"><div class="ri-l">Student</div><div class="ri-v" style="font-size:.9rem">${S.name}</div><div class="ri-s">RUID: ${S.ruid}</div></div>
-<div class="ri"><div class="ri-l">Submitted</div><div class="ri-v" style="font-size:.78rem">${new Date().toLocaleString()}</div><div class="ri-s">Local time</div></div>`;
+<div class="ri"><div class="ri-l">Timestamp</div><div class="ri-v" style="font-size:.78rem">${new Date().toLocaleString()}</div><div class="ri-s">Local time (Canvas logs separately)</div></div>`;
   document.getElementById('results').classList.add('show');
   document.getElementById('results').scrollIntoView({behavior:'smooth'});
 }
 
-function reviewMode(){
-  document.getElementById('results').classList.remove('show');
-  document.getElementById('exam-active').style.display='block';
-  QS.forEach((q,i)=>{
-    if(q.type==='short'){const fb=document.getElementById(`fb-${i}`);if(fb){fb.className='fb show inf';fb.innerHTML=`<strong>Model Answer Elements (Instructor Reference)</strong>${q.fb}`;}}
-  });showQ(0);
-}
+// reviewMode removed - answer key not available client-side
 
 function buildAnswerText(){
   let t='AI ENGINEERING — WEEK 8 MIDTERM\n==============================\n\n';
   t+=`Student Name: ${S.name}\nRUID: ${S.ruid}\nNetID: ${S.netid}\nExam Started: ${S.ts0}\nExam Submitted: ${S.ts1||new Date().toISOString()}\nTime Used: ${Math.floor((3600-S.left)/60)}m ${(3600-S.left)%60}s\n\n`;
-  let mc=0;QS.forEach((q,i)=>{if(q.type==='mc'&&S.ans[i]===q.ans)mc++;});
-  t+=`AUTO-SCORED MC: ${mc}/10\nSHORT ANSWER: pending instructor grading (5pts max)\n\n------------------------------\nANSWERS\n------------------------------\n\n`;
+  t+=`GRADING: Instructor-graded. No scores are calculated or stored in this file.\n\n------------------------------\nANSWERS\n------------------------------\n\n`;
   QS.forEach((q,i)=>{
     t+=`Q${i+1} [${q.pts}pt · ${q.type==='mc'?'MC':q.type==='code'?'Code Task':'Short Answer'}]\n${q.text}\n`;
     if(q.type==='mc'){
       const ua=S.ans[i];
       t+=`Your answer: ${ua!==undefined?`(${['A','B','C','D'][ua]}) ${q.opts[ua]}`:'[not answered]'}\n`;
-      t+=`Correct: (${['A','B','C','D'][q.ans]}) ${q.opts[q.ans]}\nResult: ${ua===q.ans?'CORRECT':'INCORRECT'}\n`;
     }else{t+=`Your answer:\n${S.ans[i]||'[not answered]'}\n`;}
     t+='\n';
   });
@@ -785,19 +778,7 @@ function addRisk(){
 function sevSt(n){const s=document.getElementById(`sev-${n}`);s.className='sev';if(s.value)s.classList.add(s.value);}
 for(let i=0;i<5;i++)addRisk();
 
-function handleUpload(inp){
-  // accepts either a file input element or a raw File object
-  const f=(inp instanceof File)?inp:inp.files[0];
-  if(!f)return;const drop=document.getElementById('adrop');
-  if(f.type.startsWith('image/')){
-    const r=new FileReader();r.onload=e=>{drop.innerHTML=`<img src="${e.target.result}">`;drop.classList.add('hi');drop.style.minHeight='auto';toast('Diagram uploaded!');};r.readAsDataURL(f);
-  }else{drop.innerHTML=`<span style="font-size:2rem">&#128196;</span><strong>${f.name}</strong><span style="font-size:.8rem;color:var(--muted)">${(f.size/1024).toFixed(0)} KB</span>`;toast('File uploaded!');}
-}
-const ad=document.getElementById('adrop');
-ad.addEventListener('dragover',e=>{e.preventDefault();ad.style.borderColor='#6366f1';});
-ad.addEventListener('dragleave',()=>{ad.style.borderColor='';});
-// Fix: pass the File object directly — browsers block setting input.files from JS
-ad.addEventListener('drop',e=>{e.preventDefault();ad.style.borderColor='';const files=e.dataTransfer.files;if(files.length)handleUpload(files[0]);});
+// diagram upload removed — students upload directly to Canvas
 
 function exportM4(){
   const rows=document.querySelectorAll('.rrow');let t=`M4 ARCHITECTURE PACKET\nStudent: ${S.name||'[complete exam first]'} · RUID: ${S.ruid||'N/A'}\nExported: ${new Date().toLocaleString()}\n\nRISK REGISTER:\n\n`;
