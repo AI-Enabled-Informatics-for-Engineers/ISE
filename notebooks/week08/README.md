@@ -2,7 +2,11 @@
 
 **Dates:** Mar 24–30
 **Primary text:** Chip Huyen, *AI Engineering* — Chapter 4
+
+
 ***LECTURE 08 AND EXAM at: https://ai-enabled-informatics-for-engineers.github.io/ISE/notebooks/week08/lecture_08_midterm
+
+
 ***UPLOAD FILES FOR COMPLETED EXAM AND M4 at CANVAS > ASSIGNMENTS TAB
 
 ## Checklist (do these in order)
@@ -15,10 +19,6 @@
 ## Required materials (live links)
 - See lecture and course repo resources for this week.
 
-## Coding lab (Colab)
-- Notebook stub
-  - Notebook: `notebooks/week08/00_stub.ipynb`
-  - Open in Colab: https://colab.research.google.com/github/AI-Enabled-Informatics-for-Engineers/ISE/blob/main/notebooks/week08/00_stub.ipynb
 
 ## Canvas discussion prompt
 - Midterm Q&A and reflections.
