@@ -2,6 +2,8 @@
 
 **Dates:** Mar 24–30
 **Primary text:** Chip Huyen, *AI Engineering* — Chapter 4
+***LECTURE 08 AND EXAM at: https://ai-enabled-informatics-for-engineers.github.io/ISE/notebooks/week08/lecture_08_midterm
+***UPLOAD FILES FOR COMPLETED EXAM AND M4 at CANVAS > ASSIGNMENTS TAB
 
 ## Checklist (do these in order)
 1. Read the required materials
