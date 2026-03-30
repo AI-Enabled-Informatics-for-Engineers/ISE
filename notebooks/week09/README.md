@@ -1,5 +1,5 @@
 # Week 9 — Embeddings + semantic retrieval as informatics
-
+**Lecture available at:  https://ai-enabled-informatics-for-engineers.github.io/ISE/notebooks/week09/lecture09
 **Dates:** Mar 31–Apr 6
 **Primary text:** Chip Huyen, *AI Engineering* — Chapter 6 (retrieval portion)
 
