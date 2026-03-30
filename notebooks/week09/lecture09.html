@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 9 · Embeddings + Semantic Retrieval</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--s2:#22263a;--border:#2e3352;--accent:#6366f1;--cyan:#22d3ee;--amber:#f59e0b;--green:#10b981;--red:#ef4444;--purple:#a78bfa;--text:#e2e8f0;--muted:#94a3b8;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+nav{display:flex;align-items:center;gap:8px;padding:12px 28px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.nav-logo{font-weight:800;font-size:1.05rem;color:var(--accent);white-space:nowrap}
+.nav-tabs{display:flex;gap:4px;margin-left:10px;flex-wrap:wrap}
+.tb{padding:5px 13px;border-radius:8px;border:none;cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s;background:transparent;color:var(--muted)}
+.tb.active{background:var(--accent);color:#fff}
+.tb:hover:not(.active){background:var(--s2);color:var(--text)}
+.page{display:none;padding:28px;max-width:980px;margin:0 auto}
+.page.active{display:block}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#1a1d27,#1a1042 50%,#0a1628);border:1px solid var(--border);border-radius:var(--r);padding:40px 36px;text-align:center;margin-bottom:28px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 60% 30%,rgba(167,139,250,.12),transparent 60%);pointer-events:none}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);color:var(--purple);padding:3px 12px;border-radius:20px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px}
+.hero h1{font-size:2rem;font-weight:800;margin-bottom:8px;line-height:1.2}
+.hero h1 span{color:var(--purple)}
+.hero p{color:var(--muted);font-size:.92rem;max-width:600px;margin:0 auto 22px;line-height:1.6}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:20px}
+.chip{display:flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border);padding:5px 12px;border-radius:20px;font-size:.78rem;color:var(--muted)}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{padding:9px 20px;border-radius:9px;border:none;cursor:pointer;font-weight:700;font-size:.86rem;transition:all .2s;display:inline-flex;align-items:center;gap:7px;text-decoration:none}
+.btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:#4f46e5;transform:translateY(-1px)}
+.btn-s{background:var(--s2);color:var(--text);border:1px solid var(--border)}.btn-s:hover{border-color:var(--accent);color:var(--accent)}
+.btn-purple{background:var(--purple);color:#fff}.btn-purple:hover{background:#8b5cf6}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:18px}
+.card-h{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.card-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.ci{background:rgba(99,102,241,.15)}.cp{background:rgba(167,139,250,.15)}.cg{background:rgba(16,185,129,.15)}.ca{background:rgba(245,158,11,.12)}.cc{background:rgba(34,211,238,.12)}
+.card-title{font-size:1rem;font-weight:700}
+
+/* LECTURE SECTIONS */
+.ls{margin-bottom:30px}
+.ls h2{font-size:1.2rem;font-weight:700;color:var(--cyan);border-bottom:1px solid var(--border);padding-bottom:9px;margin-bottom:18px;display:flex;align-items:center;gap:9px}
+.ls h3{font-size:.96rem;font-weight:700;color:var(--amber);margin:16px 0 8px}
+.ls p{color:var(--muted);line-height:1.75;margin-bottom:12px;font-size:.9rem}
+.ls ul{list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.ls li{font-size:.88rem;color:var(--muted);display:flex;gap:8px;line-height:1.5}
+.ls li::before{content:"▸";color:var(--accent);flex-shrink:0;margin-top:2px}
+
+/* HIGHLIGHT BOXES */
+.hl{border-left:3px solid var(--accent);background:rgba(99,102,241,.07);border-radius:0 8px 8px 0;padding:14px 18px;margin:14px 0;font-size:.88rem;color:var(--muted);line-height:1.7}
+.hl strong{color:var(--text)}
+.hl-purple{border-color:var(--purple);background:rgba(167,139,250,.07)}
+.hl-purple strong{color:var(--purple)}
+.hl-amber{border-color:var(--amber);background:rgba(245,158,11,.07)}
+.hl-amber strong{color:var(--amber)}
+.hl-green{border-color:var(--green);background:rgba(16,185,129,.07)}
+.hl-green strong{color:var(--green)}
+.hl-cyan{border-color:var(--cyan);background:rgba(34,211,238,.07)}
+.hl-cyan strong{color:var(--cyan)}
+
+/* CONCEPT GRID */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:13px;margin:14px 0}
+.cc-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:15px;transition:border-color .2s;cursor:default}
+.cc-card:hover{border-color:var(--purple)}
+.cc-lbl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--purple);margin-bottom:5px}
+.cc-t{font-weight:700;font-size:.88rem;margin-bottom:5px}
+.cc-d{font-size:.8rem;color:var(--muted);line-height:1.5}
+
+/* FLOW STEPS */
+.flow{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.fstep{display:flex;align-items:flex-start;gap:13px;background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)}
+.fn{background:var(--purple);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:.77rem;font-weight:800;flex-shrink:0;margin-top:1px}
+.fbody strong{font-size:.88rem;display:block;margin-bottom:4px;color:var(--text)}
+.fbody p{font-size:.81rem;color:var(--muted);margin:0;line-height:1.55}
+
+/* COMPARE TABLE */
+.cmp-tbl{width:100%;border-collapse:collapse;font-size:.84rem;margin:14px 0}
+.cmp-tbl th{background:var(--s2);font-weight:700;padding:9px 13px;text-align:left;border-bottom:1px solid var(--border)}
+.cmp-tbl th:first-child{color:var(--muted)}
+.cmp-tbl th:nth-child(2){color:var(--cyan)}
+.cmp-tbl th:nth-child(3){color:var(--purple)}
+.cmp-tbl td{padding:9px 13px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top}
+.cmp-tbl tr:last-child td{border-bottom:none}
+.cmp-tbl tr:hover td{background:rgba(167,139,250,.04)}
+code{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-family:'Courier New',monospace;font-size:.82em;color:var(--cyan)}
+.code-block{background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:16px 18px;font-family:'Courier New',monospace;font-size:.8rem;color:#e6edf3;white-space:pre;overflow-x:auto;margin:14px 0;line-height:1.65}
+.kw{color:#ff7b72}.fn2{color:#79c0ff}.str{color:#a5d6ff}.cm{color:#8b949e}.nr{color:#f8c555}
+
+/* VISUAL: EMBEDDING SPACE */
+.embed-demo{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:16px 0}
+.embed-demo h4{font-size:.85rem;font-weight:700;color:var(--purple);margin-bottom:12px;text-align:center}
+.vec-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:.82rem}
+.vec-label{width:140px;color:var(--muted);text-align:right;flex-shrink:0;font-size:.78rem}
+.vec-bar{display:flex;gap:2px;flex:1}
+.vb{height:22px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;color:rgba(255,255,255,.7);min-width:14px;transition:all .3s}
+.sim-badge{padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:700;margin-left:8px;flex-shrink:0}
+.sim-hi{background:rgba(16,185,129,.2);color:#6ee7b7}
+.sim-lo{background:rgba(239,68,68,.15);color:#fca5a5}
+.sim-md{background:rgba(245,158,11,.15);color:#fde68a}
+
+/* INTERACTIVE: RETRIEVAL DEMO */
+.retrieval-demo{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:16px 0}
+.retrieval-demo h4{font-size:.88rem;font-weight:700;color:var(--cyan);margin-bottom:14px}
+.query-input{width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px 14px;color:var(--text);font-family:inherit;font-size:.88rem;margin-bottom:10px}
+.query-input:focus{outline:none;border-color:var(--accent)}
+.retrieve-btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 18px;cursor:pointer;font-size:.84rem;font-weight:700;margin-bottom:14px;transition:all .2s}
+.retrieve-btn:hover{background:#4f46e5}
+.result-list{display:flex;flex-direction:column;gap:8px}
+.result-item{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 15px;font-size:.83rem;display:flex;align-items:flex-start;gap:11px;transition:border-color .3s}
+.result-item.hi{border-color:var(--green)}
+.result-item.md{border-color:var(--amber)}
+.result-item.lo{border-color:var(--border)}
+.score-pill{padding:3px 9px;border-radius:20px;font-size:.72rem;font-weight:700;flex-shrink:0;margin-top:2px}
+.score-hi{background:rgba(16,185,129,.2);color:#6ee7b7}
+.score-md{background:rgba(245,158,11,.15);color:#fde68a}
+.score-lo{background:rgba(100,100,100,.2);color:var(--muted)}
+.method-toggle{display:flex;gap:6px;margin-bottom:14px}
+.method-btn{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.78rem;font-weight:600;transition:all .2s}
+.method-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* VECTOR MATH INTERACTIVE */
+.vec-math{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:16px 0}
+.vec-math h4{font-size:.88rem;font-weight:700;color:var(--purple);margin-bottom:14px}
+.word-chip{display:inline-block;padding:5px 13px;border-radius:20px;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);color:var(--purple);font-size:.82rem;font-weight:600;cursor:pointer;margin:4px;transition:all .2s}
+.word-chip:hover{background:rgba(167,139,250,.3)}
+.word-chip.selected{background:var(--purple);color:#fff}
+.math-display{font-size:.9rem;color:var(--text);margin:14px 0;padding:12px;background:var(--surface);border-radius:8px;border:1px solid var(--border);min-height:44px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.math-op{color:var(--amber);font-weight:700;font-size:1.1rem}
+.math-result{color:var(--green);font-weight:700}
+
+/* CHUNKING VISUAL */
+.chunk-vis{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:16px 0}
+.chunk-vis h4{font-size:.88rem;font-weight:700;color:var(--amber);margin-bottom:14px}
+.doc-text{font-size:.82rem;color:var(--muted);line-height:1.9;background:var(--surface);border-radius:8px;padding:14px;border:1px solid var(--border);position:relative}
+.chunk-a{background:rgba(99,102,241,.25);border-radius:3px;color:var(--text);padding:1px 0}
+.chunk-b{background:rgba(34,211,238,.2);border-radius:3px;color:var(--text);padding:1px 0}
+.chunk-c{background:rgba(16,185,129,.2);border-radius:3px;color:var(--text);padding:1px 0}
+.chunk-overlap{background:rgba(245,158,11,.3);border-radius:3px;color:var(--text);padding:1px 0}
+.chunk-legend{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+.cl-item{display:flex;align-items:center;gap:6px;font-size:.75rem;color:var(--muted)}
+.cl-swatch{width:14px;height:14px;border-radius:3px;flex-shrink:0}
+
+/* ANN ALGORITHM CARDS */
+.algo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:13px;margin:14px 0}
+.algo-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:15px;transition:border-color .2s}
+.algo-card:hover{border-color:var(--cyan)}
+.algo-name{font-weight:800;font-size:.88rem;color:var(--cyan);margin-bottom:4px}
+.algo-tag{display:inline-block;padding:1px 7px;border-radius:20px;font-size:.68rem;font-weight:700;background:rgba(34,211,238,.1);color:var(--cyan);margin-bottom:8px}
+.algo-desc{font-size:.79rem;color:var(--muted);line-height:1.5;margin-bottom:8px}
+.algo-meta{display:flex;gap:8px;flex-wrap:wrap}
+.algo-chip{font-size:.7rem;padding:2px 7px;border-radius:20px;background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--border)}
+
+/* DISCUSSION SECTION */
+.discussion-card{background:linear-gradient(135deg,rgba(167,139,250,.1),rgba(99,102,241,.05));border:1px solid rgba(167,139,250,.25);border-radius:var(--r);padding:22px;margin:16px 0}
+.discussion-card h3{color:var(--purple);font-size:1rem;font-weight:700;margin-bottom:12px}
+.discussion-prompt{font-size:.9rem;color:var(--text);line-height:1.7;margin-bottom:16px;font-style:italic}
+.discussion-angles{display:flex;flex-direction:column;gap:8px}
+.da{display:flex;gap:10px;font-size:.84rem;color:var(--muted);line-height:1.5}
+.da-icon{flex-shrink:0;font-size:1rem;margin-top:1px}
+
+/* TOOL CARDS */
+.tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+.tool-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:18px;transition:border-color .2s}
+.tool-card:hover{border-color:var(--accent)}
+.tool-logo{font-size:1.8rem;margin-bottom:10px}
+.tool-name{font-size:1rem;font-weight:800;margin-bottom:4px}
+.tool-sub{font-size:.77rem;color:var(--muted);margin-bottom:12px}
+.tool-features{list-style:none;display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.tool-features li{font-size:.8rem;color:var(--muted);display:flex;gap:7px}
+.tool-features li::before{content:"✓";color:var(--green);flex-shrink:0}
+.tool-code{background:#0d1117;border-radius:8px;padding:12px 14px;font-family:'Courier New',monospace;font-size:.74rem;color:#e6edf3;white-space:pre;overflow-x:auto;margin-top:10px;line-height:1.6}
+
+/* PROJECT MILESTONE */
+.milestone{background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(34,211,238,.04));border:1px solid rgba(16,185,129,.25);border-radius:var(--r);padding:20px;margin:16px 0}
+.milestone h4{color:var(--green);font-size:.95rem;font-weight:800;margin-bottom:14px}
+.m-option{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:15px;margin-bottom:10px}
+.m-option-hdr{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.m-badge{padding:2px 9px;border-radius:20px;font-size:.7rem;font-weight:700}
+.mb-r{background:rgba(99,102,241,.2);color:var(--accent)}
+.mb-e{background:rgba(34,211,238,.15);color:var(--cyan)}
+.m-title{font-size:.9rem;font-weight:700}
+.m-desc{font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:10px}
+.m-deliverables{list-style:none;display:flex;flex-direction:column;gap:4px}
+.m-deliverables li{font-size:.8rem;color:var(--muted);display:flex;gap:7px}
+.m-deliverables li::before{content:"□";color:var(--accent);flex-shrink:0}
+
+/* CHECKLIST */
+.chklist{list-style:none}
+.chklist li{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);font-size:.88rem}
+.chklist li:last-child{border-bottom:none}
+.chk{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;transition:all .2s}
+.chk.on{background:var(--green);border-color:var(--green);color:#fff}
+.divider{border:none;border-top:1px solid var(--border);margin:22px 0}
+#toast{position:fixed;bottom:22px;right:22px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:.87rem;display:none;z-index:999;box-shadow:0 8px 28px rgba(0,0,0,.45)}
+#toast.on{display:block;animation:su .3s ease}
+@keyframes su{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.mt3{margin-top:12px}.mt4{margin-top:18px}.mb4{margin-bottom:18px}
+@media(max-width:640px){.page{padding:14px}.hero{padding:24px 16px}.tool-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <span class="nav-logo">AI Engineering</span>
+  <div class="nav-tabs">
+    <button class="tb active" onclick="show('home')">Home</button>
+    <button class="tb" onclick="show('lecture')">Lecture</button>
+    <button class="tb" onclick="show('tools')">Tools Lab</button>
+    <button class="tb" onclick="show('demo')">Interactive Demo</button>
+    <button class="tb" onclick="show('discussion')">Discussion</button>
+    <button class="tb" onclick="show('project')">Project M5</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════ HOME ═══════════════════ -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="badge">📅 Week 9 · Mar 31 – Apr 6</div>
+    <h1>Embeddings + <span>Semantic Retrieval</span></h1>
+    <p>How do machines find meaning? This week we go deep on how vectors encode semantics, how vector databases search at scale, and why retrieval is the spine of every production RAG system.</p>
+    <div class="chips">
+      <div class="chip">📚 Huyen Ch. 6 — RAG & Agents (retrieval)</div>
+      <div class="chip">🛠 Chroma + FAISS labs</div>
+      <div class="chip">💬 Discussion: what embeddings miss</div>
+      <div class="chip">🏗 Project M5 due</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-purple" onclick="show('lecture')">📖 Read Lecture</button>
+      <button class="btn btn-s" onclick="show('demo')">🔬 Try the Demo</button>
+      <button class="btn btn-s" onclick="show('tools')">🛠 Tools Lab</button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:20px">
+    <div class="card">
+      <div class="card-h"><div class="card-icon cp">🧠</div><div class="card-title">What You'll Understand</div></div>
+      <ul class="ls" style="margin:0"><ul>
+        <li>Why term-based and semantic retrieval are fundamentally different</li>
+        <li>How embeddings encode meaning as geometry in high-dimensional space</li>
+        <li>How FAISS, HNSW, IVF, and Chroma scale to billions of vectors</li>
+        <li>Hybrid search, reranking, chunking, and contextual retrieval</li>
+        <li>What embeddings systematically fail to capture — and why it matters</li>
+      </ul></ul>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-icon cg">✅</div><div class="card-title">Week 9 Checklist</div></div>
+      <ul class="chklist">
+        <li><div class="chk" onclick="ck(this)"></div>Read Ch. 6 retrieval sections (stop before Agents)</li>
+        <li><div class="chk" onclick="ck(this)"></div>Watch recorded Zoom lecture (Canvas link)</li>
+        <li><div class="chk" onclick="ck(this)"></div>Read the Lecture tab on this page</li>
+        <li><div class="chk" onclick="ck(this)"></div>Run Chroma + FAISS Colab notebooks</li>
+        <li><div class="chk" onclick="ck(this)"></div>Try the Interactive Demo tab</li>
+        <li><div class="chk" onclick="ck(this)"></div>Post Canvas discussion by Thursday</li>
+        <li><div class="chk" onclick="ck(this)"></div>Submit Project M5 to Canvas</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-icon ca">🗺</div><div class="card-title">How This Week Fits the Arc</div></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:4px">
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border:1px solid var(--border);opacity:.6">
+        <div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:4px">Wk 7 — Prompting</div>
+        <div style="font-size:.8rem;color:var(--muted)">How to instruct the model</div>
+      </div>
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border:1px solid var(--border);opacity:.6">
+        <div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:4px">Wk 8 — Evaluation</div>
+        <div style="font-size:.8rem;color:var(--muted)">How to measure if it works</div>
+      </div>
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border:1px solid rgba(167,139,250,.5)">
+        <div style="font-size:.7rem;font-weight:700;color:var(--purple);margin-bottom:4px">Wk 9 — Retrieval ← You are here</div>
+        <div style="font-size:.8rem;color:var(--muted)">How to give the model the right context</div>
+      </div>
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border:1px solid var(--border);opacity:.45">
+        <div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:4px">Wk 10 — Agents</div>
+        <div style="font-size:.8rem;color:var(--muted)">How the model acts in the world</div>
+      </div>
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border:1px solid var(--border);opacity:.35">
+        <div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:4px">Wk 11 — Finetuning</div>
+        <div style="font-size:.8rem;color:var(--muted)">How to adapt the model itself</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ LECTURE ═══════════════════ -->
+<div class="page" id="page-lecture">
+  <div class="hero">
+    <div class="badge">📖 Week 9 Lecture</div>
+    <h1>Embeddings + <span>Semantic Retrieval as Informatics</span></h1>
+    <p>Chapter 6, Huyen — RAG and Agents (retrieval portion). The question this week: how do we give a language model the right information, not just any information?</p>
+  </div>
+
+  <!-- SECTION 1: WHY RETRIEVAL -->
+  <div class="ls">
+    <h2>🎯 1 — Why Retrieval Exists: Context as Feature Engineering</h2>
+    <p>Huyen opens Chapter 6 with a precise framing: a model needs both <em>instructions</em> (how to do something) and <em>context</em> (the specific information needed to do it for this query). Instructions are shared across all queries. Context is query-specific. RAG is the discipline of constructing that query-specific context systematically.</p>
+    <div class="hl-purple"><strong>Key analogy:</strong> Context construction for foundation models is equivalent to feature engineering for classical ML. Both serve the same purpose — giving the model the information it needs to process a specific input correctly.</div>
+    <h3>Won't long context windows make RAG obsolete?</h3>
+    <p>A common question as models reach 128K, 1M, and even 10M token context windows. Huyen's answer is no — for three reasons:</p>
+    <ul class="ls"><ul>
+      <li><strong>Data always grows faster than context windows.</strong> Users generate data; they rarely delete it. No context window will ever be large enough for arbitrary applications.</li>
+      <li><strong>Attention degrades on very long contexts.</strong> "Lost in the middle" — models systematically pay less attention to information in the middle of long contexts. Stuffing everything in isn't the same as attending to it.</li>
+      <li><strong>Cost and latency scale with tokens.</strong> Every extra context token costs money and adds latency. RAG ensures only the most relevant information is in context per query.</li>
+    </ul></ul>
+    <div class="hl-cyan"><strong>Anthropic's guidance:</strong> For Claude models, if your knowledge base is smaller than ~200,000 tokens (about 500 pages), you can include the whole thing in the prompt without RAG. Above that threshold, or for dynamic data, RAG is the right architecture.</div>
+  </div>
+
+  <!-- SECTION 2: RAG ARCHITECTURE -->
+  <div class="ls">
+    <h2>🏗 2 — RAG Architecture: The Two Pipelines</h2>
+    <p>A RAG system has two fundamental components that operate in two distinct time frames:</p>
+    <div class="flow">
+      <div class="fstep"><div class="fn">📥</div><div class="fbody"><strong>Indexing Pipeline (offline / ahead of time)</strong><p>Process source documents → chunk them into manageable units → convert chunks to embeddings → store embeddings in a vector database. This runs once, or incrementally as data changes.</p></div></div>
+      <div class="fstep"><div class="fn">⚡</div><div class="fbody"><strong>Query Pipeline (online / real time)</strong><p>Receive user query → optionally rewrite it → embed the query using the same embedding model → search the vector database for the k nearest chunks → assemble context → feed into the generative model → return response.</p></div></div>
+    </div>
+    <p>The quality of the entire RAG system depends most heavily on the <strong>retriever</strong> — the component responsible for indexing and querying. A perfect generator cannot compensate for a retriever that fetches irrelevant documents. As we saw in Week 8, this is why high retrieval P@5 with low factual consistency is such a diagnostic signal: you can have excellent retrieval and still get hallucinations (from the generator), but you cannot get accurate responses if retrieval is poor.</p>
+  </div>
+
+  <!-- SECTION 3: TERM VS SEMANTIC -->
+  <div class="ls">
+    <h2>🔤 3 — Term-Based vs. Embedding-Based Retrieval</h2>
+    <h3>The Fundamental Problem with Keywords</h3>
+    <p>Term-based retrieval — querying by keyword matching — has powered search engines for decades. It works well out of the box and is extremely fast. But it operates at the <em>lexical</em> level: it matches the surface form of words, not their meaning.</p>
+    <p>Query "transformer architecture" with term-based retrieval. You'll retrieve documents about neural networks, electrical transformers, and the Transformers movie franchise with equal enthusiasm. The algorithm has no notion of intent.</p>
+    <p>More fundamentally: a user asking "how do I fix a segfault?" and a document saying "debugging memory access violations in C" have zero lexical overlap, but are semantically identical. Term-based retrieval misses this entirely.</p>
+    <h3>TF-IDF and BM25 — The Classic Baseline</h3>
+    <p>Despite their limitations, term-based methods remain important. <strong>TF-IDF</strong> (Term Frequency–Inverse Document Frequency) scores documents by how often a query term appears in them (TF), weighted by how rare that term is across the entire corpus (IDF). Common words like "the" get near-zero IDF; rare terms like "EADDRNOTI" get high IDF.</p>
+    <p><strong>BM25</strong> (Okapi BM25, 25th iteration of Best Matching) is the production-grade evolution of TF-IDF. It normalizes term frequency by document length — preventing long documents from automatically scoring higher just because they contain more words. BM25 and its variants are still widely used and serve as the mandatory baseline to beat when evaluating semantic retrieval.</p>
+    <div class="hl-amber"><strong>Production insight:</strong> Never deploy semantic-only retrieval without benchmarking it against BM25 first. Many teams have been surprised to find BM25 competitive or superior for their specific domain, especially for technical queries with precise terminology.</div>
+    <h3>Embedding-Based (Semantic) Retrieval</h3>
+    <p>Embedding-based retrieval converts both documents and queries into dense vectors — real-valued coordinates in a high-dimensional space (typically 384–4096 dimensions). Critically, the geometry of this space is trained to reflect semantic relationships: similar meanings end up close together, dissimilar meanings end up far apart.</p>
+    <p>This is what makes semantic retrieval powerful: "fix segfault" and "debug memory access violation" will have nearby embeddings, while "segfault" and "transformer (electrical device)" will be far apart even though they share vocabulary with other computer science terms.</p>
+    <div class="flow">
+      <div class="fstep"><div class="fn">1</div><div class="fbody"><strong>Embed all documents at index time</strong><p>Run each chunk through an embedding model (e.g., text-embedding-3-small, BAAI/bge-m3, sentence-transformers). Store the resulting vectors in a vector database.</p></div></div>
+      <div class="fstep"><div class="fn">2</div><div class="fbody"><strong>Embed the query at query time</strong><p>Convert the user's query to a vector using the <em>exact same embedding model</em> used during indexing. Dimension and model must match, or distances are meaningless.</p></div></div>
+      <div class="fstep"><div class="fn">3</div><div class="fbody"><strong>Find the k nearest vectors</strong><p>Search the vector database for the k document vectors closest to the query vector, using cosine similarity or L2 distance. Return the corresponding document chunks.</p></div></div>
+    </div>
+
+    <h3>Head-to-Head Comparison</h3>
+    <table class="cmp-tbl">
+      <tr><th>Dimension</th><th>Term-Based (BM25)</th><th>Embedding-Based</th></tr>
+      <tr><td>Matching level</td><td>Lexical (surface form)</td><td>Semantic (meaning)</td></tr>
+      <tr><td>Querying speed</td><td>Very fast (inverted index O(1) lookup)</td><td>Slower — embedding generation + ANN search</td></tr>
+      <tr><td>Out-of-box quality</td><td>Strong — no tuning needed</td><td>Depends on embedding model quality</td></tr>
+      <tr><td>Improvability</td><td>Limited — hard to tune beyond BM25F</td><td>High — finetune embedding model + retriever</td></tr>
+      <tr><td>Cost</td><td>Near-zero</td><td>Embedding API + vector DB storage + search</td></tr>
+      <tr><td>Failure mode</td><td>Misses synonyms, paraphrases</td><td>Loses exact keywords (error codes, product IDs)</td></tr>
+      <tr><td>Best for</td><td>Exact terminology, known keywords</td><td>Natural language, paraphrase-heavy queries</td></tr>
+    </table>
+    <div class="hl-green"><strong>The production answer is hybrid search:</strong> run both in parallel or in sequence, merge rankings with Reciprocal Rank Fusion (RRF), get the precision of term-based for exact keywords and the recall of semantic for paraphrased intents.</div>
+  </div>
+
+  <!-- SECTION 4: EMBEDDINGS AS GEOMETRY -->
+  <div class="ls">
+    <h2>📐 4 — Embeddings as Geometry: What "Meaning" Looks Like in Math</h2>
+    <p>An embedding is a vector — a point in a high-dimensional space. What makes embeddings useful is that the space is <em>structured</em>: distances between points correspond to semantic relationships. This isn't magic; it emerges from training on large text corpora where co-occurrence patterns encode meaning.</p>
+    <h3>The Classic Result: King − Man + Woman ≈ Queen</h3>
+    <p>Word2Vec (Mikolov et al., 2013) first demonstrated that vector arithmetic can capture semantic relationships. The famous example: the vector for "King" minus "Man" plus "Woman" lands near the vector for "Queen." The geometry of the embedding space encodes the concept of royalty independently of gender.</p>
+    <p>Modern sentence and document embeddings generalize this idea from words to entire passages. The embedding for "I couldn't connect to the database" will be geometrically close to "connection refused error from PostgreSQL" even though they share almost no vocabulary.</p>
+    <h3>Measuring Similarity: Cosine vs. L2</h3>
+    <p>Two vectors are "close" by one of two standard metrics. <strong>Cosine similarity</strong> measures the angle between vectors — it captures directional similarity regardless of magnitude. This is standard for text embeddings, where the scale of the vector matters less than its direction. <strong>L2 (Euclidean) distance</strong> measures straight-line distance — it cares about both direction and magnitude. FAISS supports both; cosine is usually the right choice for semantic retrieval of text.</p>
+    <div class="embed-demo">
+      <h4>🔍 Semantic Similarity — Conceptual Illustration</h4>
+      <div id="embed-pairs">
+        <div class="vec-row">
+          <div class="vec-label">"fix segfault in C"</div>
+          <div class="vec-bar" id="vb1"></div>
+          <span class="sim-badge sim-hi" title="high similarity">cos ≈ 0.91</span>
+        </div>
+        <div class="vec-row">
+          <div class="vec-label">"memory access violation"</div>
+          <div class="vec-bar" id="vb2"></div>
+          <span class="sim-badge sim-hi">cos ≈ 0.89</span>
+        </div>
+        <div class="vec-row">
+          <div class="vec-label">"electrical transformer"</div>
+          <div class="vec-bar" id="vb3"></div>
+          <span class="sim-badge sim-lo">cos ≈ 0.12</span>
+        </div>
+        <div class="vec-row">
+          <div class="vec-label">"neural network layers"</div>
+          <div class="vec-bar" id="vb4"></div>
+          <span class="sim-badge sim-md">cos ≈ 0.51</span>
+        </div>
+      </div>
+      <p style="font-size:.76rem;color:var(--muted);margin-top:10px;margin-bottom:0">Illustrative embeddings relative to query "debugging segmentation fault". Real embeddings are 768–4096 dimensional; shown here as 16-dim projections.</p>
+    </div>
+    <h3>The "Meaning" Problem — What Embeddings Miss</h3>
+    <p>This is the Week 9 discussion topic, and it's genuinely important. Embeddings capture <em>distributional semantics</em> — patterns of co-occurrence in training data. But that is not the same as meaning in a philosophical sense. Several systematic gaps:</p>
+    <div class="cgrid">
+      <div class="cc-card"><div class="cc-lbl">Gap 1</div><div class="cc-t">Antonyms cluster together</div><div class="cc-d">"hot" and "cold" appear in similar contexts, so they end up nearby in embedding space. Embeddings struggle to encode negation and opposition reliably.</div></div>
+      <div class="cc-card"><div class="cc-lbl">Gap 2</div><div class="cc-t">Exact symbols are lost</div><div class="cc-d">Error codes like <code>EADDRNOT​AVAIL</code>, product SKUs, part numbers, and version strings have embeddings that reflect surrounding text — not the symbol itself. BM25 handles these better.</div></div>
+      <div class="cc-card"><div class="cc-lbl">Gap 3</div><div class="cc-t">Cultural & temporal bias</div><div class="cc-d">Embeddings encode the associations dominant in training data. "Doctor" may cluster closer to male names; "software engineer" may cluster closer to "young." These biases are inherited, not chosen.</div></div>
+      <div class="cc-card"><div class="cc-lbl">Gap 4</div><div class="cc-t">No compositionality guarantee</div><div class="cc-d">"The patient recovered quickly" and "The patient did not recover quickly" may have similar embeddings — the model has seen both patterns. Sentence-level negation is notoriously poorly captured.</div></div>
+      <div class="cc-card"><div class="cc-lbl">Gap 5</div><div class="cc-t">Domain shift</div><div class="cc-d">A general-purpose embedding model trained on web text may encode "RAG" as "ragdoll" or "rags to riches" — not "retrieval-augmented generation." In-domain finetuning is often necessary.</div></div>
+      <div class="cc-card"><div class="cc-lbl">Gap 6</div><div class="cc-t">No world knowledge</div><div class="cc-d">Embeddings encode linguistic patterns, not facts. "The capital of France" and "Paris" will be related — but this relationship comes from co-occurrence, not from genuinely knowing that Paris is the capital.</div></div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: ANN ALGORITHMS -->
+  <div class="ls">
+    <h2>⚡ 5 — Vector Search at Scale: Approximate Nearest Neighbors</h2>
+    <p>Naive k-NN — compare every query vector to every stored vector, rank by similarity, return top-k — is exact but O(n) per query. At 10 million documents it's impractically slow. The solution is Approximate Nearest Neighbor (ANN) search: trade a small amount of accuracy for massive speed gains.</p>
+    <div class="algo-grid">
+      <div class="algo-card">
+        <div class="algo-name">HNSW</div>
+        <div class="algo-tag">Graph-based</div>
+        <div class="algo-desc">Hierarchical Navigable Small World. Builds a multi-layer graph where nodes are vectors, edges connect similar nodes. Search navigates the graph from coarse to fine layers. State-of-the-art recall/speed tradeoff.</div>
+        <div class="algo-meta"><span class="algo-chip">High recall</span><span class="algo-chip">Fast query</span><span class="algo-chip">Large index</span><span class="algo-chip">FAISS, Chroma</span></div>
+      </div>
+      <div class="algo-card">
+        <div class="algo-name">IVF + PQ</div>
+        <div class="algo-tag">Cluster + Quantize</div>
+        <div class="algo-desc">IVF uses k-means clustering; at query time only nearby cluster centroids are searched. Product Quantization (PQ) compresses vectors into short codes. Together they form the backbone of FAISS at billion-vector scale.</div>
+        <div class="algo-meta"><span class="algo-chip">Billion-scale</span><span class="algo-chip">Low memory</span><span class="algo-chip">FAISS default</span></div>
+      </div>
+      <div class="algo-card">
+        <div class="algo-name">LSH</div>
+        <div class="algo-tag">Hash-based</div>
+        <div class="algo-desc">Locality-Sensitive Hashing. Similar vectors are hashed to the same bucket with high probability. Search only looks in the same bucket. Fast to build, lower recall than HNSW, but very memory-efficient.</div>
+        <div class="algo-meta"><span class="algo-chip">Fast build</span><span class="algo-chip">Lower recall</span><span class="algo-chip">Memory efficient</span></div>
+      </div>
+      <div class="algo-card">
+        <div class="algo-name">Annoy</div>
+        <div class="algo-tag">Tree-based</div>
+        <div class="algo-desc">Approximate Nearest Neighbors Oh Yeah (Spotify). Builds multiple random binary trees by repeatedly splitting vectors with random hyperplanes. Search traverses trees to collect candidates. Great for static datasets.</div>
+        <div class="algo-meta"><span class="algo-chip">Static data</span><span class="algo-chip">Simple API</span><span class="algo-chip">Spotify OSS</span></div>
+      </div>
+    </div>
+    <div class="hl-amber"><strong>Index vs. query tradeoff:</strong> HNSW gives the best query-time recall but requires the most memory and longest build time. LSH builds fastest but has lower recall. IVF+PQ is the memory-efficient billion-scale choice. For most applications under 10M vectors, HNSW is the right default — it's what both Chroma and FAISS default to for small-to-mid scale deployments.</div>
+  </div>
+
+  <!-- SECTION 6: CHUNKING -->
+  <div class="ls">
+    <h2>✂️ 6 — Chunking Strategy: The Underrated Decision</h2>
+    <p>How you split source documents into retrievable chunks is one of the most practically impactful decisions in a RAG pipeline — and one of the least glamorous. Chunk size affects recall, precision, context quality, and cost simultaneously.</p>
+    <div class="chunk-vis">
+      <h4>📄 Chunking Approaches — Visual</h4>
+      <div class="doc-text">
+        <span class="chunk-a">The transformer architecture introduced self-attention, enabling models to weigh the relevance of different parts of the input.</span>
+        <span class="chunk-overlap"> This mechanism allows</span>
+        <span class="chunk-b"><span class="chunk-overlap">the model to process</span> sequences in parallel rather than sequentially, dramatically reducing training time.</span>
+        <span class="chunk-overlap"> Attention weights</span>
+        <span class="chunk-c"><span class="chunk-overlap">reflect the model's focus</span> on specific tokens when generating each output token, providing a form of interpretability.</span>
+      </div>
+      <div class="chunk-legend">
+        <div class="cl-item"><div class="cl-swatch" style="background:rgba(99,102,241,.5)"></div>Chunk 1</div>
+        <div class="cl-item"><div class="cl-swatch" style="background:rgba(34,211,238,.4)"></div>Chunk 2</div>
+        <div class="cl-item"><div class="cl-swatch" style="background:rgba(16,185,129,.4)"></div>Chunk 3</div>
+        <div class="cl-item"><div class="cl-swatch" style="background:rgba(245,158,11,.5)"></div>Overlap region (prevents context loss at boundaries)</div>
+      </div>
+    </div>
+    <div class="cgrid" style="margin-top:16px">
+      <div class="cc-card"><div class="cc-lbl">Strategy 1</div><div class="cc-t">Fixed Size</div><div class="cc-d">Split every N characters / words / sentences. Simple and fast. Risk: cuts mid-thought. Use overlap to mitigate boundary loss.</div></div>
+      <div class="cc-card"><div class="cc-lbl">Strategy 2</div><div class="cc-t">Recursive Splitter</div><div class="cc-d">Try section → paragraph → sentence → word in order. Stop when chunk fits. Preserves natural boundaries much better than fixed size.</div></div>
+      <div class="cc-card"><div class="cc-lbl">Strategy 3</div><div class="cc-t">Semantic Splitter</div><div class="cc-d">Use embeddings to detect topic shifts. Split when cosine similarity between adjacent sentences drops below threshold. Computationally expensive but high-quality chunks.</div></div>
+      <div class="cc-card"><div class="cc-lbl">Strategy 4</div><div class="cc-t">Contextual Retrieval</div><div class="cc-d">Anthropic's approach: prepend a 50-100 token AI-generated context summary to each chunk before indexing. Makes isolated chunks self-contained and dramatically improves retrieval recall.</div></div>
+    </div>
+    <div class="hl"><strong>Chunk size tradeoffs:</strong> Smaller chunks → more diverse information, fits more per context, but loses long-range dependencies and doubles your vector storage if you halve size. Larger chunks → richer context per result, but may dilute relevance and hit model context limits. There is no universal optimal — experiment with your specific documents and query distribution.</div>
+  </div>
+
+  <!-- SECTION 7: HYBRID + OPTIMIZATION -->
+  <div class="ls">
+    <h2>🔀 7 — Hybrid Search, Reranking & Query Rewriting</h2>
+    <h3>Hybrid Search + Reciprocal Rank Fusion (RRF)</h3>
+    <p>Run term-based and semantic retrievers in parallel. Each returns a ranked list. Merge them using RRF: each document's score is the sum of <code>1/(k + rank_i)</code> across all ranked lists, where k=60 is a smoothing constant. Documents consistently ranked highly by multiple retrievers rise to the top; no single retriever's quirks dominate.</p>
+    <p>Hybrid search gets you the best of both worlds: term-based precision for exact keywords (error codes, product IDs, proper nouns) and semantic recall for natural language intent and paraphrases.</p>
+    <h3>Reranking</h3>
+    <p>The initial ranked list from the retriever can be improved with a second-pass reranker. The pattern: use a fast, approximate retriever (BM25 or ANN) to get 100 candidate chunks. Then apply an expensive but precise cross-encoder model that jointly considers the query and each candidate chunk together (rather than comparing embeddings independently) to produce a final top-10. Cross-encoders are slower but more accurate because they can model interaction between query and document explicitly.</p>
+    <p>Documents can also be reranked by recency — essential for news aggregation, email Q&A, or any time-sensitive application where the most recent information should be prioritized over older, possibly more topically similar content.</p>
+    <h3>Query Rewriting</h3>
+    <p>Multi-turn conversations produce ambiguous queries. "How about Emily Doe?" means nothing in isolation — but in context, it means "When was the last time Emily Doe bought something from us?" A query rewriting step uses the conversation history to reformulate the raw user input into a self-contained query before passing it to the retriever.</p>
+    <p>This can be done with heuristics for simple cases (replace pronouns with their referents) or with a small LLM call for complex coreference resolution and entity expansion.</p>
+  </div>
+
+  <!-- SECTION 8: EVALUATION -->
+  <div class="ls">
+    <h2>📊 8 — Evaluating Retrieval: What to Measure</h2>
+    <p>Retrieval quality must be measured at three levels — the retriever alone, the embeddings alone, and the end-to-end RAG system output — because failures can occur at any layer independently.</p>
+    <table class="cmp-tbl">
+      <tr><th>Metric</th><th>What It Measures</th><th>How to Compute</th></tr>
+      <tr><td><strong>Context Precision</strong></td><td>Of retrieved docs, what fraction are relevant?</td><td>AI judge labels each retrieved chunk; mean across queries</td></tr>
+      <tr><td><strong>Context Recall</strong></td><td>Of all relevant docs, what fraction was retrieved?</td><td>Requires annotating all docs per query — expensive but important</td></tr>
+      <tr><td><strong>NDCG</strong></td><td>Quality of ranking (relevant docs should be ranked first)</td><td>Discounted cumulative gain normalized to ideal ranking</td></tr>
+      <tr><td><strong>MRR</strong></td><td>How high is the first relevant result ranked?</td><td>Mean of reciprocal rank across queries</td></tr>
+      <tr><td><strong>MTEB score</strong></td><td>Embedding quality across retrieval, classification, clustering</td><td>Muennighoff et al. 2023 — public leaderboard</td></tr>
+      <tr><td><strong>E2E factual consistency</strong></td><td>Does the generated answer match retrieved context?</td><td>Entailment classifier or AI judge on (context, response) pairs</td></tr>
+    </table>
+    <div class="hl-amber"><strong>Evaluation architecture:</strong> Measure retrieval precision and generation faithfulness separately. This isolation is what tells you whether a system failure is a retrieval problem (wrong chunks) or a generation problem (hallucinating despite good chunks). You cannot diagnose the system if you only measure end-to-end output.</div>
+  </div>
+
+  <!-- SECTION 9: BEYOND TEXT -->
+  <div class="ls">
+    <h2>🌐 9 — Beyond Text RAG: Multimodal and Tabular</h2>
+    <h3>Multimodal RAG</h3>
+    <p>When the generator is multimodal (e.g., GPT-4V, Gemini), context can include images, audio, and video alongside text. CLIP (Contrastive Language-Image Pre-training, Radford et al. 2021) enables joint embedding of images and text in the same vector space — you can embed a text query and retrieve images by cosine similarity.</p>
+    <h3>Tabular RAG — Text-to-SQL</h3>
+    <p>Many real queries require structured data — sales figures, user records, inventory counts. The workflow: (1) text-to-SQL model converts natural language to a SQL query using the table schema as context; (2) execute the SQL query against the database; (3) include the result in the generative model's context. This is conceptually a form of RAG where the "retriever" is a SQL executor and the "index" is a relational database.</p>
+    <div class="code-block"><span class="cm">-- Generated by text-to-SQL from: "How many units of Fruity Fedora sold in last 7 days?"</span>
+<span class="kw">SELECT</span> <span class="fn2">SUM</span>(units) <span class="kw">AS</span> total_units_sold
+<span class="kw">FROM</span> Sales
+<span class="kw">WHERE</span> product_name = <span class="str">'Fruity Fedora'</span>
+  <span class="kw">AND</span> timestamp >= <span class="fn2">DATE_SUB</span>(<span class="fn2">CURDATE</span>(), <span class="kw">INTERVAL</span> <span class="nr">7</span> <span class="kw">DAY</span>);</div>
+  </div>
+
+  <div class="btn-row mt4">
+    <button class="btn btn-purple" onclick="show('demo')">🔬 Try the Interactive Demo</button>
+    <button class="btn btn-s" onclick="show('tools')">🛠 Tools Lab (Chroma + FAISS)</button>
+  </div>
+</div>
+
+<!-- ═══════════════════ TOOLS LAB ═══════════════════ -->
+<div class="page" id="page-tools">
+  <div class="hero">
+    <div class="badge">🛠 Tools Lab — Week 9</div>
+    <h1>Chroma + <span>FAISS</span></h1>
+    <p>The two most widely used vector storage and search libraries. Chroma is designed for developer ergonomics; FAISS is designed for production scale and maximum control.</p>
+  </div>
+
+  <div class="tool-grid">
+    <div class="tool-card">
+      <div class="tool-logo">🟣</div>
+      <div class="tool-name">Chroma</div>
+      <div class="tool-sub">docs.trychroma.com · Open source · Python + JS</div>
+      <ul class="tool-features">
+        <li>Embedded vector DB — runs in-process, zero infra to set up</li>
+        <li>Persistent mode: data saved to disk across sessions</li>
+        <li>Built-in embedding functions (OpenAI, HuggingFace, custom)</li>
+        <li>Metadata filtering — filter by date, source, tags before ANN search</li>
+        <li>Collections API — logical namespacing for multiple indexes</li>
+        <li>HNSW under the hood (via hnswlib) — good default performance</li>
+      </ul>
+      <div class="tool-code"><span class="kw">import</span> chromadb
+<span class="kw">from</span> chromadb.utils <span class="kw">import</span> embedding_functions
+
+client = chromadb.<span class="fn2">PersistentClient</span>(path=<span class="str">"./chroma_db"</span>)
+ef = embedding_functions.<span class="fn2">OpenAIEmbeddingFunction</span>(
+    api_key=<span class="str">"sk-..."</span>, model_name=<span class="str">"text-embedding-3-small"</span>
+)
+
+<span class="cm"># Create a collection</span>
+col = client.<span class="fn2">get_or_create_collection</span>(
+    name=<span class="str">"ai_engineering_docs"</span>,
+    embedding_function=ef,
+    metadata={<span class="str">"hnsw:space"</span>: <span class="str">"cosine"</span>}
+)
+
+<span class="cm"># Add documents</span>
+col.<span class="fn2">add</span>(
+    documents=[<span class="str">"RAG augments generation..."</span>, <span class="str">"Embeddings encode meaning..."</span>],
+    ids=[<span class="str">"doc1"</span>, <span class="str">"doc2"</span>],
+    metadatas=[{<span class="str">"source"</span>: <span class="str">"ch6"</span>, <span class="str">"week"</span>: <span class="nr">9</span>}, {<span class="str">"source"</span>: <span class="str">"ch3"</span>}]
+)
+
+<span class="cm"># Query</span>
+results = col.<span class="fn2">query</span>(
+    query_texts=[<span class="str">"how does semantic search work?"</span>],
+    n_results=<span class="nr">3</span>,
+    where={<span class="str">"week"</span>: {<span class="str">"$gte"</span>: <span class="nr">7</span>}}  <span class="cm"># metadata filter</span>
+)
+<span class="fn2">print</span>(results[<span class="str">'documents'</span>], results[<span class="str">'distances'</span>])</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-logo">🔵</div>
+      <div class="tool-name">FAISS</div>
+      <div class="tool-sub">github.com/facebookresearch/faiss · Meta AI · C++ / Python</div>
+      <ul class="tool-features">
+        <li>Battle-tested at billion-vector scale (Meta production)</li>
+        <li>Full ANN algorithm zoo: IVF, HNSW, PQ, LSH, ScaNN-like</li>
+        <li>GPU acceleration — same API, orders of magnitude faster on CUDA</li>
+        <li>Index serialization — save/load large indexes from disk</li>
+        <li>No built-in storage — you manage doc IDs and metadata yourself</li>
+        <li>Maximum flexibility for production optimization</li>
+      </ul>
+      <div class="tool-code"><span class="kw">import</span> faiss
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+dim = <span class="nr">1536</span>  <span class="cm"># text-embedding-3-small dimension</span>
+
+<span class="cm"># Build an IVF + PQ index for large-scale retrieval</span>
+quantizer = faiss.<span class="fn2">IndexFlatL2</span>(dim)         <span class="cm"># coarse quantizer</span>
+index = faiss.<span class="fn2">IndexIVFPQ</span>(
+    quantizer, dim,
+    n_list=<span class="nr">256</span>,   <span class="cm"># number of clusters</span>
+    m=<span class="nr">16</span>,          <span class="cm"># subvectors for PQ</span>
+    n_bits=<span class="nr">8</span>       <span class="cm"># bits per subvector code</span>
+)
+
+<span class="cm"># Train on representative vectors</span>
+train_vecs = np.random.<span class="fn2">random</span>((<span class="nr">10000</span>, dim)).<span class="fn2">astype</span>(<span class="str">'float32'</span>)
+index.<span class="fn2">train</span>(train_vecs)
+
+<span class="cm"># Add document embeddings</span>
+doc_vecs = np.random.<span class="fn2">random</span>((<span class="nr">100000</span>, dim)).<span class="fn2">astype</span>(<span class="str">'float32'</span>)
+index.<span class="fn2">add</span>(doc_vecs)
+
+<span class="cm"># Search — set nprobe for accuracy/speed tradeoff</span>
+index.nprobe = <span class="nr">32</span>  <span class="cm"># check 32 of 256 clusters</span>
+query = np.random.<span class="fn2">random</span>((<span class="nr">1</span>, dim)).<span class="fn2">astype</span>(<span class="str">'float32'</span>)
+distances, indices = index.<span class="fn2">search</span>(query, k=<span class="nr">10</span>)
+
+<span class="cm"># Save to disk for production use</span>
+faiss.<span class="fn2">write_index</span>(index, <span class="str">"production.index"</span>)</div>
+    </div>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon ca">⚖️</div><div class="card-title">Chroma vs. FAISS — When to Use Which</div></div>
+    <table class="cmp-tbl">
+      <tr><th>Scenario</th><th>Chroma</th><th>FAISS</th></tr>
+      <tr><td>Local development / prototyping</td><td>✅ Preferred — zero setup, runs in-process</td><td>⚠️ Viable but more boilerplate</td></tr>
+      <tr><td>Small-medium datasets (&lt;10M vectors)</td><td>✅ HNSW works well</td><td>✅ Both viable</td></tr>
+      <tr><td>Billion-scale production</td><td>❌ Not designed for this</td><td>✅ Designed exactly for this</td></tr>
+      <tr><td>GPU-accelerated search</td><td>❌ CPU only</td><td>✅ FAISS-GPU (faiss-gpu pip package)</td></tr>
+      <tr><td>Metadata filtering before ANN</td><td>✅ Built-in <code>where</code> clause</td><td>❌ Must implement yourself</td></tr>
+      <tr><td>LangChain / LlamaIndex integration</td><td>✅ First-class support</td><td>✅ Also well-supported</td></tr>
+      <tr><td>Custom ANN index tuning (IVF, PQ, nprobe)</td><td>❌ Limited</td><td>✅ Full control</td></tr>
+      <tr><td>Multi-tenancy / managed cloud</td><td>✅ Chroma Cloud available</td><td>❌ Self-managed only</td></tr>
+    </table>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon cg">🧪</div><div class="card-title">Lab Exercises — Run in Google Colab</div></div>
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:14px">Open <code>notebooks/week09/</code> in the course Colab. Three progressively harder exercises:</p>
+    <div class="flow" style="margin-bottom:0">
+      <div class="fstep"><div class="fn">1</div><div class="fbody"><strong>Chroma Quickstart — Semantic Search Over Course Notes</strong><p>Chunk the Week 1–8 lecture summaries, embed with <code>text-embedding-3-small</code>, build a Chroma collection, and query it. Compare results for the same query using cosine vs. L2 distance. Observe how result quality changes with k=3 vs. k=10.</p></div></div>
+      <div class="fstep"><div class="fn">2</div><div class="fbody"><strong>FAISS Index Types — Accuracy vs. Speed Tradeoff</strong><p>Build three FAISS indexes on the same 50K vector dataset: <code>IndexFlatL2</code> (exact), <code>IndexHNSWFlat</code> (approximate graph), and <code>IndexIVFPQ</code> (cluster + quantize). Benchmark recall@10 and queries-per-second for each. Plot the tradeoff curve.</p></div></div>
+      <div class="fstep"><div class="fn">3</div><div class="fbody"><strong>Hybrid Search — BM25 + Chroma + RRF</strong><p>Implement hybrid search: BM25 retrieval using <code>rank_bm25</code> + Chroma semantic retrieval, merged with Reciprocal Rank Fusion. Evaluate context precision at k=5 on 20 test queries. Does hybrid outperform either method alone? Under what conditions?</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ INTERACTIVE DEMO ═══════════════════ -->
+<div class="page" id="page-demo">
+  <div class="hero">
+    <div class="badge">🔬 Interactive Demo</div>
+    <h1>See <span>Retrieval in Action</span></h1>
+    <p>Explore how term-based and semantic retrieval behave differently on the same corpus. No APIs required — all simulated client-side to illustrate the concepts.</p>
+  </div>
+
+  <!-- DEMO 1: RETRIEVAL COMPARISON -->
+  <div class="card">
+    <div class="card-h"><div class="card-icon cc">🔍</div><div class="card-title">Demo 1 — Term-Based vs. Semantic Retrieval</div></div>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">Simulated corpus of 8 AI engineering documents. Type a query and see how each retrieval method ranks them.</p>
+    <div class="method-toggle" id="method-toggle">
+      <button class="method-btn active" onclick="setMethod('term')">Term-Based (BM25)</button>
+      <button class="method-btn" onclick="setMethod('semantic')">Semantic</button>
+      <button class="method-btn" onclick="setMethod('hybrid')">Hybrid (RRF)</button>
+    </div>
+    <div class="retrieval-demo" style="background:transparent;border:none;padding:0">
+      <input class="query-input" id="query-input" placeholder="Try: transformer architecture / fix memory error / how models learn" value="how to reduce hallucinations in RAG">
+      <button class="retrieve-btn" onclick="runRetrieval()">🔍 Retrieve</button>
+      <div class="result-list" id="result-list"></div>
+    </div>
+  </div>
+
+  <!-- DEMO 2: VECTOR ARITHMETIC -->
+  <div class="card">
+    <div class="card-h"><div class="card-icon cp">➕</div><div class="card-title">Demo 2 — Semantic Vector Arithmetic</div></div>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">Explore how embeddings encode semantic relationships. Select words to compose an analogy query: <em>A is to B as C is to ?</em></p>
+    <div class="vec-math">
+      <h4>Select words for your analogy (click to toggle)</h4>
+      <div id="word-palette" style="margin-bottom:14px">
+        <span class="word-chip" onclick="toggleWord(this,'king')">king</span>
+        <span class="word-chip" onclick="toggleWord(this,'man')">man</span>
+        <span class="word-chip" onclick="toggleWord(this,'woman')">woman</span>
+        <span class="word-chip" onclick="toggleWord(this,'queen')">queen</span>
+        <span class="word-chip" onclick="toggleWord(this,'doctor')">doctor</span>
+        <span class="word-chip" onclick="toggleWord(this,'nurse')">nurse</span>
+        <span class="word-chip" onclick="toggleWord(this,'paris')">paris</span>
+        <span class="word-chip" onclick="toggleWord(this,'france')">france</span>
+        <span class="word-chip" onclick="toggleWord(this,'berlin')">berlin</span>
+        <span class="word-chip" onclick="toggleWord(this,'germany')">germany</span>
+        <span class="word-chip" onclick="toggleWord(this,'RAG')">RAG</span>
+        <span class="word-chip" onclick="toggleWord(this,'retrieval')">retrieval</span>
+        <span class="word-chip" onclick="toggleWord(this,'embedding')">embedding</span>
+        <span class="word-chip" onclick="toggleWord(this,'vector')">vector</span>
+      </div>
+      <div class="math-display" id="math-display"><span style="color:var(--muted)">Select words above to build a vector equation...</span></div>
+      <div id="analogy-result" style="font-size:.84rem;color:var(--muted);margin-top:10px;min-height:24px"></div>
+    </div>
+  </div>
+
+  <!-- DEMO 3: CHUNKING SIMULATOR -->
+  <div class="card">
+    <div class="card-h"><div class="card-icon ca">✂️</div><div class="card-title">Demo 3 — Chunking Strategy Simulator</div></div>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">Paste any text and see how different chunking strategies split it. Observe how chunk boundaries affect context quality.</p>
+    <div style="margin-bottom:12px">
+      <select id="chunk-strategy" onchange="runChunker()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.84rem;margin-right:10px">
+        <option value="fixed">Fixed Size (256 chars)</option>
+        <option value="sentence">Sentence-based</option>
+        <option value="paragraph">Paragraph-based</option>
+        <option value="overlap">Fixed + Overlap (64 chars)</option>
+      </select>
+      <span id="chunk-count" style="font-size:.8rem;color:var(--muted)"></span>
+    </div>
+    <textarea id="chunk-input" oninput="runChunker()" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:.83rem;font-family:inherit;resize:vertical;min-height:100px;line-height:1.6" placeholder="Paste any text here to see how it gets chunked...">The transformer architecture introduced self-attention mechanisms that allow models to weigh the relevance of different tokens when generating each output token. Unlike recurrent networks that process tokens sequentially, transformers process the entire sequence in parallel, which dramatically reduces training time on modern hardware.
+
+RAG systems leverage this architecture by retrieving relevant document chunks and including them in the model's context. The quality of a RAG system depends on both the retriever — which finds the relevant chunks — and the generator — which produces the final response grounded in retrieved context.
+
+Chunking strategy is a critical design decision. Chunks that are too small may lose important context across sentence boundaries. Chunks that are too large may dilute the relevance signal and consume excessive context window space.</textarea>
+    <div id="chunk-output" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ DISCUSSION ═══════════════════ -->
+<div class="page" id="page-discussion">
+  <div class="hero">
+    <div class="badge">💬 Canvas Discussion — Week 9</div>
+    <h1>What Does <span>"Meaning"</span> in Embeddings Capture — and What Does It Miss?</h1>
+    <p>Post your response in Canvas by Thursday. Engage with at least one classmate's post before Sunday. This isn't a trivia quiz — your goal is to push the concept somewhere interesting.</p>
+  </div>
+
+  <div class="discussion-card">
+    <h3>📌 The Discussion Prompt</h3>
+    <div class="discussion-prompt">"Embeddings turn meaning into math — they let machines compute semantic similarity, power search that understands intent, and underpin every production RAG system. But embedding similarity is not the same as meaning. What does a high cosine similarity score actually tell you? What can it never tell you? Is there a domain or application where the gap between 'semantically similar embeddings' and 'actually meaningful match' becomes consequential — even dangerous?"</div>
+    <p style="color:var(--muted);font-size:.85rem">Your response should be 200–350 words. Reference at least one specific concept from Ch. 6 or this week's lecture. Go beyond the obvious — the most interesting posts will take a position.</p>
+  </div>
+
+  <div class="ls">
+    <h2>🧠 Angles to Consider — Choose Your Entry Point</h2>
+    <div class="discussion-angles">
+      <div class="da"><div class="da-icon">⚗️</div><div><strong style="color:var(--text)">The Technical Angle:</strong> STS (Semantic Textual Similarity) benchmarks show embeddings are highly accurate. But STS benchmarks are curated to avoid adversarial cases. When does the real world diverge from benchmark conditions? Think about negation, sarcasm, low-resource languages, or domain-specific jargon.</div></div>
+      <div class="da"><div class="da-icon">⚖️</div><div><strong style="color:var(--text)">The Fairness Angle:</strong> Embeddings trained on internet text encode societal biases. "Doctor" clusters closer to male names than female names in many models. What happens when a RAG system for medical literature retrieves information based on biased semantic associations? Who is harmed and how?</div></div>
+      <div class="da"><div class="da-icon">🔬</div><div><strong style="color:var(--text)">The Scientific Angle:</strong> Embeddings capture distributional semantics — how words co-occur — not grounded meaning tied to physical reality. "Boiling water burns" and "boiling water is soothing" may have similar embeddings because "boiling water" always appears in similar contexts. Is distributional semantics sufficient for scientific retrieval?</div></div>
+      <div class="da"><div class="da-icon">🏥</div><div><strong style="color:var(--text)">The High-Stakes Application Angle:</strong> Medical RAG systems, legal document retrieval, financial analysis. Identify a specific failure mode where semantic similarity misleads the system toward confidently wrong retrieved context, and trace through how the generation step propagates the error.</div></div>
+      <div class="da"><div class="da-icon">🧩</div><div><strong style="color:var(--text)">The Hybrid Search Angle:</strong> Huyen argues that combining term-based and semantic retrieval compensates for each method's gaps. Is hybrid search a principled solution to the meaning problem, or is it patching a symptom? What cases remain unaddressed?</div></div>
+    </div>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon cg">💡</div><div class="card-title">Good Post Checklist</div></div>
+    <ul class="chklist">
+      <li><div class="chk" onclick="ck(this)"></div>Takes a clear position — not just "there are pros and cons"</li>
+      <li><div class="chk" onclick="ck(this)"></div>References at least one specific concept from Ch. 6 or the lecture (e.g., cosine similarity, contextual retrieval, hybrid search, embedding bias)</li>
+      <li><div class="chk" onclick="ck(this)"></div>Uses a concrete example — a specific domain, query type, or failure scenario</li>
+      <li><div class="chk" onclick="ck(this)"></div>200–350 words</li>
+      <li><div class="chk" onclick="ck(this)"></div>Responded to at least one classmate's post (by Sunday)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════ PROJECT ═══════════════════ -->
+<div class="page" id="page-project">
+  <div class="hero">
+    <div class="badge">🏗 Project Milestone M5 · 4 pts</div>
+    <h1>Retrieval Index or <span>Explainability Hook</span></h1>
+    <p>M5 moves your project from design to implementation. You are building a real, working component — a retrieval system for your data, or an explainability layer that surfaces what your system is "paying attention to."</p>
+    <div class="chips">
+      <div class="chip">4 pts toward Project 30%</div>
+      <div class="chip">Due: end of Week 9</div>
+      <div class="chip">Submit: Canvas → Assignments → M5</div>
+    </div>
+  </div>
+
+  <div class="milestone">
+    <h4>Choose One Track — or Combine Both</h4>
+    <div class="m-option">
+      <div class="m-option-hdr">
+        <span class="m-badge mb-r">Track A</span>
+        <div class="m-title">Retrieval Index — Build a working RAG pipeline for your project data</div>
+      </div>
+      <div class="m-desc">Implement a functioning retrieval system over your project's knowledge base. Must use real data relevant to your project, not toy datasets. You should be able to demonstrate end-to-end: query → retrieved chunks → grounded response.</div>
+      <ul class="m-deliverables">
+        <li>Chunked and embedded document corpus (describe your chunking strategy and why you chose it)</li>
+        <li>Vector index built with Chroma or FAISS (specify index type and configuration)</li>
+        <li>Query interface — run at least 10 test queries and record retrieved results</li>
+        <li>Context precision evaluation — for 5 test queries, manually label whether retrieved chunks are relevant; report P@3</li>
+        <li>Brief writeup (1 page): what did you learn about your data from building the index? What surprised you?</li>
+      </ul>
+    </div>
+    <div class="m-option">
+      <div class="m-option-hdr">
+        <span class="m-badge mb-e">Track B</span>
+        <div class="m-title">Explainability Hook — Surface what your system retrieves and why</div>
+      </div>
+      <div class="m-desc">Build a layer that makes the retrieval step transparent to users or developers. Instead of just returning a final answer, the system surfaces which chunks were retrieved, their similarity scores, and how they contributed to the response.</div>
+      <ul class="m-deliverables">
+        <li>Working retrieval pipeline (can use an existing dataset if your project data isn't ready)</li>
+        <li>Retrieval trace: for any query, output the top-k retrieved chunks with similarity scores and source metadata</li>
+        <li>At least one visualization: heatmap of chunk relevance scores, t-SNE plot of query vs. corpus embeddings, or attribution highlights in the generated response</li>
+        <li>One documented failure case: a query where the top retrieved chunk looks semantically relevant but is actually wrong or misleading — analyze why</li>
+        <li>Brief writeup (1 page): what does the explainability layer reveal about your system's failure modes?</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-icon ca">📋</div><div class="card-title">M5 Rubric (4 pts)</div></div>
+    <table class="cmp-tbl">
+      <tr><th>Category</th><th>Points</th><th>Meets</th><th>Exceeds</th></tr>
+      <tr><td style="font-weight:700;color:var(--cyan)">Implementation Quality</td><td style="font-weight:800">1.5</td><td>Working pipeline that can be run; retrieval returns results</td><td>Correct index choice with justification; configuration tuned to data characteristics; reproducible code in notebook</td></tr>
+      <tr><td style="font-weight:700;color:var(--cyan)">Evaluation</td><td style="font-weight:800">1.25</td><td>Some test queries run; results reported</td><td>Precision@k measured on labeled test set; at least one documented failure case analyzed with root-cause reasoning</td></tr>
+      <tr><td style="font-weight:700;color:var(--cyan)">Reflection & Insight</td><td style="font-weight:800">1.25</td><td>Brief writeup present</td><td>Writeup demonstrates genuine learning from building the system: unexpected data issues, chunking tradeoffs observed empirically, or a non-obvious finding about your domain</td></tr>
+    </table>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon cg">✅</div><div class="card-title">M5 Pre-Submission Checklist</div></div>
+    <ul class="chklist">
+      <li><div class="chk" onclick="ck(this)"></div>Notebook runs end-to-end without errors in a clean Colab environment</li>
+      <li><div class="chk" onclick="ck(this)"></div>Used real project data (not a textbook toy dataset)</li>
+      <li><div class="chk" onclick="ck(this)"></div>Index type documented and justified (why HNSW vs. IVF? why cosine vs. L2?)</li>
+      <li><div class="chk" onclick="ck(this)"></div>10+ test queries run; results recorded</li>
+      <li><div class="chk" onclick="ck(this)"></div>Evaluation metric computed (P@k or equivalent)</li>
+      <li><div class="chk" onclick="ck(this)"></div>At least one failure case documented</li>
+      <li><div class="chk" onclick="ck(this)"></div>1-page reflection writeup included in the notebook as markdown</li>
+      <li><div class="chk" onclick="ck(this)"></div>Submitted to Canvas → Assignments → M5 by end of Week 9</li>
+    </ul>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// NAV
+function show(p){
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.tb').forEach(e=>e.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const idx={home:0,lecture:1,tools:2,demo:3,discussion:4,project:5};
+  if(idx[p]!==undefined)document.querySelectorAll('.tb')[idx[p]].classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// CHECKLIST
+function ck(el){el.classList.toggle('on');el.textContent=el.classList.contains('on')?'✓':'';}
+
+// EMBEDDING VIS - draw illustrative 16-dim bars
+function drawBars(){
+  const configs = [
+    {id:'vb1', vals:[.8,.7,.6,.9,.2,.1,.8,.7,.3,.5,.6,.9,.4,.3,.8,.7]},
+    {id:'vb2', vals:[.7,.8,.5,.8,.2,.1,.7,.8,.3,.4,.7,.8,.4,.3,.7,.8]},
+    {id:'vb3', vals:[.2,.1,.9,.2,.8,.9,.1,.2,.8,.7,.1,.2,.9,.8,.2,.1]},
+    {id:'vb4', vals:[.5,.6,.4,.5,.5,.4,.6,.5,.4,.6,.5,.4,.6,.5,.4,.5]},
+  ];
+  const cols=['#6366f1','#8b5cf6','#a78bfa','#7c3aed','#4f46e5','#6d28d9','#7c3aed','#6366f1',
+               '#22d3ee','#06b6d4','#0891b2','#0e7490','#22d3ee','#06b6d4','#0891b2','#0e7490'];
+  configs.forEach(c=>{
+    const el=document.getElementById(c.id);if(!el)return;
+    el.innerHTML=c.vals.map((v,i)=>{
+      const h=Math.round(v*26+4);
+      return `<div class="vb" style="height:${h}px;background:${cols[i]};opacity:${v};flex:1"></div>`;
+    }).join('');
+  });
+}
+drawBars();
+
+// RETRIEVAL DEMO
+const CORPUS = [
+  {id:0,title:"RAG reduces hallucinations by grounding responses",text:"Retrieval-augmented generation helps models avoid hallucinating by providing factual context retrieved from a trusted knowledge base. The model generates responses only from retrieved evidence.",terms:["rag","hallucination","retrieval","reduce","grounding","context","factual","generation"],sem:[.92,.85,.15,.20,.10,.30,.18,.05]},
+  {id:1,title:"BM25 and TF-IDF for keyword search",text:"Term-based retrieval algorithms like BM25 and TF-IDF rank documents by keyword frequency and inverse document frequency, providing a strong baseline for information retrieval.",terms:["bm25","tfidf","keyword","term","retrieval","frequency","search","baseline"],sem:[.15,.30,.85,.20,.18,.05,.25,.12]},
+  {id:2,title:"Vector databases and HNSW indexing",text:"FAISS and Chroma implement HNSW for approximate nearest neighbor search. Vector databases store embeddings and support efficient similarity search at scale.",terms:["vector","database","hnsw","faiss","chroma","embedding","similarity","search","approximate"],sem:[.20,.65,.70,.15,.10,.35,.28,.15]},
+  {id:3,title:"Chunking strategy affects retrieval precision",text:"How you split documents into chunks significantly impacts retrieval precision. Smaller chunks provide more precise matches but may lose cross-sentence context. Overlap helps preserve boundary information.",terms:["chunk","split","retrieval","precision","overlap","context","document","boundary"],sem:[.30,.55,.60,.18,.15,.40,.22,.10]},
+  {id:4,title:"Embedding models encode semantic meaning",text:"Sentence transformers convert text to dense vectors where similar meaning maps to nearby coordinates. Cosine similarity measures the angle between embedding vectors.",terms:["embedding","semantic","meaning","cosine","similarity","vector","sentence","dense"],sem:[.35,.88,.25,.15,.12,.38,.20,.08]},
+  {id:5,title:"Hybrid search combines BM25 and semantic retrieval",text:"Reciprocal rank fusion merges rankings from term-based and embedding-based retrievers, capturing both exact keyword matches and semantic similarity.",terms:["hybrid","bm25","semantic","retrieval","rank","fusion","keyword","embedding"],sem:[.40,.72,.75,.20,.15,.45,.25,.12]},
+  {id:6,title:"Query rewriting for multi-turn conversations",text:"Ambiguous follow-up queries like 'how about her?' need rewriting to include conversation context before retrieval. LLMs can perform query reformulation automatically.",terms:["query","rewriting","conversation","context","reformulation","multi-turn","follow-up"],sem:[.18,.40,.35,.25,.20,.15,.28,.10]},
+  {id:7,title:"Contextual retrieval with AI-generated summaries",text:"Anthropic's contextual retrieval prepends a 50-100 token summary to each chunk before indexing, situating the chunk within its source document and improving retrieval recall.",terms:["contextual","retrieval","anthropic","summary","chunk","index","context","recall"],sem:[.45,.68,.55,.22,.18,.42,.30,.08]},
+];
+
+let currentMethod = 'term';
+function setMethod(m){
+  currentMethod=m;
+  document.querySelectorAll('.method-btn').forEach((b,i)=>{
+    b.classList.toggle('active',['term','semantic','hybrid'][i]===m);
+  });
+  runRetrieval();
+}
+
+function termScore(doc,query){
+  const qt=query.toLowerCase().split(/\s+/);
+  return qt.reduce((s,t)=>s+(doc.terms.includes(t)?1:0)+(doc.text.toLowerCase().includes(t)?.5:0),0);
+}
+
+function semScore(doc,query){
+  const q=query.toLowerCase();
+  const topics={
+    'hallucination':0,'rag':0,'reduce':0,'semantic':3,'embedding':3,'vector':2,'chunk':2,
+    'retrieval':1,'search':1,'hybrid':5,'contextual':7,'rewriting':6,'rerank':2,'query':6
+  };
+  let s=0;
+  Object.keys(topics).forEach(k=>{if(q.includes(k))s+=doc.sem[topics[k]]||0;});
+  s+=doc.sem.slice(0,3).reduce((a,v)=>a+v,0)*.1;
+  return Math.min(s,1);
+}
+
+function rrf(r1,r2){
+  const k=60,all={};
+  r1.forEach((id,i)=>all[id]=(all[id]||0)+1/(k+i+1));
+  r2.forEach((id,i)=>all[id]=(all[id]||0)+1/(k+i+1));
+  return Object.entries(all).sort((a,b)=>b[1]-a[1]).map(([id,s])=>({id:+id,score:s}));
+}
+
+function runRetrieval(){
+  const q=document.getElementById('query-input').value.trim()||"hallucination";
+  let ranked;
+  if(currentMethod==='term'){
+    ranked=CORPUS.map(d=>({id:d.id,score:termScore(d,q)+Math.random()*.05})).sort((a,b)=>b.score-a.score);
+  }else if(currentMethod==='semantic'){
+    ranked=CORPUS.map(d=>({id:d.id,score:semScore(d,q)+Math.random()*.05})).sort((a,b)=>b.score-a.score);
+  }else{
+    const tr=CORPUS.map(d=>d.id).sort((a,b)=>termScore(CORPUS[b],q)-termScore(CORPUS[a],q));
+    const sr=CORPUS.map(d=>d.id).sort((a,b)=>semScore(CORPUS[b],q)-semScore(CORPUS[a],q));
+    ranked=rrf(tr,sr);
+  }
+  const maxScore=ranked[0].score;
+  document.getElementById('result-list').innerHTML=ranked.slice(0,5).map((r,i)=>{
+    const doc=CORPUS[r.id];
+    const norm=maxScore>0?r.score/maxScore:0;
+    const cls=norm>.7?'hi':norm>.4?'md':'lo';
+    const scls=norm>.7?'score-hi':norm>.4?'score-md':'score-lo';
+    return`<div class="result-item ${cls}">
+      <span class="score-pill ${scls}">#${i+1} &nbsp;${(norm*100).toFixed(0)}%</span>
+      <div>
+        <div style="font-weight:700;font-size:.85rem;margin-bottom:4px">${doc.title}</div>
+        <div style="font-size:.8rem;color:var(--muted);line-height:1.5">${doc.text.slice(0,120)}...</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+runRetrieval();
+
+// VECTOR ARITHMETIC DEMO
+const analogies={
+  'king-man+woman':['queen','princess','empress'],
+  'paris-france+germany':['berlin','munich','hamburg'],
+  'doctor-man+woman':['nurse','midwife','physician'],
+  'embedding-vector+word':['representation','token','encoding'],
+  'RAG-retrieval+generation':['augmented','synthesis','grounded'],
+};
+let selected=[];
+function toggleWord(el,w){
+  if(selected.includes(w)){selected=selected.filter(x=>x!==w);el.classList.remove('selected');}
+  else{if(selected.length<5){selected.push(w);el.classList.add('selected');}}
+  updateMath();
+}
+function updateMath(){
+  const d=document.getElementById('math-display');
+  const r=document.getElementById('analogy-result');
+  if(selected.length===0){d.innerHTML='<span style="color:var(--muted)">Select words above...</span>';r.textContent='';return;}
+  const parts=selected.map((w,i)=>`<span class="word-chip" style="margin:2px;cursor:default">${w}</span>${i<selected.length-1?`<span class="math-op">${i%2===0?'−':'+'}</span>`:''}`).join('');
+  d.innerHTML=parts+`<span class="math-op">=</span><span class="math-result">?</span>`;
+  const key=selected.slice(0,3).join('-');
+  const found=analogies[key];
+  if(found){r.innerHTML=`<span style="color:var(--green)">Nearest result: </span><strong style="color:var(--text)">${found[0]}</strong><span style="color:var(--muted)"> (also nearby: ${found.slice(1).join(', ')})</span>`;}
+  else if(selected.length>=2){r.innerHTML=`<span style="color:var(--muted)">In a real embedding space, this vector arithmetic would return the semantically closest term. Try: king − man + woman, or paris − france + germany</span>`;}
+  else{r.textContent='';}
+}
+
+// CHUNKING DEMO
+function runChunker(){
+  const text=document.getElementById('chunk-input').value;
+  const strategy=document.getElementById('chunk-strategy').value;
+  let chunks=[];
+  if(strategy==='fixed'){
+    const sz=256;
+    for(let i=0;i<text.length;i+=sz)chunks.push(text.slice(i,i+sz));
+  }else if(strategy==='sentence'){
+    chunks=text.split(/(?<=[.!?])\s+/).filter(s=>s.trim().length>10);
+  }else if(strategy==='paragraph'){
+    chunks=text.split(/\n\n+/).filter(s=>s.trim().length>10);
+  }else if(strategy==='overlap'){
+    const sz=256,ov=64;
+    for(let i=0;i<text.length;i+=sz-ov){chunks.push(text.slice(i,i+sz));if(i+sz>=text.length)break;}
+  }
+  document.getElementById('chunk-count').textContent=`${chunks.length} chunk${chunks.length!==1?'s':''}`;
+  const colors=['rgba(99,102,241,.3)','rgba(34,211,238,.25)','rgba(16,185,129,.25)','rgba(245,158,11,.25)','rgba(167,139,250,.3)'];
+  document.getElementById('chunk-output').innerHTML=chunks.map((c,i)=>
+    `<div style="background:${colors[i%colors.length]};border:1px solid var(--border);border-radius:8px;padding:11px 14px;margin-bottom:8px;font-size:.8rem;color:var(--muted);line-height:1.6">
+      <div style="font-size:.7rem;font-weight:700;color:var(--accent);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em">Chunk ${i+1} &nbsp;·&nbsp; ${c.length} chars</div>
+      ${c.replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+    </div>`).join('');
+}
+runChunker();
+
+function toast(msg,dur=3000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),dur);}
+</script>
+</body>
+</html>
