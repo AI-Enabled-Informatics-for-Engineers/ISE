@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 10 · RAG Systems: Grounding + Evaluation</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--s2:#22263a;--border:#2e3352;--accent:#6366f1;--cyan:#22d3ee;--amber:#f59e0b;--green:#10b981;--red:#ef4444;--purple:#a78bfa;--orange:#fb923c;--text:#e2e8f0;--muted:#94a3b8;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+nav{display:flex;align-items:center;gap:8px;padding:12px 28px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.nav-logo{font-weight:800;font-size:1.05rem;color:var(--accent);white-space:nowrap}
+.nav-tabs{display:flex;gap:4px;margin-left:10px;flex-wrap:wrap}
+.tb{padding:5px 13px;border-radius:8px;border:none;cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s;background:transparent;color:var(--muted)}
+.tb.active{background:var(--accent);color:#fff}
+.tb:hover:not(.active){background:var(--s2);color:var(--text)}
+.page{display:none;padding:28px;max-width:980px;margin:0 auto}
+.page.active{display:block}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#1a1d27,#1a0e2e 50%,#0a1a28);border:1px solid var(--border);border-radius:var(--r);padding:40px 36px;text-align:center;margin-bottom:28px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 60% 30%,rgba(251,146,60,.1),transparent 60%);pointer-events:none}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(251,146,60,.15);border:1px solid rgba(251,146,60,.35);color:var(--orange);padding:3px 12px;border-radius:20px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px}
+.hero h1{font-size:2rem;font-weight:800;margin-bottom:8px;line-height:1.2}
+.hero h1 span{color:var(--orange)}
+.hero p{color:var(--muted);font-size:.92rem;max-width:600px;margin:0 auto 22px;line-height:1.6}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:20px}
+.chip{display:flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border);padding:5px 12px;border-radius:20px;font-size:.78rem;color:var(--muted)}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{padding:9px 20px;border-radius:9px;border:none;cursor:pointer;font-weight:700;font-size:.86rem;transition:all .2s;display:inline-flex;align-items:center;gap:7px;text-decoration:none}
+.btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:#4f46e5;transform:translateY(-1px)}
+.btn-s{background:var(--s2);color:var(--text);border:1px solid var(--border)}.btn-s:hover{border-color:var(--accent);color:var(--accent)}
+.btn-orange{background:var(--orange);color:#fff}.btn-orange:hover{background:#ea580c}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:18px}
+.card-h{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.card-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.ci{background:rgba(99,102,241,.15)}.cp{background:rgba(167,139,250,.15)}.cg{background:rgba(16,185,129,.15)}.ca{background:rgba(245,158,11,.12)}.cc{background:rgba(34,211,238,.12)}.co{background:rgba(251,146,60,.15)}
+.card-title{font-size:1rem;font-weight:700}
+
+/* LECTURE SECTIONS */
+.ls{margin-bottom:30px}
+.ls h2{font-size:1.2rem;font-weight:700;color:var(--cyan);border-bottom:1px solid var(--border);padding-bottom:9px;margin-bottom:18px;display:flex;align-items:center;gap:9px}
+.ls h3{font-size:.96rem;font-weight:700;color:var(--amber);margin:16px 0 8px}
+.ls p{color:var(--muted);line-height:1.75;margin-bottom:12px;font-size:.9rem}
+.ls ul{list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.ls li{font-size:.88rem;color:var(--muted);display:flex;gap:8px;line-height:1.5}
+.ls li::before{content:"▸";color:var(--accent);flex-shrink:0;margin-top:2px}
+
+/* HIGHLIGHT BOXES */
+.hl{border-left:3px solid var(--accent);background:rgba(99,102,241,.07);border-radius:0 8px 8px 0;padding:14px 18px;margin:14px 0;font-size:.88rem;color:var(--muted);line-height:1.7}
+.hl strong{color:var(--text)}
+.hl-orange{border-color:var(--orange);background:rgba(251,146,60,.07)}
+.hl-orange strong{color:var(--orange)}
+.hl-amber{border-color:var(--amber);background:rgba(245,158,11,.07)}
+.hl-amber strong{color:var(--amber)}
+.hl-green{border-color:var(--green);background:rgba(16,185,129,.07)}
+.hl-green strong{color:var(--green)}
+.hl-red{border-color:var(--red);background:rgba(239,68,68,.07)}
+.hl-red strong{color:var(--red)}
+.hl-cyan{border-color:var(--cyan);background:rgba(34,211,238,.07)}
+.hl-cyan strong{color:var(--cyan)}
+
+/* CONCEPT GRID */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:13px;margin:14px 0}
+.cc-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:15px;transition:border-color .2s;cursor:default}
+.cc-card:hover{border-color:var(--orange)}
+.cc-lbl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--orange);margin-bottom:5px}
+.cc-t{font-weight:700;font-size:.88rem;margin-bottom:5px}
+.cc-d{font-size:.8rem;color:var(--muted);line-height:1.5}
+
+/* FLOW STEPS */
+.flow{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.fstep{display:flex;align-items:flex-start;gap:13px;background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)}
+.fn{background:var(--orange);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:.77rem;font-weight:800;flex-shrink:0;margin-top:1px}
+.fbody strong{font-size:.88rem;display:block;margin-bottom:4px;color:var(--text)}
+.fbody p{font-size:.81rem;color:var(--muted);margin:0;line-height:1.55}
+
+/* COMPARE TABLE */
+.cmp-tbl{width:100%;border-collapse:collapse;font-size:.84rem;margin:14px 0}
+.cmp-tbl th{background:var(--s2);font-weight:700;padding:9px 13px;text-align:left;border-bottom:1px solid var(--border)}
+.cmp-tbl th:first-child{color:var(--muted)}
+.cmp-tbl th:nth-child(2){color:var(--orange)}
+.cmp-tbl th:nth-child(3){color:var(--cyan)}
+.cmp-tbl td{padding:9px 13px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top;font-size:.83rem}
+.cmp-tbl tr:last-child td{border-bottom:none}
+.cmp-tbl tr:hover td{background:rgba(251,146,60,.04)}
+code{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-family:'Courier New',monospace;font-size:.82em;color:var(--orange)}
+.code-block{background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:16px 18px;font-family:'Courier New',monospace;font-size:.79rem;color:#e6edf3;white-space:pre;overflow-x:auto;margin:14px 0;line-height:1.65}
+.kw{color:#ff7b72}.fn2{color:#79c0ff}.str{color:#a5d6ff}.cm{color:#8b949e}.nr{color:#f8c555}.cl{color:#ffa657}
+
+/* EVAL HARNESS DEMO */
+.eval-panel{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:16px 0}
+.eval-panel h4{font-size:.88rem;font-weight:700;color:var(--orange);margin-bottom:14px}
+.qa-pair{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px}
+.qa-q{font-size:.83rem;font-weight:700;color:var(--text);margin-bottom:8px}
+.qa-ctx{font-size:.79rem;color:var(--muted);background:#0d1117;border-radius:6px;padding:8px 12px;margin-bottom:8px;line-height:1.6;border-left:3px solid var(--orange)}
+.qa-ans{font-size:.82rem;color:var(--muted);margin-bottom:10px;line-height:1.6}
+.score-row{display:flex;gap:8px;flex-wrap:wrap}
+.score-pill{padding:4px 10px;border-radius:20px;font-size:.73rem;font-weight:700}
+.s-faith{background:rgba(16,185,129,.15);color:#6ee7b7}
+.s-ans{background:rgba(99,102,241,.15);color:#a5b4fc}
+.s-ctx{background:rgba(251,146,60,.15);color:#fed7aa}
+.s-bad{background:rgba(239,68,68,.15);color:#fca5a5}
+.run-btn{background:var(--orange);color:#fff;border:none;border-radius:8px;padding:8px 18px;cursor:pointer;font-size:.84rem;font-weight:700;margin-bottom:16px;transition:all .2s}
+.run-btn:hover{background:#ea580c}
+
+/* HALLUCINATION CLASSIFIER */
+.hall-demo{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:16px 0}
+.hall-demo h4{font-size:.88rem;font-weight:700;color:var(--red);margin-bottom:14px}
+.hall-case{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:13px;margin-bottom:10px;cursor:pointer;transition:border-color .2s}
+.hall-case:hover{border-color:var(--orange)}
+.hall-case.open{border-color:var(--red)}
+.hall-type{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;padding:2px 8px;border-radius:20px;display:inline-block}
+.ht-conf{background:rgba(239,68,68,.15);color:#fca5a5}
+.ht-intrusion{background:rgba(245,158,11,.15);color:#fde68a}
+.ht-incomp{background:rgba(99,102,241,.15);color:#a5b4fc}
+.hall-q{font-size:.83rem;font-weight:700;color:var(--text);margin-bottom:6px}
+.hall-ctx{font-size:.79rem;color:var(--muted);border-left:3px solid var(--orange);padding-left:10px;margin-bottom:6px;line-height:1.5}
+.hall-ans{font-size:.82rem;color:var(--muted);margin-bottom:6px}
+.hall-explain{font-size:.8rem;color:#fca5a5;display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);line-height:1.6}
+.hall-case.open .hall-explain{display:block}
+
+/* RAGAS METERS */
+.ragas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:14px 0}
+.ragas-card{background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)}
+.ragas-name{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.ragas-bar-wrap{background:rgba(255,255,255,.06);border-radius:6px;height:8px;overflow:hidden;margin-bottom:6px}
+.ragas-bar{height:100%;border-radius:6px;transition:width 1s ease}
+.ragas-score{font-size:.85rem;font-weight:700}
+.ragas-def{font-size:.75rem;color:var(--muted);line-height:1.5;margin-top:6px}
+
+/* TOOLS */
+.tool-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:14px 0}
+.tool-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:16px;transition:border-color .2s}
+.tool-card:hover{border-color:var(--orange)}
+.tool-name{font-size:.9rem;font-weight:800;margin-bottom:4px}
+.tool-sub{font-size:.75rem;color:var(--muted);margin-bottom:10px}
+.tool-features{list-style:none;display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.tool-features li{font-size:.78rem;color:var(--muted);display:flex;gap:6px}
+.tool-features li::before{content:"✓";color:var(--green);flex-shrink:0}
+.tool-code{background:#0d1117;border-radius:8px;padding:11px 13px;font-family:'Courier New',monospace;font-size:.72rem;color:#e6edf3;white-space:pre;overflow-x:auto;margin-top:8px;line-height:1.6}
+
+/* DISCUSSION */
+.discussion-card{background:linear-gradient(135deg,rgba(251,146,60,.08),rgba(99,102,241,.05));border:1px solid rgba(251,146,60,.25);border-radius:var(--r);padding:22px;margin:16px 0}
+
+/* MILESTONE */
+.milestone{background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(34,211,238,.04));border:1px solid rgba(16,185,129,.25);border-radius:var(--r);padding:20px;margin:16px 0}
+.m-option{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:15px;margin-bottom:10px}
+.m-option-hdr{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.m-badge{padding:2px 9px;border-radius:20px;font-size:.7rem;font-weight:700}
+.mb-a{background:rgba(251,146,60,.2);color:var(--orange)}
+.mb-b{background:rgba(34,211,238,.15);color:var(--cyan)}
+.m-title{font-size:.9rem;font-weight:700}
+.m-desc{font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:10px}
+.m-deliverables{list-style:none;display:flex;flex-direction:column;gap:4px}
+.m-deliverables li{font-size:.8rem;color:var(--muted);display:flex;gap:7px}
+.m-deliverables li::before{content:"□";color:var(--accent);flex-shrink:0}
+
+/* CHECKLIST */
+.chklist{list-style:none}
+.chklist li{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);font-size:.88rem}
+.chklist li:last-child{border-bottom:none}
+.chk{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;transition:all .2s}
+.chk.on{background:var(--green);border-color:var(--green);color:#fff}
+.mt3{margin-top:12px}.mt4{margin-top:18px}.mb4{margin-bottom:18px}
+#toast{position:fixed;bottom:22px;right:22px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:.87rem;display:none;z-index:999}
+#toast.on{display:block;animation:su .3s ease}
+@keyframes su{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+@media(max-width:640px){.page{padding:14px}.hero{padding:24px 16px}.tool-grid{grid-template-columns:1fr}}
+@media(max-width:780px){.tool-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <span class="nav-logo">AI Engineering</span>
+  <div class="nav-tabs">
+    <button class="tb active" onclick="show('home')">Home</button>
+    <button class="tb" onclick="show('lecture')">Lecture</button>
+    <button class="tb" onclick="show('tools')">Tools Lab</button>
+    <button class="tb" onclick="show('demo')">Eval Demo</button>
+    <button class="tb" onclick="show('discussion')">Discussion</button>
+    <button class="tb" onclick="show('assignment')">Assignment 4 + M5</button>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="badge">📅 Week 10 · Apr 7–13</div>
+    <h1>RAG Systems: <span>Grounding + Evaluation</span></h1>
+    <p>You built the retrieval index. Now we ask: is the system actually honest? This week shifts from finding information to verifying that generated answers are faithfully grounded in retrieved evidence — and building the harnesses to prove it.</p>
+    <div class="chips">
+      <div class="chip">📚 Huyen Ch. 6 — RAG (generation + evaluation)</div>
+      <div class="chip">🛠 LangChain LCEL + RAGAS</div>
+      <div class="chip">💬 Discussion: grounding vs. capability</div>
+      <div class="chip">📝 Assignment 4 + M5 due</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-orange" onclick="show('lecture')">📖 Read Lecture</button>
+      <button class="btn btn-s" onclick="show('demo')">🔬 Eval Demo</button>
+      <button class="btn btn-s" onclick="show('assignment')">📝 Assignment 4</button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:20px">
+    <div class="card">
+      <div class="card-h"><div class="card-icon co">🎯</div><div class="card-title">Week 10 Objectives</div></div>
+      <ul class="ls"><ul>
+        <li>Understand grounding: what it means and how to enforce it in prompts</li>
+        <li>Classify the three hallucination types that occur in RAG systems</li>
+        <li>Implement the four RAGAS metrics as an evaluation harness</li>
+        <li>Use LangChain LCEL to wire a production-grade grounded RAG pipeline</li>
+        <li>Build Assignment 4: a working evaluation harness for your RAG system</li>
+      </ul></ul>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-icon cg">✅</div><div class="card-title">Week 10 Checklist</div></div>
+      <ul class="chklist">
+        <li><div class="chk" onclick="ck(this)"></div>Read Ch. 6 generation + evaluation sections</li>
+        <li><div class="chk" onclick="ck(this)"></div>Read OpenAI RAG explainer (link in Resources)</li>
+        <li><div class="chk" onclick="ck(this)"></div>Watch recorded Zoom lecture (Canvas link)</li>
+        <li><div class="chk" onclick="ck(this)"></div>Read this Lecture tab in full</li>
+        <li><div class="chk" onclick="ck(this)"></div>Run grounding + evaluation Colab notebook</li>
+        <li><div class="chk" onclick="ck(this)"></div>Explore the Eval Demo tab</li>
+        <li><div class="chk" onclick="ck(this)"></div>Post Canvas discussion by Thursday</li>
+        <li><div class="chk" onclick="ck(this)"></div>Submit Assignment 4 + M5 to Canvas</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-icon ca">🗺</div><div class="card-title">How This Week Fits — The Arc</div></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-top:4px">
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border:1px solid var(--border);opacity:.55"><div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:4px">Wk 8 — Evaluation Methodology</div><div style="font-size:.79rem;color:var(--muted)">How to measure model quality</div></div>
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border:1px solid var(--border);opacity:.7"><div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:4px">Wk 9 — Retrieval</div><div style="font-size:.79rem;color:var(--muted)">Embeddings, ANN, hybrid search</div></div>
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border:1px solid rgba(251,146,60,.5)"><div style="font-size:.7rem;font-weight:700;color:var(--orange);margin-bottom:4px">Wk 10 — Grounding + Eval ← You</div><div style="font-size:.79rem;color:var(--muted)">Is the generated answer honest?</div></div>
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border:1px solid var(--border);opacity:.45"><div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:4px">Wk 11 — Agents</div><div style="font-size:.79rem;color:var(--muted)">Models that act in the world</div></div>
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border:1px solid var(--border);opacity:.35"><div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:4px">Wk 12 — Finetuning</div><div style="font-size:.79rem;color:var(--muted)">Adapting the model itself</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- LECTURE -->
+<div class="page" id="page-lecture">
+  <div class="hero">
+    <div class="badge">📖 Week 10 Lecture</div>
+    <h1>RAG Systems: <span>Grounding + Evaluation</span></h1>
+    <p>Week 9 asked: how do we retrieve the right information? Week 10 asks: how do we verify the model is actually using it — and build the machinery to prove it?</p>
+  </div>
+
+  <!-- SECTION 1 -->
+  <div class="ls">
+    <h2>🔄 1 — The Full RAG Pipeline: From Retrieval to Answer</h2>
+    <p>Week 9 covered the retrieval half of RAG in depth — how embeddings encode meaning, how ANN indexes scale, how hybrid search and reranking improve recall. This week we take the output of that retrieval and ask: what actually happens next?</p>
+    <p>The pipeline after retrieval has three critical steps that are often underspecified in tutorials but where the most dangerous failure modes live:</p>
+    <div class="flow">
+      <div class="fstep"><div class="fn">1</div><div class="fbody"><strong>Context Assembly</strong><p>The retrieved chunks are formatted into a structured prompt context. This is not trivial — chunk ordering matters (models attend better to information at the beginning and end of context), chunk count must fit the context window, and metadata like source citations should be included for attribution.</p></div></div>
+      <div class="fstep"><div class="fn">2</div><div class="fbody"><strong>Grounded Prompt Construction</strong><p>The system prompt must explicitly constrain the model to the provided context. Without an explicit grounding instruction, models freely mix retrieved evidence with parametric knowledge — and they do so confidently and fluently, making hallucinations indistinguishable from grounded answers.</p></div></div>
+      <div class="fstep"><div class="fn">3</div><div class="fbody"><strong>Generation + Attribution</strong><p>The model generates a response. Ideally, it cites the specific chunks that support each claim. The generated response then goes through an evaluation layer before being served — or the evaluation runs asynchronously on a sample of production traffic.</p></div></div>
+    </div>
+    <div class="hl-orange"><strong>The central insight of Week 10:</strong> A RAG system can have perfect retrieval (P@5 = 1.0) and still hallucinate — if the generation step is not properly grounded and evaluated. The retrieval and generation components fail independently. You need evaluation machinery that measures both.</div>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div class="ls">
+    <h2>⚓ 2 — Grounding: What It Means and How to Enforce It</h2>
+    <p><strong>Grounding</strong> is the property of a generated response that all factual claims in it are supported by (entailed by) the provided retrieved context — not by the model's parametric knowledge. A grounded system says "I don't know" or "the provided context doesn't address this" when the retrieved chunks don't contain the answer. An ungrounded system fills in the gap from training data, often with high confidence.</p>
+    <h3>The Grounding Spectrum</h3>
+    <div class="cgrid">
+      <div class="cc-card"><div class="cc-lbl">Fully Ungrounded</div><div class="cc-t">Pure Parametric</div><div class="cc-d">Model answers entirely from training data. No retrieved context used. Standard LLM behavior. Hallucination rate highest here.</div></div>
+      <div class="cc-card"><div class="cc-lbl">Partially Grounded</div><div class="cc-t">Mixed Sources</div><div class="cc-d">Model blends retrieved context with parametric knowledge. Most common failure mode in RAG — the context is present but the model supplements it. Subtle and dangerous.</div></div>
+      <div class="cc-card"><div class="cc-lbl">Fully Grounded</div><div class="cc-t">Context-Anchored</div><div class="cc-d">All claims traced to retrieved chunks. Model refuses to answer questions not addressable from context. Maximum faithfulness, minimum hallucination.</div></div>
+    </div>
+    <h3>The Grounding System Prompt Pattern</h3>
+    <p>The single most impactful engineering change for improving grounding is the system prompt. Here is the pattern that consistently outperforms generic prompts in production:</p>
+    <div class="code-block"><span class="cm"># The grounding system prompt — use this pattern</span>
+<span class="cl">SYSTEM_PROMPT</span> = <span class="str">"""You are a precise, evidence-based assistant.
+
+RULES (follow these strictly):
+1. Answer ONLY using information from the CONTEXT section below.
+2. If the context does not contain enough information to answer, say:
+   "The provided context does not address this question."
+3. Do NOT use your pre-trained knowledge to supplement the context.
+4. For every factual claim, cite the source chunk (e.g., [Source 1]).
+5. If chunks contain conflicting information, flag the conflict explicitly.
+
+CONTEXT:
+{context}
+
+QUESTION:
+{question}
+
+Answer based only on the context above:"""</span></div>
+    <div class="hl-amber"><strong>Why explicit rules beat implicit instructions:</strong> Models are trained to be helpful. Without explicit prohibition, they default to supplementing incomplete context with training knowledge — which feels helpful but introduces unverifiable claims. The numbered rules force the model to acknowledge knowledge boundaries rather than paper over them.</div>
+    <h3>Citation and Attribution Patterns</h3>
+    <p>Grounding becomes verifiable when the model cites the specific chunk each claim comes from. This has two engineering benefits: users can verify claims by clicking through to sources, and your evaluation harness can check whether cited chunks actually entail the claims.</p>
+    <div class="code-block"><span class="cm"># Formatted context with citation markers</span>
+<span class="kw">def</span> <span class="fn2">format_context_with_citations</span>(chunks: list[dict]) -> str:
+    context_parts = []
+    <span class="kw">for</span> i, chunk <span class="kw">in</span> <span class="fn2">enumerate</span>(chunks, <span class="nr">1</span>):
+        context_parts.<span class="fn2">append</span>(
+            <span class="str">f"[Source {i}] {chunk['metadata']['source']}\n"</span>
+            <span class="str">f"{chunk['content']}\n"</span>
+        )
+    <span class="kw">return</span> <span class="str">"\n---\n"</span>.<span class="fn2">join</span>(context_parts)
+
+<span class="cm"># Instruct model to cite inline: "The system requires... [Source 2]"</span></div>
+  </div>
+
+  <!-- SECTION 3 -->
+  <div class="ls">
+    <h2>🔴 3 — Hallucination Taxonomy in RAG Systems</h2>
+    <p>Not all hallucinations are the same. In RAG-specific contexts, three distinct failure types occur — and they require different diagnostic approaches and fixes. Understanding the taxonomy is the first step toward targeted remediation.</p>
+    <div class="cgrid">
+      <div class="cc-card" style="border-color:rgba(239,68,68,.4)">
+        <div class="cc-lbl" style="color:#fca5a5">Type 1</div>
+        <div class="cc-t" style="color:#fca5a5">Conflation Hallucination</div>
+        <div class="cc-d">The model generates a claim that is true in its training data but contradicts the retrieved context. The model substitutes its memory for the provided evidence. <em>Example: context says "released 2023," model says "released 2022" because that's what it learned during training.</em></div>
+      </div>
+      <div class="cc-card" style="border-color:rgba(245,158,11,.4)">
+        <div class="cc-lbl" style="color:#fde68a">Type 2</div>
+        <div class="cc-t" style="color:#fde68a">Intrusion Hallucination</div>
+        <div class="cc-d">The model introduces a factual claim that is not present anywhere in the retrieved context — neither confirmed nor denied. Pure parametric generation leaking into what should be a grounded response. <em>Example: adding specific numbers, names, or dates not in any retrieved chunk.</em></div>
+      </div>
+      <div class="cc-card" style="border-color:rgba(99,102,241,.4)">
+        <div class="cc-lbl" style="color:#a5b4fc">Type 3</div>
+        <div class="cc-t" style="color:#a5b4fc">Completeness Hallucination</div>
+        <div class="cc-d">The retrieved context partially addresses the question. The model answers the partial question correctly but presents the answer as complete, hiding the gap. <em>Example: context covers only half a procedure; model describes the full procedure confidently, fabricating the missing half.</em></div>
+      </div>
+    </div>
+    <h3>Diagnostic Question: Which Component Is Failing?</h3>
+    <table class="cmp-tbl">
+      <tr><th>Symptom</th><th>Likely Root Cause</th><th>Targeted Fix</th></tr>
+      <tr><td>High retrieval P@5 + low faithfulness</td><td>Generation: model not grounded to context</td><td>Stronger system prompt; add grounding constraint</td></tr>
+      <tr><td>Low retrieval P@5 + low faithfulness</td><td>Retrieval: wrong chunks retrieved; generator working with bad evidence</td><td>Improve retrieval (Week 9 tools); re-evaluate</td></tr>
+      <tr><td>High retrieval P@5 + high answer relevance + low faithfulness</td><td>Intrusion hallucination: model supplements with parametric knowledge</td><td>Explicit "do not use prior knowledge" instruction + entailment checker</td></tr>
+      <tr><td>Correct answer, no citation</td><td>Attribution missing; answer may be grounded but unverifiable</td><td>Add citation instruction to prompt; validate post-generation</td></tr>
+      <tr><td>Correct answer for known queries, wrong for novel queries</td><td>Conflation: model falls back to training data for unknown concepts</td><td>Detect via SelfCheckGPT; add abstention instruction</td></tr>
+    </table>
+  </div>
+
+  <!-- SECTION 4 -->
+  <div class="ls">
+    <h2>📊 4 — RAGAS: The Four-Metric RAG Evaluation Framework</h2>
+    <p>RAGAS (Retrieval Augmented Generation Assessment) is the most widely adopted framework for evaluating RAG systems end-to-end. It decomposes system quality into four orthogonal metrics, each measuring a distinct failure mode. A system can score well on three and fail catastrophically on the fourth — which is why all four are necessary.</p>
+    <div class="ragas-grid" id="ragas-grid">
+      <div class="ragas-card">
+        <div class="ragas-name" style="color:var(--green)">Faithfulness</div>
+        <div class="ragas-bar-wrap"><div class="ragas-bar" id="rb-faith" style="width:0%;background:var(--green)"></div></div>
+        <div class="ragas-score" id="rs-faith" style="color:var(--green)">—</div>
+        <div class="ragas-def">Are all claims in the generated answer entailed by the retrieved context? Measures grounding quality. Low score = hallucination in the generation step.</div>
+      </div>
+      <div class="ragas-card">
+        <div class="ragas-name" style="color:var(--accent)">Answer Relevance</div>
+        <div class="ragas-bar-wrap"><div class="ragas-bar" id="rb-ans" style="width:0%;background:var(--accent)"></div></div>
+        <div class="ragas-score" id="rs-ans" style="color:var(--accent)">—</div>
+        <div class="ragas-def">Does the generated answer actually address the question asked? Measures response coherence. Low score = answer is grounded but off-topic.</div>
+      </div>
+      <div class="ragas-card">
+        <div class="ragas-name" style="color:var(--orange)">Context Precision</div>
+        <div class="ragas-bar-wrap"><div class="ragas-bar" id="rb-prec" style="width:0%;background:var(--orange)"></div></div>
+        <div class="ragas-score" id="rs-prec" style="color:var(--orange)">—</div>
+        <div class="ragas-def">Of the retrieved chunks, what fraction are actually relevant to the question? Measures retrieval precision. Low score = noisy retrieval polluting the context.</div>
+      </div>
+      <div class="ragas-card">
+        <div class="ragas-name" style="color:var(--cyan)">Context Recall</div>
+        <div class="ragas-bar-wrap"><div class="ragas-bar" id="rb-rec" style="width:0%;background:var(--cyan)"></div></div>
+        <div class="ragas-score" id="rs-rec" style="color:var(--cyan)">—</div>
+        <div class="ragas-def">Does the retrieved context contain all the information needed to answer the question? Measures retrieval completeness. Low score = relevant chunks missing from retrieval.</div>
+      </div>
+    </div>
+    <button class="run-btn" onclick="animateRagas()">▶ Run Example Evaluation</button>
+    <div class="hl-cyan"><strong>The critical relationship between these four metrics:</strong> Faithfulness and Answer Relevance measure the <em>generation</em> component. Context Precision and Context Recall measure the <em>retrieval</em> component. This decomposition is what allows you to diagnose which half of the pipeline is failing — which is the entire point of building an evaluation harness rather than measuring end-to-end accuracy alone.</div>
+    <h3>How Faithfulness Is Computed</h3>
+    <p>Faithfulness is the hardest metric to compute automatically because it requires an entailment judgment — does the retrieved context logically support each claim in the response? The RAGAS implementation uses an LLM-as-judge pattern:</p>
+    <div class="code-block"><span class="cm"># Faithfulness computation (RAGAS pattern)</span>
+<span class="kw">def</span> <span class="fn2">compute_faithfulness</span>(answer: str, context_chunks: list[str], judge_llm) -> float:
+    <span class="cm"># Step 1: decompose answer into atomic claims</span>
+    claims_prompt = <span class="str">f"""Extract all factual claims from this answer as a list.
+Answer: {answer}
+Return only the claims, one per line."""</span>
+    claims = judge_llm.<span class="fn2">invoke</span>(claims_prompt).<span class="fn2">split</span>(<span class="str">'\n'</span>)
+
+    <span class="cm"># Step 2: for each claim, check if context entails it</span>
+    supported = <span class="nr">0</span>
+    <span class="kw">for</span> claim <span class="kw">in</span> claims:
+        entail_prompt = <span class="str">f"""Context: {' '.join(context_chunks)}
+
+Claim: {claim}
+
+Is this claim fully supported by the context? Answer YES or NO."""</span>
+        result = judge_llm.<span class="fn2">invoke</span>(entail_prompt).<span class="fn2">strip</span>()
+        <span class="kw">if</span> <span class="str">"YES"</span> <span class="kw">in</span> result.<span class="fn2">upper</span>(): supported += <span class="nr">1</span>
+
+    <span class="kw">return</span> supported / <span class="fn2">len</span>(claims) <span class="kw">if</span> claims <span class="kw">else</span> <span class="nr">0.0</span></div>
+  </div>
+
+  <!-- SECTION 5 -->
+  <div class="ls">
+    <h2>🏗 5 — Building the Evaluation Harness</h2>
+    <p>An evaluation harness is a systematic, reproducible pipeline for scoring your RAG system across a representative set of test cases. It is the engineering artifact that converts informal testing ("I tried a few queries and it seemed okay") into measurement-backed quality assurance.</p>
+    <h3>The Test Dataset: Your Most Important Asset</h3>
+    <p>The harness is only as good as the test dataset it runs on. A test dataset for RAG evaluation requires four components per test case:</p>
+    <div class="flow">
+      <div class="fstep"><div class="fn">Q</div><div class="fbody"><strong>Question</strong><p>A representative query from your actual user distribution — or a synthetic query generated to probe a specific capability or failure mode.</p></div></div>
+      <div class="fstep"><div class="fn">G</div><div class="fbody"><strong>Ground Truth Answer</strong><p>The correct answer, written by a domain expert based on the source documents. Used to compute answer correctness against a human gold standard.</p></div></div>
+      <div class="fstep"><div class="fn">C</div><div class="fbody"><strong>Ground Truth Context</strong><p>The specific chunks from the corpus that contain the information needed to answer this question. Used to compute context recall — did retrieval find these chunks?</p></div></div>
+      <div class="fstep"><div class="fn">M</div><div class="fbody"><strong>Metadata</strong><p>Query type (factual, multi-hop, adversarial), domain, difficulty level. Enables sliced analysis — do you perform differently on simple factual queries vs. complex reasoning queries?</p></div></div>
+    </div>
+    <h3>Harness Architecture</h3>
+    <div class="code-block"><span class="cm"># Assignment 4 skeleton — evaluation harness</span>
+<span class="kw">from</span> ragas <span class="kw">import</span> evaluate
+<span class="kw">from</span> ragas.metrics <span class="kw">import</span> faithfulness, answer_relevancy, context_precision, context_recall
+<span class="kw">from</span> datasets <span class="kw">import</span> Dataset
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+<span class="kw">class</span> <span class="cl">RAGEvaluationHarness</span>:
+    <span class="kw">def</span> <span class="fn2">__init__</span>(self, rag_pipeline, test_dataset: list[dict]):
+        self.pipeline = rag_pipeline
+        self.test_data = test_dataset  <span class="cm"># list of {question, ground_truth, contexts}</span>
+
+    <span class="kw">def</span> <span class="fn2">run</span>(self) -> pd.DataFrame:
+        results = []
+        <span class="kw">for</span> case <span class="kw">in</span> self.test_data:
+            <span class="cm"># 1. Run the RAG pipeline</span>
+            response = self.pipeline.<span class="fn2">invoke</span>(case[<span class="str">'question'</span>])
+            retrieved_chunks = response[<span class="str">'source_documents'</span>]
+            answer = response[<span class="str">'answer'</span>]
+
+            <span class="cm"># 2. Collect result for RAGAS evaluation</span>
+            results.<span class="fn2">append</span>({
+                <span class="str">'question'</span>: case[<span class="str">'question'</span>],
+                <span class="str">'answer'</span>: answer,
+                <span class="str">'contexts'</span>: [doc.page_content <span class="kw">for</span> doc <span class="kw">in</span> retrieved_chunks],
+                <span class="str">'ground_truth'</span>: case[<span class="str">'ground_truth'</span>],
+                <span class="str">'ground_truth_contexts'</span>: case[<span class="str">'contexts'</span>],
+            })
+
+        <span class="cm"># 3. Score with RAGAS</span>
+        dataset = Dataset.<span class="fn2">from_list</span>(results)
+        scores = <span class="fn2">evaluate</span>(
+            dataset,
+            metrics=[faithfulness, answer_relevancy, context_precision, context_recall]
+        )
+        <span class="kw">return</span> scores.<span class="fn2">to_pandas</span>()</div>
+    <div class="hl-green"><strong>What the harness tells you:</strong> Run this on 20–50 representative test cases. The output DataFrame shows per-query scores on all four metrics. Sort by faithfulness ascending to find your worst-performing queries. Those are your debugging targets — read the retrieved context and the generated answer side-by-side to understand which of the three hallucination types is occurring.</div>
+  </div>
+
+  <!-- SECTION 6 -->
+  <div class="ls">
+    <h2>🛡 6 — Guardrails: Preventing Hallucination at the System Level</h2>
+    <p>Evaluation tells you what went wrong. Guardrails try to prevent it. The two-layer approach — prevention at generation time, detection after generation — is more robust than either alone.</p>
+    <h3>Layer 1: Generation-Time Prevention</h3>
+    <ul class="ls"><ul>
+      <li><strong>Grounding system prompt</strong> — explicit "only use context" instructions (Section 2)</li>
+      <li><strong>Temperature control</strong> — lower temperature (0.0–0.3) reduces creative generation that departs from context; appropriate for factual Q&A</li>
+      <li><strong>Context window management</strong> — include only the k most relevant chunks, not all of them; irrelevant context increases the probability the model supplements from parametric knowledge to fill perceived gaps</li>
+      <li><strong>Abstention training</strong> — fine-tuned models can be trained to say "I don't know" rather than hallucinate; this is a model-level intervention</li>
+    </ul></ul>
+    <h3>Layer 2: Post-Generation Detection</h3>
+    <ul class="ls"><ul>
+      <li><strong>Entailment checking</strong> — run a lightweight NLI (Natural Language Inference) model to check whether each claim in the response is entailed by the context. Fast, cheap, can run synchronously before serving.</li>
+      <li><strong>SelfCheckGPT</strong> — for open-domain queries where no ground truth context exists; samples N additional responses and measures internal consistency (from Week 8)</li>
+      <li><strong>LLM-as-judge faithfulness</strong> — more accurate than NLI but slower and more expensive; use on a sample of production traffic</li>
+      <li><strong>Citation validation</strong> — if the model cites [Source 2], verify that [Source 2] actually entails the cited claim; flag misattributions automatically</li>
+    </ul></ul>
+    <div class="code-block"><span class="cm"># Synchronous entailment guardrail (before serving)</span>
+<span class="kw">from</span> transformers <span class="kw">import</span> pipeline
+
+nli = <span class="fn2">pipeline</span>(<span class="str">"text-classification"</span>, model=<span class="str">"cross-encoder/nli-deberta-v3-small"</span>)
+
+<span class="kw">def</span> <span class="fn2">check_grounded</span>(answer: str, context: str, threshold: float = <span class="nr">0.7</span>) -> dict:
+    result = <span class="fn2">nli</span>(<span class="str">f"{context} [SEP] {answer}"</span>)[<span class="nr">0</span>]
+    entailment_score = result[<span class="str">'score'</span>] <span class="kw">if</span> result[<span class="str">'label'</span>] == <span class="str">'ENTAILMENT'</span> <span class="kw">else</span> <span class="nr">1</span> - result[<span class="str">'score'</span>]
+    <span class="kw">return</span> {
+        <span class="str">'grounded'</span>: entailment_score >= threshold,
+        <span class="str">'score'</span>: entailment_score,
+        <span class="str">'action'</span>: <span class="str">'serve'</span> <span class="kw">if</span> entailment_score >= threshold <span class="kw">else</span> <span class="str">'flag_for_review'</span>
+    }</div>
+  </div>
+
+  <!-- SECTION 7 -->
+  <div class="ls">
+    <h2>🔗 7 — Context Window Management for RAG</h2>
+    <p>One of the most practically important and least discussed challenges in production RAG is context window budget management. Your generative model has a fixed context limit (e.g., 128K tokens for GPT-4o). Your system prompt, conversation history, retrieved chunks, and question all compete for that budget.</p>
+    <h3>The Budget Allocation Problem</h3>
+    <table class="cmp-tbl">
+      <tr><th>Context Component</th><th>Typical Token Budget</th><th>Notes</th></tr>
+      <tr><td>System prompt (grounding rules)</td><td>200–500 tokens</td><td>Fixed; optimize for minimum needed to achieve grounding</td></tr>
+      <tr><td>Conversation history</td><td>0–8,000 tokens</td><td>Variable; must truncate old turns in long sessions</td></tr>
+      <tr><td>Retrieved chunks (k chunks)</td><td>k × chunk_size tokens</td><td>Largest variable; tune k and chunk_size together</td></tr>
+      <tr><td>User question</td><td>10–200 tokens</td><td>Usually small but adversarial inputs can be long</td></tr>
+      <tr><td>Output generation budget</td><td>500–4,000 tokens</td><td>Reserve space for the answer you expect</td></tr>
+    </table>
+    <p>The practical rule: reserve 30–40% of your context window for the system prompt + question + output. Use the remaining 60–70% for retrieved chunks. If your chunks are 512 tokens each, you can fit about 150 chunks into a 128K window — but you should never retrieve 150 chunks because most will be irrelevant noise. Aim for 5–10 high-precision chunks. More chunks without precision improvement degrades faithfulness.</p>
+    <div class="hl-orange"><strong>The lost-in-the-middle effect:</strong> Huyen cites research showing that models pay systematically less attention to content in the middle of long contexts. If you stuff 50 chunks into the context, the model effectively ignores most of them. Tighter retrieval + fewer, more relevant chunks consistently outperforms large context with loose retrieval — and is cheaper.</div>
+    <h3>Dynamic Context Assembly</h3>
+    <div class="code-block"><span class="cm"># Context budget manager</span>
+<span class="kw">def</span> <span class="fn2">assemble_context</span>(chunks: list[dict], budget_tokens: int, tokenizer) -> list[dict]:
+    selected, used = [], <span class="nr">0</span>
+    <span class="kw">for</span> chunk <span class="kw">in</span> chunks:  <span class="cm"># already ranked by relevance</span>
+        chunk_tokens = <span class="fn2">len</span>(tokenizer.<span class="fn2">encode</span>(chunk[<span class="str">'content'</span>]))
+        <span class="kw">if</span> used + chunk_tokens > budget_tokens: <span class="kw">break</span>
+        selected.<span class="fn2">append</span>(chunk)
+        used += chunk_tokens
+    <span class="kw">return</span> selected  <span class="cm"># never exceed budget</span></div>
+  </div>
+
+  <!-- SECTION 8 -->
+  <div class="ls">
+    <h2>🧪 8 — Testing Strategies for RAG Systems</h2>
+    <p>Beyond RAGAS scores on a fixed test set, production RAG systems need three additional testing strategies to catch the failure modes that aggregate metrics miss.</p>
+    <h3>Adversarial Testing</h3>
+    <p>Deliberately craft queries designed to trigger hallucination. The goal is to find the edge of the system's grounding before users do. Categories of adversarial queries:</p>
+    <div class="cgrid">
+      <div class="cc-card"><div class="cc-lbl">Type A</div><div class="cc-t">Out-of-scope queries</div><div class="cc-d">Questions the corpus cannot answer. The grounded system should abstain. An ungrounded system will fabricate.</div></div>
+      <div class="cc-card"><div class="cc-lbl">Type B</div><div class="cc-t">Near-miss queries</div><div class="cc-d">Questions very similar to answerable queries but with key details changed. Tests whether the model notices the difference or answers based on the similar-but-wrong context.</div></div>
+      <div class="cc-card"><div class="cc-lbl">Type C</div><div class="cc-t">Contradictory context</div><div class="cc-d">Inject chunks that contradict each other. Does the model flag the conflict or pick one arbitrarily? Grounded systems should surface conflicts explicitly.</div></div>
+      <div class="cc-card"><div class="cc-lbl">Type D</div><div class="cc-t">Leading questions</div><div class="cc-d">"Confirm that X is the case, even though the actual policy is Y." Tests whether the model resists user pressure to validate incorrect claims.</div></div>
+    </div>
+    <h3>Regression Testing</h3>
+    <p>Every change to your RAG system — new embedding model, different chunking strategy, updated prompts — should be validated against a fixed regression test suite. Run RAGAS before and after the change. A change that improves faithfulness but degrades context recall is not obviously an improvement. Track all four metrics together over time.</p>
+    <h3>Production Sampling</h3>
+    <p>A 2–5% sample of real production queries, evaluated asynchronously via LLM-as-judge faithfulness checking, provides the ground truth signal that no fixed test set can match. Real users ask questions the test set didn't anticipate. Production sampling catches these distribution shifts before they accumulate into reputational failures.</p>
+  </div>
+
+  <!-- SECTION 9 -->
+  <div class="ls">
+    <h2>🔁 9 — Closing the Loop: From Evaluation to Improvement</h2>
+    <p>An evaluation harness without an improvement loop is just diagnostics. The value comes from using scores to drive specific, targeted changes to specific system components.</p>
+    <table class="cmp-tbl">
+      <tr><th>If This Metric Is Low</th><th>Diagnose By</th><th>Improve By</th></tr>
+      <tr><td><strong>Faithfulness</strong></td><td>Read the low-scoring (query, context, answer) triples; identify which hallucination type</td><td>Strengthen grounding prompt; add entailment guardrail; lower temperature</td></tr>
+      <tr><td><strong>Answer Relevance</strong></td><td>Check if retrieved context is relevant; check if prompt is distracting the model</td><td>Improve query rewriting; check system prompt for over-constraining the response</td></tr>
+      <tr><td><strong>Context Precision</strong></td><td>Examine retrieved chunks for off-topic noise</td><td>Improve retrieval (reranker, hybrid search tuning); reduce k; add metadata filtering</td></tr>
+      <tr><td><strong>Context Recall</strong></td><td>Identify which ground truth chunks were missed</td><td>Improve chunking strategy; tune embedding model; add contextual retrieval</td></tr>
+    </table>
+    <div class="hl-green"><strong>The evaluation flywheel:</strong> Build test set → Run harness → Identify lowest metric → Make targeted fix → Re-run harness → Compare deltas → Update test set with new adversarial cases → Repeat. Each cycle moves all four metrics toward 1.0 while revealing new failure modes to address. This is how production RAG systems improve continuously over time.</div>
+  </div>
+
+  <div class="btn-row mt4">
+    <button class="btn btn-orange" onclick="show('demo')">🔬 Run the Eval Demo</button>
+    <button class="btn btn-s" onclick="show('tools')">🛠 Tools Lab</button>
+  </div>
+</div>
+
+<!-- TOOLS LAB -->
+<div class="page" id="page-tools">
+  <div class="hero">
+    <div class="badge">🛠 Tools Lab — Week 10</div>
+    <h1>LangChain + <span>RAGAS + OpenAI Cookbook</span></h1>
+    <p>The three tools that together let you build, wire, and evaluate a production-grade grounded RAG pipeline.</p>
+  </div>
+
+  <div class="tool-grid">
+    <div class="tool-card">
+      <div style="font-size:1.8rem;margin-bottom:10px">🦜</div>
+      <div class="tool-name">LangChain LCEL</div>
+      <div class="tool-sub">docs.langchain.com · Python + JS · Apache 2.0</div>
+      <ul class="tool-features">
+        <li>LCEL (LangChain Expression Language) — pipe-based chain composition</li>
+        <li>Built-in retriever abstraction over Chroma, FAISS, Pinecone</li>
+        <li>RetrievalQA and ConversationalRetrievalChain for grounded Q&A</li>
+        <li>RunnablePassthrough for injecting context with citation metadata</li>
+        <li>LangSmith tracing — observe every chain step end-to-end</li>
+      </ul>
+      <div class="tool-code"><span class="kw">from</span> langchain_core.runnables <span class="kw">import</span> RunnablePassthrough
+<span class="kw">from</span> langchain_core.output_parsers <span class="kw">import</span> StrOutputParser
+<span class="kw">from</span> langchain_openai <span class="kw">import</span> ChatOpenAI
+<span class="kw">from</span> langchain_core.prompts <span class="kw">import</span> ChatPromptTemplate
+
+llm = <span class="cl">ChatOpenAI</span>(model=<span class="str">"gpt-4o-mini"</span>, temperature=<span class="nr">0</span>)
+prompt = <span class="cl">ChatPromptTemplate</span>.<span class="fn2">from_template</span>(<span class="str">"""Answer ONLY from context.
+Context: {context}
+Question: {question}"""</span>)
+
+<span class="cm"># LCEL pipe syntax</span>
+rag_chain = (
+    {<span class="str">"context"</span>: retriever, <span class="str">"question"</span>: <span class="cl">RunnablePassthrough</span>()}
+    | prompt | llm | <span class="cl">StrOutputParser</span>()
+)
+answer = rag_chain.<span class="fn2">invoke</span>(<span class="str">"What is the RAG context limit?"</span>)</div>
+    </div>
+    <div class="tool-card">
+      <div style="font-size:1.8rem;margin-bottom:10px">📊</div>
+      <div class="tool-name">RAGAS</div>
+      <div class="tool-sub">docs.ragas.io · pip install ragas · MIT License</div>
+      <ul class="tool-features">
+        <li>Faithfulness, Answer Relevance, Context Precision, Context Recall</li>
+        <li>LLM-as-judge evaluation — uses GPT-4 or Anthropic as scorer</li>
+        <li>HuggingFace Datasets integration — standard input/output format</li>
+        <li>testset_generator — auto-generates test questions from your corpus</li>
+        <li>Integrates with LangSmith for production evaluation pipelines</li>
+      </ul>
+      <div class="tool-code"><span class="kw">from</span> ragas <span class="kw">import</span> evaluate
+<span class="kw">from</span> ragas.metrics <span class="kw">import</span> (
+    faithfulness, answer_relevancy,
+    context_precision, context_recall
+)
+<span class="kw">from</span> datasets <span class="kw">import</span> Dataset
+
+data = {
+  <span class="str">"question"</span>: [<span class="str">"What is RAG?"</span>],
+  <span class="str">"answer"</span>: [<span class="str">"RAG retrieves relevant docs..."</span>],
+  <span class="str">"contexts"</span>: [[<span class="str">"RAG is retrieval-augmented generation..."</span>]],
+  <span class="str">"ground_truth"</span>: [<span class="str">"RAG augments LLMs with retrieval."</span>]
+}
+dataset = Dataset.<span class="fn2">from_dict</span>(data)
+result = <span class="fn2">evaluate</span>(
+    dataset,
+    metrics=[faithfulness, answer_relevancy,
+             context_precision, context_recall]
+)
+<span class="fn2">print</span>(result)  <span class="cm"># {'faithfulness': 0.87, ...}</span></div>
+    </div>
+    <div class="tool-card">
+      <div style="font-size:1.8rem;margin-bottom:10px">📖</div>
+      <div class="tool-name">OpenAI Cookbook</div>
+      <div class="tool-sub">cookbook.openai.com · Reference patterns</div>
+      <ul class="tool-features">
+        <li>End-to-end RAG notebook with evaluation included</li>
+        <li>Chunking + embedding + retrieval best practices</li>
+        <li>Structured output patterns for citation-bearing responses</li>
+        <li>Guardrail implementation patterns</li>
+        <li>Batch evaluation with GPT-4 as judge</li>
+      </ul>
+      <div class="tool-code"><span class="cm"># OpenAI Cookbook grounding pattern</span>
+<span class="cm"># cookbook.openai.com → "Question Answering"</span>
+
+<span class="kw">from</span> openai <span class="kw">import</span> OpenAI
+client = <span class="cl">OpenAI</span>()
+
+<span class="kw">def</span> <span class="fn2">grounded_answer</span>(question, context_chunks):
+    context = <span class="str">"\n\n"</span>.<span class="fn2">join</span>(context_chunks)
+    response = client.chat.completions.<span class="fn2">create</span>(
+        model=<span class="str">"gpt-4o-mini"</span>,
+        temperature=<span class="nr">0</span>,
+        messages=[{
+            <span class="str">"role"</span>: <span class="str">"system"</span>,
+            <span class="str">"content"</span>: <span class="str">f"Answer ONLY from context:\n{context}"</span>
+        },{
+            <span class="str">"role"</span>: <span class="str">"user"</span>,
+            <span class="str">"content"</span>: question
+        }]
+    )
+    <span class="kw">return</span> response.choices[<span class="nr">0</span>].message.content</div>
+    </div>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon cg">🧪</div><div class="card-title">Colab Lab Exercises — Week 10</div></div>
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:14px">Open <code>notebooks/week10/</code> in the course Colab. Three exercises building toward Assignment 4.</p>
+    <div class="flow" style="margin-bottom:0">
+      <div class="fstep"><div class="fn">1</div><div class="fbody"><strong>Grounding Experiment — Measure the Impact of Prompt Design</strong><p>Start with the same RAG pipeline and 10 test queries. Run three prompt variants: (a) no grounding instruction, (b) basic "use context only," (c) the full grounding pattern from Section 2. Compute faithfulness scores for each variant with RAGAS. Document how much faithfulness improves with each added constraint.</p></div></div>
+      <div class="fstep"><div class="fn">2</div><div class="fbody"><strong>Hallucination Classification — Build a Labeled Dataset</strong><p>Run your RAG pipeline on 20 queries. Manually read each (query, context, answer) triple and label each response as: No Hallucination / Type 1 Conflation / Type 2 Intrusion / Type 3 Completeness. Compute the frequency of each hallucination type. Which type is most common in your system? What pattern explains it?</p></div></div>
+      <div class="fstep"><div class="fn">3</div><div class="fbody"><strong>Full RAGAS Harness — Assignment 4 Implementation</strong><p>Implement the RAGEvaluationHarness class from Section 5. Build a test dataset of at least 15 question/answer/context triples from your M5 corpus. Run all four RAGAS metrics. Produce a results DataFrame. Identify the worst-performing metric and implement one targeted fix. Re-run the harness and document the delta.</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- EVAL DEMO -->
+<div class="page" id="page-demo">
+  <div class="hero">
+    <div class="badge">🔬 Interactive Demo</div>
+    <h1>RAG <span>Evaluation in Action</span></h1>
+    <p>See how RAGAS scores differ across hallucination types, and test your ability to classify RAG failures before the framework does.</p>
+  </div>
+
+  <!-- DEMO 1: HALLUCINATION CLASSIFIER -->
+  <div class="card">
+    <div class="card-h"><div class="card-icon" style="background:rgba(239,68,68,.15)">🔴</div><div class="card-title">Demo 1 — Hallucination Classification Challenge</div></div>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">Click each case to reveal which hallucination type it is and why the RAGAS faithfulness scorer would flag it. Try to classify it yourself before clicking.</p>
+    <div class="hall-demo" style="background:transparent;border:none;padding:0">
+      <div class="hall-case" id="hc1" onclick="toggleHall('hc1')">
+        <span class="hall-type ht-conf">? Click to reveal type</span>
+        <div class="hall-q">Q: What year was GPT-4 released?</div>
+        <div class="hall-ctx">Context chunk: "GPT-4 was released by OpenAI in March 2023, featuring multimodal capabilities."</div>
+        <div class="hall-ans">Generated answer: "GPT-4 was released in November 2022, the same month as ChatGPT."</div>
+        <div class="hall-explain">❌ <strong>Type 1 — Conflation Hallucination.</strong> The context clearly states March 2023. The model substituted its training knowledge (confusing GPT-4 with a different release date) for the explicit statement in the retrieved chunk. RAGAS Faithfulness: ~0.1 — the date claim directly contradicts the context. Fix: stronger grounding instruction; the model should defer to the context even when its training suggests otherwise.</div>
+      </div>
+      <div class="hall-case" id="hc2" onclick="toggleHall('hc2')">
+        <span class="hall-type ht-intrusion">? Click to reveal type</span>
+        <div class="hall-q">Q: How many parameters does Claude 3 Opus have?</div>
+        <div class="hall-ctx">Context chunk: "Claude 3 Opus is Anthropic's most capable model in the Claude 3 family, designed for complex reasoning tasks requiring nuanced understanding."</div>
+        <div class="hall-ans">Generated answer: "Claude 3 Opus has approximately 175 billion parameters, similar in scale to GPT-3, making it highly capable for complex reasoning."</div>
+        <div class="hall-explain">❌ <strong>Type 2 — Intrusion Hallucination.</strong> The context says nothing about parameter count. The model introduced "approximately 175 billion" from its parametric knowledge — which is also incorrect (Anthropic has not disclosed Claude 3's parameter count). RAGAS Faithfulness: ~0.2 — the parameter claim is completely unsupported by context. Fix: add explicit abstention instruction: "If the context does not contain this information, say so."</div>
+      </div>
+      <div class="hall-case" id="hc3" onclick="toggleHall('hc3')">
+        <span class="hall-type ht-incomp">? Click to reveal type</span>
+        <div class="hall-q">Q: How do I set up a new user in the admin portal?</div>
+        <div class="hall-ctx">Context chunk: "To begin adding a new user, navigate to Admin → User Management → Add User. Enter the user's email address and select their role from the dropdown menu."</div>
+        <div class="hall-ans">Generated answer: "To set up a new user: (1) Navigate to Admin → User Management → Add User. (2) Enter their email and select their role. (3) Configure their permissions in the Permissions tab. (4) Send an activation email by clicking 'Notify User.' (5) The user will receive an email within 5 minutes."</div>
+        <div class="hall-explain">❌ <strong>Type 3 — Completeness Hallucination.</strong> Steps 1 and 2 are correctly grounded in the context. Steps 3–5 are fabricated — the context ends after "select their role." The model generated a plausible-sounding completion but steps 3–5 may describe a completely different system's interface. RAGAS Faithfulness: ~0.4 — two of five steps are grounded, three are not. Fix: retrieval gap (the permissions and notification steps may be in a different document chunk that wasn't retrieved); also strengthen the abstention instruction to say "stop when the context ends."</div>
+      </div>
+      <div class="hall-case" id="hc4" onclick="toggleHall('hc4')">
+        <span class="hall-type" style="background:rgba(16,185,129,.15);color:#6ee7b7">? Click to reveal type</span>
+        <div class="hall-q">Q: What is the refund policy for annual subscriptions?</div>
+        <div class="hall-ctx">Context chunk: "Annual subscription customers are eligible for a full refund within 30 days of purchase. After 30 days, refunds are issued on a pro-rata basis for the remaining subscription period."</div>
+        <div class="hall-ans">Generated answer: "Annual subscription customers can get a full refund within 30 days of purchase. After 30 days, refunds are calculated proportionally based on the remaining subscription time. [Source 1]"</div>
+        <div class="hall-explain">✅ <strong>No Hallucination — Fully Grounded.</strong> Every claim in the answer is directly entailed by the context. "Full refund within 30 days" ✓ "Pro-rata basis for remaining period" ✓ — the model correctly paraphrased without adding unsupported claims. The [Source 1] citation is accurate. RAGAS Faithfulness: ~0.97. This is what a well-grounded response looks like.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEMO 2: RAGAS SCORE COMPARATOR -->
+  <div class="card">
+    <div class="card-h"><div class="card-icon co">📊</div><div class="card-title">Demo 2 — RAGAS Score Comparator</div></div>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">Select a pipeline configuration and see how RAGAS scores change. Observe how each metric is independently affected by different design choices.</p>
+    <div class="method-toggle" id="config-toggle" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+      <button style="padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:var(--accent);border-color:var(--accent);color:#fff;cursor:pointer;font-size:.78rem;font-weight:600" onclick="setConfig('baseline',this)">Baseline (no grounding)</button>
+      <button style="padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.78rem;font-weight:600" onclick="setConfig('grounded',this)">+ Grounding prompt</button>
+      <button style="padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.78rem;font-weight:600" onclick="setConfig('hybrid',this)">+ Hybrid retrieval</button>
+      <button style="padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.78rem;font-weight:600" onclick="setConfig('full',this)">Full pipeline</button>
+    </div>
+    <div class="ragas-grid" id="compare-grid">
+      <div class="ragas-card"><div class="ragas-name" style="color:var(--green)">Faithfulness</div><div class="ragas-bar-wrap"><div class="ragas-bar" id="cb-faith" style="width:0%;background:var(--green)"></div></div><div class="ragas-score" id="cs-faith" style="color:var(--green)">—</div></div>
+      <div class="ragas-card"><div class="ragas-name" style="color:var(--accent)">Answer Relevance</div><div class="ragas-bar-wrap"><div class="ragas-bar" id="cb-ans" style="width:0%;background:var(--accent)"></div></div><div class="ragas-score" id="cs-ans" style="color:var(--accent)">—</div></div>
+      <div class="ragas-card"><div class="ragas-name" style="color:var(--orange)">Context Precision</div><div class="ragas-bar-wrap"><div class="ragas-bar" id="cb-prec" style="width:0%;background:var(--orange)"></div></div><div class="ragas-score" id="cs-prec" style="color:var(--orange)">—</div></div>
+      <div class="ragas-card"><div class="ragas-name" style="color:var(--cyan)">Context Recall</div><div class="ragas-bar-wrap"><div class="ragas-bar" id="cb-rec" style="width:0%;background:var(--cyan)"></div></div><div class="ragas-score" id="cs-rec" style="color:var(--cyan)">—</div></div>
+    </div>
+    <div id="config-explanation" style="font-size:.84rem;color:var(--muted);line-height:1.7;padding:14px;background:var(--s2);border-radius:10px;border:1px solid var(--border);margin-top:10px">Select a pipeline configuration above to see scores and explanation.</div>
+  </div>
+
+  <!-- DEMO 3: BUILD YOUR TEST CASE -->
+  <div class="card">
+    <div class="card-h"><div class="card-icon ca">✍️</div><div class="card-title">Demo 3 — Write a Test Case for Your Harness</div></div>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">Practice writing a RAGAS-compatible test case from scratch. Fill in each field as you would for Assignment 4.</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div><label style="font-size:.78rem;font-weight:700;color:var(--orange);display:block;margin-bottom:5px">Question</label><input id="tc-q" placeholder="A question your RAG system should be able to answer..." style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:.85rem;font-family:inherit" oninput="scoreTestCase()"></div>
+      <div><label style="font-size:.78rem;font-weight:700;color:var(--orange);display:block;margin-bottom:5px">Ground Truth Context (paste a chunk from your corpus that answers this question)</label><textarea id="tc-ctx" rows="3" placeholder="The specific text from your knowledge base that contains the answer..." style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:.85rem;font-family:inherit;resize:vertical" oninput="scoreTestCase()"></textarea></div>
+      <div><label style="font-size:.78rem;font-weight:700;color:var(--orange);display:block;margin-bottom:5px">Generated Answer (what your RAG system returned)</label><textarea id="tc-ans" rows="3" placeholder="The answer your system produced for this question..." style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:.85rem;font-family:inherit;resize:vertical" oninput="scoreTestCase()"></textarea></div>
+      <div><label style="font-size:.78rem;font-weight:700;color:var(--orange);display:block;margin-bottom:5px">Ground Truth Answer (expert-written correct answer)</label><input id="tc-gt" placeholder="What the answer should ideally be..." style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:.85rem;font-family:inherit" oninput="scoreTestCase()"></div>
+      <div id="tc-feedback" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:.83rem;color:var(--muted)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- DISCUSSION -->
+<div class="page" id="page-discussion">
+  <div class="hero">
+    <div class="badge">💬 Canvas Discussion — Week 10</div>
+    <h1>Grounding vs. <span>Capability</span> — A False Tradeoff?</h1>
+    <p>Post your response by Thursday. Reply to at least one classmate before Sunday. Take a position — the best posts have a clear argument, not just a list of considerations.</p>
+  </div>
+
+  <div class="discussion-card">
+    <h3 style="color:var(--orange);font-size:1rem;font-weight:700;margin-bottom:12px">📌 The Discussion Prompt</h3>
+    <div style="font-size:.9rem;color:var(--text);line-height:1.7;margin-bottom:16px;font-style:italic">"A fully grounded RAG system that refuses to answer questions outside its context window is technically safe — but is it actually useful? A user who asks a question the corpus can't answer gets 'I don't know.' A user who asks a question that requires synthesizing across three retrieved chunks and some general world knowledge gets a truncated, artificially limited response. Is the goal of grounding fundamentally in tension with the goal of being helpful? Or is this tension resolvable — and if so, how?"</div>
+    <p style="color:var(--muted);font-size:.85rem">Your response should be 200–350 words. Reference at least one specific technical concept from this week (faithfulness, abstention, guardrails, context precision, or the hallucination taxonomy). Take a clear position and defend it.</p>
+  </div>
+
+  <div class="ls">
+    <h2>🧠 Five Entry Points — Choose Your Angle</h2>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:12px;background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)"><span style="font-size:1.1rem">⚖️</span><div><strong style="color:var(--text);font-size:.88rem">The Architecture Angle:</strong><span style="font-size:.84rem;color:var(--muted)"> A fully grounded system and a system that gracefully degrades are not the same thing. Is the answer to design abstention more carefully — distinguishing "context is silent" from "context contradicts the claim"? What does that architecture look like?</span></div></div>
+      <div style="display:flex;gap:12px;background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)"><span style="font-size:1.1rem">⚗️</span><div><strong style="color:var(--text);font-size:.88rem">The Measurement Angle:</strong><span style="font-size:.84rem;color:var(--muted)"> RAGAS measures faithfulness and answer relevance independently. A system that scores perfectly on faithfulness but low on answer relevance is grounded but unhelpful. Does the framework itself embody the tension you're describing — and does it offer a path to resolving it?</span></div></div>
+      <div style="display:flex;gap:12px;background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)"><span style="font-size:1.1rem">🏥</span><div><strong style="color:var(--text);font-size:.88rem">The High-Stakes Domain Angle:</strong><span style="font-size:.84rem;color:var(--muted)"> In medical, legal, or financial applications, the cost of a hallucinated answer may far exceed the cost of an unhelpful abstention. Is the grounding-capability tradeoff actually domain-specific rather than universal? Which domains should maximize grounding even at the cost of helpfulness?</span></div></div>
+      <div style="display:flex;gap:12px;background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)"><span style="font-size:1.1rem">🔬</span><div><strong style="color:var(--text);font-size:.88rem">The System Design Angle:</strong><span style="font-size:.84rem;color:var(--muted)"> What if the answer is better corpus design rather than a looser grounding constraint? A richer knowledge base with more comprehensive coverage pushes the boundary of what "fully grounded" can answer. Is the real failure mode the grounding constraint or the retrieval corpus?</span></div></div>
+      <div style="display:flex;gap:12px;background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)"><span style="font-size:1.1rem">🧩</span><div><strong style="color:var(--text);font-size:.88rem">The User Experience Angle:</strong><span style="font-size:.84rebel;color:var(--muted)"> Users have mental models of what AI assistants do. A grounded assistant that frequently says "I don't know" creates one kind of trust; an ungrounded assistant that always answers creates a different kind of trust that is more fragile. Which trust model is actually more valuable long-term?</span></div></div>
+    </div>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon cg">💡</div><div class="card-title">Strong Post Checklist</div></div>
+    <ul class="chklist">
+      <li><div class="chk" onclick="ck(this)"></div>Takes a clear position — not just "it depends" without commitment</li>
+      <li><div class="chk" onclick="ck(this)"></div>References at least one specific technical concept from Week 10 lecture</li>
+      <li><div class="chk" onclick="ck(this)"></div>Uses a concrete example or scenario — not purely abstract</li>
+      <li><div class="chk" onclick="ck(this)"></div>200–350 words</li>
+      <li><div class="chk" onclick="ck(this)"></div>Replied to at least one classmate substantively (by Sunday)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ASSIGNMENT -->
+<div class="page" id="page-assignment">
+  <div class="hero">
+    <div class="badge">📝 Assignment 4 + Project M5</div>
+    <h1>Evaluation Harness + <span>M5 Checkpoint</span></h1>
+    <p>Assignment 4 is the technical deliverable that proves your RAG system is measurably grounded. M5 is the project milestone that validates your system's advanced capabilities. Both are due end of Week 10.</p>
+    <div class="chips">
+      <div class="chip">Assignment 4: graded separately</div>
+      <div class="chip">M5: 4 pts toward Project 30%</div>
+      <div class="chip">Submit both to Canvas · Assignments tab</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-icon co">📋</div><div class="card-title">Assignment 4 — Build a RAG Evaluation Harness</div></div>
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:16px">Assignment 4 is the applied implementation of Week 10's lecture content. You are building and running a systematic evaluation pipeline for a RAG system — either your own M5 system or the provided baseline system if yours is not yet ready.</p>
+    <div class="m-option">
+      <div class="m-option-hdr"><span class="m-badge mb-a">Part 1</span><div class="m-title">Test Dataset Construction (required)</div></div>
+      <div class="m-desc">Build a RAGAS-compatible test dataset of at least 15 question/answer/context triples. Each triple must include: the question, ground truth context (the specific chunk(s) that contain the answer), ground truth answer (expert-written), and the generated answer from your RAG system. At least 3 of your 15 cases must be adversarial (designed to trigger hallucination — out-of-scope, near-miss, or contradictory context).</div>
+      <ul class="m-deliverables">
+        <li>15+ test cases in a structured format (CSV, JSON, or Python list of dicts)</li>
+        <li>3+ adversarial cases clearly labeled with their adversarial type</li>
+        <li>Brief justification (1–2 sentences per case) for why each case was included</li>
+      </ul>
+    </div>
+    <div class="m-option">
+      <div class="m-option-hdr"><span class="m-badge mb-a">Part 2</span><div class="m-title">Harness Implementation + Score Report</div></div>
+      <div class="m-desc">Implement the RAGEvaluationHarness using RAGAS. Run all four metrics on your 15+ test cases. Produce and submit the results DataFrame. Your notebook must be runnable end-to-end in Colab with a clean kernel restart.</div>
+      <ul class="m-deliverables">
+        <li>Working Colab notebook that runs the full harness end-to-end</li>
+        <li>Results DataFrame showing per-query scores for all four RAGAS metrics</li>
+        <li>Aggregate scores (mean of each metric across all test cases)</li>
+        <li>Identification of the 3 worst-performing queries by faithfulness score</li>
+      </ul>
+    </div>
+    <div class="m-option">
+      <div class="m-option-hdr"><span class="m-badge mb-a">Part 3</span><div class="m-title">Diagnostic Analysis + One Targeted Fix</div></div>
+      <div class="m-desc">For your 3 lowest-faithfulness queries: read each (query, context, answer) triple carefully. Classify the hallucination type (Type 1/2/3). Trace the root cause. Implement one targeted fix to your pipeline — stronger grounding prompt, added guardrail, chunking change, or retrieval improvement. Re-run the harness and report the delta on all four metrics.</div>
+      <ul class="m-deliverables">
+        <li>Hallucination classification for your 3 worst cases (with reasoning)</li>
+        <li>Description of the fix implemented and why you chose it</li>
+        <li>Before/after RAGAS scores showing the delta</li>
+        <li>200-word reflection: what did building the harness reveal that informal testing did not?</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-icon cg">📋</div><div class="card-title">Assignment 4 Rubric</div></div>
+    <table class="cmp-tbl">
+      <tr><th>Component</th><th>Points</th><th>Full Credit Criteria</th></tr>
+      <tr><td><strong>Test Dataset Quality</strong></td><td style="font-weight:700">25 pts</td><td>15+ cases; 3+ adversarial; clear justifications; format is clean and RAGAS-compatible</td></tr>
+      <tr><td><strong>Harness Implementation</strong></td><td style="font-weight:700">35 pts</td><td>Notebook runs cleanly; all four metrics computed correctly; results DataFrame produced; code is readable with comments</td></tr>
+      <tr><td><strong>Diagnostic Analysis</strong></td><td style="font-weight:700">25 pts</td><td>Hallucination types correctly classified with specific reasoning; root cause identified (not just "the model hallucinated")</td></tr>
+      <tr><td><strong>Fix + Reflection</strong></td><td style="font-weight:700">15 pts</td><td>Fix is technically sound and targeted to the identified root cause; before/after scores show measurable delta; reflection demonstrates genuine learning</td></tr>
+    </table>
+  </div>
+
+  <div class="milestone mt4">
+    <h4 style="color:var(--green);font-size:.95rem;font-weight:800;margin-bottom:14px">🏗 Project Milestone M5 — Advanced Capability Checkpoint (4 pts)</h4>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px">M5 is the advanced capability checkpoint for your course project. It builds directly on M4 (retrieval index, Week 9) and adds evaluation and grounding to the working system you've built.</p>
+    <div class="m-option">
+      <div class="m-option-hdr"><span class="m-badge mb-b">Track A</span><div class="m-title">End-to-End Grounded Pipeline with Evaluation</div></div>
+      <div class="m-desc">Integrate your M4 retrieval index into a complete grounded RAG pipeline. Add a grounding system prompt. Run RAGAS evaluation on at least 10 project-domain test cases. Show that your system is measurably more grounded than a baseline without grounding constraints.</div>
+      <ul class="m-deliverables">
+        <li>Working end-to-end RAG pipeline (retrieval + grounded generation)</li>
+        <li>Grounding system prompt documented and justified</li>
+        <li>RAGAS scores on 10+ domain-specific test cases</li>
+        <li>Comparison with ungrounded baseline (at least faithfulness score)</li>
+      </ul>
+    </div>
+    <div class="m-option">
+      <div class="m-option-hdr"><span class="m-badge mb-b">Track B</span><div class="m-title">Guardrail Layer + Production Readiness Assessment</div></div>
+      <div class="m-desc">Add a post-generation guardrail to your pipeline — either an NLI entailment checker or LLM-as-judge faithfulness filter. Document the system's behavior on adversarial inputs. Produce a "production readiness" assessment that honestly characterizes where the system will succeed and where it will fail.</div>
+      <ul class="m-deliverables">
+        <li>Implemented guardrail with documented threshold and action (serve / flag / abstain)</li>
+        <li>5+ adversarial test cases showing how the guardrail responds</li>
+        <li>Production readiness assessment (1 page): known failure modes, recommended monitoring</li>
+        <li>One concrete recommendation for improvement in Week 11+</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon ca">📋</div><div class="card-title">M5 Rubric (4 pts)</div></div>
+    <table class="cmp-tbl">
+      <tr><th>Category</th><th>Points</th><th>Meets</th><th>Exceeds</th></tr>
+      <tr><td style="font-weight:700;color:var(--cyan)">Pipeline Integration</td><td style="font-weight:800">1.5</td><td>Working end-to-end pipeline; retrieval + generation connected; grounding prompt present</td><td>Grounding prompt has clear, domain-specific rules; citation format included; temperature appropriately set</td></tr>
+      <tr><td style="font-weight:700;color:var(--cyan)">Evaluation Results</td><td style="font-weight:800">1.5</td><td>RAGAS scores computed on 10+ cases; results presented clearly</td><td>Before/after comparison; sliced analysis by query type; worst-case examples analyzed</td></tr>
+      <tr><td style="font-weight:700;color:var(--cyan)">Reflection Quality</td><td style="font-weight:800">1.0</td><td>Writeup present; results summarized</td><td>Demonstrates genuine insight into system behavior; identifies a specific non-obvious finding; next steps are concrete and technically sound</td></tr>
+    </table>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon cg">✅</div><div class="card-title">Pre-Submission Checklist — Both Deliverables</div></div>
+    <ul class="chklist">
+      <li><div class="chk" onclick="ck(this)"></div>Assignment 4: Colab notebook runs cleanly with kernel restart</li>
+      <li><div class="chk" onclick="ck(this)"></div>Assignment 4: 15+ test cases in clean RAGAS format</li>
+      <li><div class="chk" onclick="ck(this)"></div>Assignment 4: All four RAGAS metrics computed and displayed</li>
+      <li><div class="chk" onclick="ck(this)"></div>Assignment 4: 3 worst-case queries classified with hallucination type</li>
+      <li><div class="chk" onclick="ck(this)"></div>Assignment 4: Before/after scores after implementing fix</li>
+      <li><div class="chk" onclick="ck(this)"></div>Assignment 4: 200-word reflection included in notebook</li>
+      <li><div class="chk" onclick="ck(this)"></div>M5: Pipeline runs end-to-end on project corpus</li>
+      <li><div class="chk" onclick="ck(this)"></div>M5: Grounding prompt documented with specific rules</li>
+      <li><div class="chk" onclick="ck(this)"></div>M5: RAGAS evaluation on 10+ domain test cases</li>
+      <li><div class="chk" onclick="ck(this)"></div>Both submitted to Canvas → Assignments → Week 10 tab</li>
+    </ul>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// NAV
+function show(p){
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.tb').forEach(e=>e.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const idx={home:0,lecture:1,tools:2,demo:3,discussion:4,assignment:5};
+  if(idx[p]!==undefined)document.querySelectorAll('.tb')[idx[p]].classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// CHECKLIST
+function ck(el){el.classList.toggle('on');el.textContent=el.classList.contains('on')?'✓':'';}
+
+// HALLUCINATION DEMO
+function toggleHall(id){
+  const el=document.getElementById(id);
+  const isOpen=el.classList.contains('open');
+  document.querySelectorAll('.hall-case').forEach(e=>e.classList.remove('open'));
+  if(!isOpen){
+    el.classList.add('open');
+    const type=id==='hc1'?'ht-conf':id==='hc2'?'ht-intrusion':id==='hc3'?'ht-incomp':'';
+    const label=id==='hc1'?'Type 1 — Conflation':id==='hc2'?'Type 2 — Intrusion':id==='hc3'?'Type 3 — Completeness':'✅ Grounded — No Hallucination';
+    el.querySelector('.hall-type').className='hall-type '+(type||'');
+    el.querySelector('.hall-type').textContent=label;
+  } else {
+    el.querySelector('.hall-type').textContent='? Click to reveal type';
+  }
+}
+
+// RAGAS ANIMATION (Demo 1)
+const ragasData={
+  faith:{bars:['rb-faith','rb-ans','rb-prec','rb-rec'],scores:['rs-faith','rs-ans','rs-prec','rs-rec'],vals:[0.87,0.91,0.72,0.65]}
+};
+function animateRagas(){
+  const vals=[0.87,0.91,0.72,0.65];
+  const bids=['rb-faith','rb-ans','rb-prec','rb-rec'];
+  const sids=['rs-faith','rs-ans','rs-prec','rs-rec'];
+  vals.forEach((v,i)=>{
+    setTimeout(()=>{
+      document.getElementById(bids[i]).style.width=(v*100)+'%';
+      let t=0;
+      const interval=setInterval(()=>{
+        document.getElementById(sids[i]).textContent=(t/100).toFixed(2);
+        t+=Math.ceil(v*100/20);
+        if(t>=v*100){document.getElementById(sids[i]).textContent=v.toFixed(2);clearInterval(interval);}
+      },50);
+    },i*200);
+  });
+}
+
+// CONFIG COMPARATOR
+const CONFIGS={
+  baseline:{faith:.41,ans:.78,prec:.55,rec:.62,explain:"No grounding instruction. The model answers from parametric knowledge supplemented by context — faithfulness is low (0.41) because many claims are not traceable to retrieved chunks. Answer relevance is reasonable (0.78) because the model still tries to address the question."},
+  grounded:{faith:.76,ans:.82,prec:.55,rec:.62,explain:"Grounding system prompt added ('Answer only from context'). Faithfulness jumps from 0.41 to 0.76 — the single biggest lever for grounding. Retrieval metrics unchanged because retrieval was not modified. Note answer relevance also improved slightly (0.82) because the model's responses are more focused."},
+  hybrid:{faith:.77,ans:.84,prec:.74,rec:.78,explain:"Hybrid search (BM25 + semantic + RRF) added. Context precision improves from 0.55 to 0.74 and context recall from 0.62 to 0.78 — better chunks retrieved. Faithfulness stays similar (the grounding prompt is already doing its job). Answer relevance improves slightly because the retrieved context is more relevant."},
+  full:{faith:.91,ans:.88,prec:.79,rec:.83,explain:"Full pipeline: grounding prompt + hybrid retrieval + NLI entailment guardrail (blocks responses below 0.7 entailment score). Faithfulness reaches 0.91 — the guardrail catches the remaining cases that slip through the prompt. All four metrics are now strong. This is the production-quality configuration."}
+};
+function setConfig(key, btn){
+  document.querySelectorAll('#config-toggle button').forEach(b=>{b.style.background='transparent';b.style.borderColor='var(--border)';b.style.color='var(--muted)';});
+  btn.style.background='var(--accent)';btn.style.borderColor='var(--accent)';btn.style.color='#fff';
+  const c=CONFIGS[key];
+  const pairs=[['cb-faith',c.faith,'cs-faith','var(--green)'],['cb-ans',c.ans,'cs-ans','var(--accent)'],['cb-prec',c.prec,'cs-prec','var(--orange)'],['cb-rec',c.rec,'cs-rec','var(--cyan)']];
+  pairs.forEach(([bid,val,sid,color])=>{
+    document.getElementById(bid).style.width=(val*100)+'%';
+    document.getElementById(sid).textContent=val.toFixed(2);
+    document.getElementById(sid).style.color=color;
+  });
+  document.getElementById('config-explanation').textContent=c.explain;
+}
+// Initialize
+setConfig('baseline',document.querySelector('#config-toggle button'));
+
+// TEST CASE SCORER
+function scoreTestCase(){
+  const q=document.getElementById('tc-q').value.trim();
+  const ctx=document.getElementById('tc-ctx').value.trim();
+  const ans=document.getElementById('tc-ans').value.trim();
+  const gt=document.getElementById('tc-gt').value.trim();
+  const fb=document.getElementById('tc-feedback');
+  if(!q||!ctx||!ans) {fb.style.display='none';return;}
+  fb.style.display='block';
+  // Heuristic scoring for demonstration
+  const ansWords=ans.toLowerCase().split(/\s+/);
+  const ctxWords=new Set(ctx.toLowerCase().split(/\s+/));
+  const overlap=ansWords.filter(w=>w.length>4&&ctxWords.has(w)).length;
+  const faithScore=Math.min(0.95,Math.max(0.2,(overlap/Math.max(ansWords.length,1))*2.5));
+  const gtWords=gt.toLowerCase().split(/\s+/);
+  const ansGtOverlap=ansWords.filter(w=>w.length>3&&gtWords.includes(w)).length;
+  const ansRelScore=Math.min(0.97,Math.max(0.4,(ansGtOverlap/Math.max(gtWords.length,1))*2));
+  fb.innerHTML=`<strong style="color:var(--orange)">Heuristic Evaluation (approximate — RAGAS uses LLM-based scoring):</strong><br><br>
+    <span style="color:var(--green)">Faithfulness: ~${faithScore.toFixed(2)}</span> — ${faithScore>0.7?'Answer appears grounded in context':'Low overlap between answer and context — possible intrusion hallucination'}<br>
+    <span style="color:var(--accent)">Answer Relevance: ~${ansRelScore.toFixed(2)}</span> — ${ansRelScore>0.7?'Answer addresses the question':'Answer may not address what was asked'}<br><br>
+    <span style="color:var(--muted);font-size:.8rem">This is a bag-of-words approximation. Your actual RAGAS harness uses GPT-4 as judge for much more accurate entailment and relevance scoring.</span>`;
+}
+
+function toast(msg,dur=3000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),dur);}
+</script>
+</body>
+</html>
