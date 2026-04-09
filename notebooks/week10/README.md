@@ -2,6 +2,7 @@
 
 **Dates:** Apr 7–13
 **Primary text:** Chip Huyen, *AI Engineering* — Chapter 6 (RAG portion)
+
 **Lecture Available at:  https://ai-enabled-informatics-for-engineers.github.io/ISE/notebooks/week10/lecture10
 
 ## Checklist (do these in order)
