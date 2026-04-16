@@ -1,5 +1,6 @@
 # Week 11 — Agentic workflows + human oversight
 
+**Lecture is available at:  https://ai-enabled-informatics-for-engineers.github.io/ISE/notebooks/week11/lecture11
 **Dates:** Apr 14–20
 **Primary text:** Chip Huyen, *AI Engineering* — Chapter 6 (agents portion)
 
