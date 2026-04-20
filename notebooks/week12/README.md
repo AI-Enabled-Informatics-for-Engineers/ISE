@@ -1,5 +1,6 @@
 # Week 12 — Causal informatics: interventions and decision impact
 
+***Lecture at https://htmlpreview.github.io/?https://github.com/AI-Enabled-Informatics-for-Engineers/ISE/blob/main/notebooks/week12/lecture12.html
 **Dates:** Apr 21–27
 **Primary text:** Chip Huyen, *AI Engineering* — No new chapter (connect Ch.3/Ch.4)
 
