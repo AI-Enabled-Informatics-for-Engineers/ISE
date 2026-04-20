@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 12 · Causal Informatics</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--s2:#22263a;--border:#2e3352;--ind:#6366f1;--amber:#f59e0b;--green:#10b981;--red:#ef4444;--teal:#14b8a6;--rose:#f43f5e;--text:#e2e8f0;--muted:#94a3b8;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+nav{display:flex;align-items:center;gap:8px;padding:12px 28px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.nav-logo{font-weight:800;font-size:1.05rem;color:var(--ind);white-space:nowrap}
+.nav-tabs{display:flex;gap:4px;margin-left:10px;flex-wrap:wrap}
+.tb{padding:5px 13px;border-radius:8px;border:none;cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s;background:transparent;color:var(--muted)}
+.tb.active{background:var(--ind);color:#fff}
+.tb:hover:not(.active){background:var(--s2);color:var(--text)}
+.page{display:none;padding:28px;max-width:980px;margin:0 auto}
+.page.active{display:block}
+
+.hero{background:linear-gradient(135deg,#1a1d27,#1a1042 50%,#0f1117);border:1px solid var(--border);border-radius:var(--r);padding:40px 36px;text-align:center;margin-bottom:28px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 60% 30%,rgba(99,102,241,.12),transparent 60%);pointer-events:none}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.35);color:var(--ind);padding:3px 12px;border-radius:20px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px}
+.hero h1{font-size:2rem;font-weight:800;margin-bottom:8px;line-height:1.2}
+.hero h1 span{color:var(--ind)}
+.hero p{color:var(--muted);font-size:.92rem;max-width:600px;margin:0 auto 22px;line-height:1.6}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:20px}
+.chip{display:flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border);padding:5px 12px;border-radius:20px;font-size:.78rem;color:var(--muted)}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{padding:9px 20px;border-radius:9px;border:none;cursor:pointer;font-weight:700;font-size:.86rem;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+.btn-ind{background:var(--ind);color:#fff}.btn-ind:hover{background:#4f46e5;transform:translateY(-1px)}
+.btn-s{background:var(--s2);color:var(--text);border:1px solid var(--border)}.btn-s:hover{border-color:var(--ind);color:var(--ind)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:18px}
+.card-h{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.card-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.ci{background:rgba(99,102,241,.15)}.cg{background:rgba(16,185,129,.15)}.ca{background:rgba(245,158,11,.12)}.cr{background:rgba(239,68,68,.15)}
+.card-title{font-size:1rem;font-weight:700}
+
+.ls{margin-bottom:30px}
+.ls h2{font-size:1.2rem;font-weight:700;color:var(--ind);border-bottom:1px solid var(--border);padding-bottom:9px;margin-bottom:18px}
+.ls h3{font-size:.96rem;font-weight:700;color:var(--amber);margin:16px 0 8px}
+.ls p{color:var(--muted);line-height:1.75;margin-bottom:12px;font-size:.9rem}
+.ls ul{list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.ls li{font-size:.88rem;color:var(--muted);display:flex;gap:8px;line-height:1.5}
+.ls li::before{content:"▸";color:var(--ind);flex-shrink:0;margin-top:2px}
+
+.hl{border-left:3px solid var(--ind);background:rgba(99,102,241,.07);border-radius:0 8px 8px 0;padding:14px 18px;margin:14px 0;font-size:.88rem;color:var(--muted);line-height:1.7}
+.hl strong{color:var(--text)}
+.hl-amber{border-color:var(--amber);background:rgba(245,158,11,.07)}
+.hl-amber strong{color:var(--amber)}
+.hl-green{border-color:var(--green);background:rgba(16,185,129,.07)}
+.hl-green strong{color:var(--green)}
+.hl-red{border-color:var(--red);background:rgba(239,68,68,.07)}
+.hl-red strong{color:var(--red)}
+.hl-rose{border-color:var(--rose);background:rgba(244,63,94,.07)}
+.hl-rose strong{color:var(--rose)}
+
+.flow{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.fstep{display:flex;align-items:flex-start;gap:13px;background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)}
+.fn{background:var(--ind);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:.77rem;font-weight:800;flex-shrink:0;margin-top:1px}
+.fbody strong{font-size:.88rem;display:block;margin-bottom:4px;color:var(--text)}
+.fbody p{font-size:.81rem;color:var(--muted);margin:0;line-height:1.55}
+
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:13px;margin:14px 0}
+.cc-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:15px}
+.cc-lbl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ind);margin-bottom:5px}
+.cc-t{font-weight:700;font-size:.88rem;margin-bottom:5px}
+.cc-d{font-size:.8rem;color:var(--muted);line-height:1.5}
+
+.cmp-tbl{width:100%;border-collapse:collapse;font-size:.84rem;margin:14px 0}
+.cmp-tbl th{background:var(--s2);font-weight:700;padding:9px 13px;text-align:left;border-bottom:1px solid var(--border);color:var(--ind)}
+.cmp-tbl th:first-child{color:var(--muted)}
+.cmp-tbl td{padding:9px 13px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top;font-size:.83rem}
+.cmp-tbl tr:last-child td{border-bottom:none}
+code{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-family:'Courier New',monospace;font-size:.82em;color:var(--ind)}
+
+/* DAG SVG styles */
+.dag-wrap{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:16px 0}
+.dag-wrap h4{font-size:.88rem;font-weight:700;color:var(--ind);margin-bottom:14px}
+.dag-svg{width:100%;max-width:560px;margin:0 auto;display:block}
+.dag-node{rx:8;fill:#22263a;stroke:#6366f1;stroke-width:1.5}
+.dag-node-confounder{fill:#22263a;stroke:#f59e0b;stroke-width:2;stroke-dasharray:5 3}
+.dag-node-outcome{fill:#22263a;stroke:#10b981;stroke-width:1.5}
+.dag-edge{stroke:#6366f1;stroke-width:1.5;fill:none;marker-end:url(#arrow)}
+.dag-edge-spurious{stroke:#ef4444;stroke-width:1.5;stroke-dasharray:6 3;fill:none;marker-end:url(#arrow-red)}
+.dag-lbl{font-size:13px;font-weight:700;fill:#e2e8f0;text-anchor:middle;dominant-baseline:central}
+.dag-sublbl{font-size:10px;fill:#94a3b8;text-anchor:middle;dominant-baseline:central}
+
+/* Intervention demo */
+.int-demo{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:16px 0}
+.int-demo h4{font-size:.88rem;font-weight:700;color:var(--amber);margin-bottom:14px}
+.scenario-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.st{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.78rem;font-weight:600;transition:all .2s}
+.st.on{background:var(--ind);border-color:var(--ind);color:#fff}
+.scenario-body{display:none}
+.scenario-body.on{display:block}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0}
+.side-box{background:var(--surface);border-radius:10px;padding:14px;border:1px solid var(--border)}
+.side-lbl{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.sl-obs{color:var(--rose)}
+.sl-int{color:var(--green)}
+.obs-val{font-size:1.3rem;font-weight:800;margin-bottom:4px}
+.obs-sub{font-size:.78rem;color:var(--muted);line-height:1.5}
+
+/* Do-calc demo */
+.do-demo{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:16px 0}
+.do-demo h4{font-size:.88rem;font-weight:700;color:var(--teal);margin-bottom:12px}
+.formula{font-family:'Courier New',monospace;font-size:.88rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin:10px 0;color:var(--text);line-height:1.8}
+.formula .do{color:var(--ind);font-weight:700}
+.formula .obs{color:var(--rose)}
+.formula .notequal{color:var(--amber);font-weight:700;font-size:1rem}
+
+/* Checklist */
+.chklist{list-style:none}
+.chklist li{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);font-size:.88rem}
+.chklist li:last-child{border-bottom:none}
+.chk{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;transition:all .2s}
+.chk.on{background:var(--green);border-color:var(--green);color:#fff}
+.discussion-card{background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(20,184,166,.04));border:1px solid rgba(99,102,241,.25);border-radius:var(--r);padding:22px;margin:16px 0}
+.mt4{margin-top:18px}
+@media(max-width:640px){.page{padding:14px}.hero{padding:24px 16px}.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <span class="nav-logo">ISE 16:540</span>
+  <div class="nav-tabs">
+    <button class="tb active" onclick="show('home')">Home</button>
+    <button class="tb" onclick="show('lecture')">Lecture</button>
+    <button class="tb" onclick="show('frameworks')">Frameworks</button>
+    <button class="tb" onclick="show('demo')">Demo</button>
+    <button class="tb" onclick="show('discussion')">Discussion</button>
+    <button class="tb" onclick="show('assignment')">Assignment 5</button>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="badge">📅 Week 12 · Apr 21–27</div>
+    <h1>Causal Informatics: <span>Interventions & Decision Impact</span></h1>
+    <p>ML learns what will happen. Decisions require knowing what happens if you act. Those are different questions — and confusing them produces bad decisions even from accurate models.</p>
+    <div class="chips">
+      <div class="chip">📚 Huyen Ch. 3 + Ch. 4 (connect)</div>
+      <div class="chip">🔧 DoWhy — pywhy.org</div>
+      <div class="chip">💬 When is prediction not enough?</div>
+      <div class="chip">📋 Assignment 5 — causal mini-study</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ind" onclick="show('lecture')">📖 Read Lecture</button>
+      <button class="btn btn-s" onclick="show('demo')">🔬 Try the Demo</button>
+      <button class="btn btn-s" onclick="show('frameworks')">🗺 Causal Frameworks</button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:20px">
+    <div class="card">
+      <div class="card-h"><div class="card-icon ci">🧠</div><div class="card-title">Week 12 Objectives</div></div>
+      <ul class="ls"><ul>
+        <li>Distinguish P(Y|X) from P(Y|do(X)) — and explain why the difference matters</li>
+        <li>Identify confounders and explain why they corrupt observational inference</li>
+        <li>Read and interpret a causal DAG</li>
+        <li>Use DoWhy to define a causal model and estimate treatment effects</li>
+        <li>Connect causal thinking to data collection and evaluation (Huyen Ch. 3/4)</li>
+      </ul></ul>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-icon cg">✅</div><div class="card-title">Week 12 Checklist</div></div>
+      <ul class="chklist">
+        <li><div class="chk" onclick="ck(this)"></div>Read Huyen Ch. 3 §data and Ch. 4 §evaluation (review)</li>
+        <li><div class="chk" onclick="ck(this)"></div>Watch recorded Zoom lecture (Canvas link)</li>
+        <li><div class="chk" onclick="ck(this)"></div>Read the Lecture tab on this page</li>
+        <li><div class="chk" onclick="ck(this)"></div>Try the Demo tab — both interactive tools</li>
+        <li><div class="chk" onclick="ck(this)"></div>Run the Colab notebook</li>
+        <li><div class="chk" onclick="ck(this)"></div>Post Canvas discussion by Thursday</li>
+        <li><div class="chk" onclick="ck(this)"></div>Submit Assignment 5 by Sunday</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-icon ca">🗺</div><div class="card-title">Course Arc — Where Week 12 Sits</div></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px;margin-top:4px">
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border:1px solid var(--border);opacity:.45"><div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:4px">Wk 9 — Retrieval</div><div style="font-size:.79rem;color:var(--muted)">Find the right info</div></div>
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border:1px solid var(--border);opacity:.55"><div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:4px">Wk 10 — Grounding</div><div style="font-size:.79rem;color:var(--muted)">Verify the answer</div></div>
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border:1px solid var(--border);opacity:.7"><div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:4px">Wk 11 — Agents</div><div style="font-size:.79rem;color:var(--muted)">Model acts + oversight</div></div>
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border:1px solid rgba(99,102,241,.55)"><div style="font-size:.7rem;font-weight:700;color:var(--ind);margin-bottom:4px">Wk 12 — Causality ← You</div><div style="font-size:.79rem;color:var(--muted)">Intervene, not just predict</div></div>
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border:1px solid var(--border);opacity:.4"><div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:4px">Wk 13–14 — Capstone</div><div style="font-size:.79rem;color:var(--muted)">Integrate everything</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- LECTURE -->
+<div class="page" id="page-lecture">
+  <div class="hero">
+    <div class="badge">📖 Week 12 Lecture</div>
+    <h1>Causal Informatics: <span>Interventions & Decision Impact</span></h1>
+    <p>Six sections. The first half establishes why prediction and causation are different. The second half provides the tools and connects them to your AI engineering coursework.</p>
+  </div>
+
+  <!-- S1 -->
+  <div class="ls">
+    <h2>🔄 1 — The Core Distinction: P(Y|X) vs. P(Y|do(X))</h2>
+    <p>Every model you have built in this course answers the same fundamental question: given this input, what output should I predict? That question has a formal name: conditional probability — P(Y given X). The model learns from historical data where X and Y co-occurred, and it uses that learned association to make predictions on new inputs.</p>
+    <p>Conditional probability is extraordinarily useful for prediction tasks. But when you want to use a prediction to make a decision — to take an action — prediction is not sufficient. You need to know what happens if you <em>intervene</em> — if you actively set X to a specific value. That question is P(Y|do(X)) — the probability of Y if you forcibly set X, regardless of what naturally determines X in the world.</p>
+    <p>These two quantities are different. Sometimes radically different. The gap between them is the source of most bad AI-driven decisions.</p>
+    <div class="hl-rose"><strong>The ice cream example:</strong> Ice cream sales predict drowning rates extremely well. A model trained on this data will assign high P(drowning | high ice cream sales). If you use this to decide whether to ban ice cream, you are asking P(drowning | do(ice_cream=low)) — which is a completely different question. The causal structure is: summer heat causes both ice cream consumption and swimming; swimming causes drowning. Intervening on ice cream sales changes nothing about drowning rates. The conditional is real. The causal claim is false.</div>
+    <h3>Why Accurate Models Can Drive Wrong Decisions</h3>
+    <p>A model can have excellent predictive accuracy — low loss, high precision, strong benchmark scores — and still produce bad decisions when used to guide interventions. This is not a model quality problem. It is a question-type mismatch: the model was trained to answer a prediction question, and you are asking it a causal question. Getting the right answer to the wrong question is still the wrong answer.</p>
+    <p>This is the connection to Huyen's Chapters 3 and 4. Data collected under natural (observational) conditions reflects the correlations in the world — including spurious correlations that predict well but causally mean nothing. Evaluation metrics that reward predictive accuracy reward the model for learning all correlations, causal and spurious alike. High evaluation scores do not guarantee that the model's predictions can be safely used for decisions.</p>
+  </div>
+
+  <!-- S2 -->
+  <div class="ls">
+    <h2>🗺 2 — The Causal Framework: DAGs and Confounders</h2>
+    <p>The causal inference framework gives us a precise language for reasoning about what causes what and how interventions work. The central tool is the Directed Acyclic Graph — DAG. A DAG is a graph where nodes are variables and edges represent causal relationships: an arrow from A to B means A causally influences B.</p>
+    <h3>Confounders — The Source of Most Problems</h3>
+    <p>A confounder is a variable that causes both the treatment (your intervention variable) and the outcome. In the ice cream example, summer heat is a confounder: it causes ice cream sales (the treatment) and it causes drowning (the outcome, through swimming). When you observe the correlation between ice cream and drowning, you are picking up the shared influence of the confounder, not a direct causal link.</p>
+    <p>Confounders corrupt observational inference because the observational data contains both the causal signal you want and the confounding signal you need to remove. A model trained on confounded data learns both signals simultaneously — and often learns the confounding signal more strongly, because it explains more variance.</p>
+    <div class="dag-wrap">
+      <h4>Causal DAG — Confounder Structure</h4>
+      <svg class="dag-svg" viewBox="0 0 520 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#6366f1"/>
+          </marker>
+          <marker id="arr-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#ef4444"/>
+          </marker>
+          <marker id="arr-amber" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b"/>
+          </marker>
+        </defs>
+        <!-- Confounder top -->
+        <rect x="190" y="20" width="140" height="52" rx="8" fill="#22263a" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5 3"/>
+        <text x="260" y="43" class="dag-lbl" fill="#fde68a">Confounder (C)</text>
+        <text x="260" y="60" class="dag-sublbl">e.g. Summer Heat</text>
+        <!-- Treatment -->
+        <rect x="30" y="130" width="140" height="52" rx="8" fill="#22263a" stroke="#6366f1" stroke-width="1.5"/>
+        <text x="100" y="153" class="dag-lbl">Treatment (T)</text>
+        <text x="100" y="170" class="dag-sublbl">e.g. Ice Cream Sales</text>
+        <!-- Outcome -->
+        <rect x="350" y="130" width="140" height="52" rx="8" fill="#22263a" stroke="#10b981" stroke-width="1.5"/>
+        <text x="420" y="153" class="dag-lbl" fill="#6ee7b7">Outcome (Y)</text>
+        <text x="420" y="170" class="dag-sublbl">e.g. Drowning Rate</text>
+        <!-- C → T -->
+        <line x1="220" y1="72" x2="155" y2="128" stroke="#f59e0b" stroke-width="1.8" marker-end="url(#arr-amber)"/>
+        <!-- C → Y -->
+        <line x1="300" y1="72" x2="365" y2="128" stroke="#f59e0b" stroke-width="1.8" marker-end="url(#arr-amber)"/>
+        <!-- T ⇏ Y (spurious dashed) -->
+        <line x1="172" y1="156" x2="348" y2="156" stroke="#ef4444" stroke-width="1.8" stroke-dasharray="7 4" marker-end="url(#arr-red)"/>
+        <!-- labels -->
+        <text x="260" y="148" fill="#fca5a5" font-size="10" text-anchor="middle">spurious correlation (not causal)</text>
+        <text x="175" y="105" fill="#fde68a" font-size="10" text-anchor="middle">causes</text>
+        <text x="345" y="105" fill="#fde68a" font-size="10" text-anchor="middle">causes</text>
+      </svg>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:10px">Orange = confounder, Green = outcome, dashed red = spurious correlation (observed but not causal). The confounder causes both T and Y, creating a back-door path that makes T appear to cause Y.</p>
+    </div>
+    <h3>The Do-Operator — Surgical Intervention</h3>
+    <p>Judea Pearl's do-operator formalizes what it means to intervene. When you condition on X — P(Y|X=x) — you are asking: in the subset of observations where X happened to equal x, what is Y? This includes all the natural causes of X, including confounders.</p>
+    <p>When you intervene on X — P(Y|do(X=x)) — you are asking: if I surgically set X to x, cutting all its natural causes and holding it there by force, what is Y? This removes the confounding paths. The do-operator erases all incoming arrows to the intervened variable in the DAG.</p>
+    <div class="hl"><strong>The adjustment formula (back-door criterion):</strong> If you can identify the set of confounders C that blocks all back-door paths from treatment to outcome, then P(Y|do(T)) = Σ<sub>c</sub> P(Y|T,C=c) · P(C=c). This is adjustment — you compute the causal effect by averaging the conditional effect over the distribution of the confounder. DoWhy automates this calculation.</div>
+  </div>
+
+  <!-- S3 -->
+  <div class="ls">
+    <h2>🔧 3 — DoWhy: Causal Reasoning in Practice</h2>
+    <p>DoWhy (pywhy.org) is the Microsoft Research library for causal inference in Python. It provides a four-step workflow that maps directly onto the causal framework from Section 2.</p>
+    <div class="flow">
+      <div class="fstep"><div class="fn">1</div><div class="fbody"><strong>Model — Define the causal DAG</strong><p>Specify the causal graph as a list of edges: which variables cause which. This encodes your domain knowledge about the causal structure. The model is your causal assumptions made explicit.</p></div></div>
+      <div class="fstep"><div class="fn">2</div><div class="fbody"><strong>Identify — Find an identification strategy</strong><p>DoWhy searches the DAG for a valid identification strategy — a way to express P(Y|do(T)) in terms of observational quantities. It may find back-door adjustment, front-door adjustment, or instrumental variables, depending on the graph structure.</p></div></div>
+      <div class="fstep"><div class="fn">3</div><div class="fbody"><strong>Estimate — Compute the causal effect</strong><p>Apply the identification strategy to actual data. DoWhy supports multiple estimators: linear regression adjustment, propensity score matching, inverse probability weighting, and doubly-robust estimation.</p></div></div>
+      <div class="fstep"><div class="fn">4</div><div class="fbody"><strong>Refute — Test the robustness of the estimate</strong><p>Run refutation tests: add a random common cause (should not change the estimate), replace the treatment with a placebo (estimate should go to zero), use a subset of the data (estimate should be stable). If your estimate fails these tests, your causal assumptions may be wrong.</p></div></div>
+    </div>
+    <div class="hl-green"><strong>Why the refutation step matters:</strong> The three prior steps are only as good as your DAG assumptions. Refutation tests are the discipline of checking whether your causal conclusions are robust to violations of those assumptions. A causal estimate that survives placebo treatment and random common cause tests is much more credible than one that does not.</div>
+    <p>The Colab notebook for this week walks you through all four steps on a procurement scenario: does supplier lead time (treatment) causally affect defect rate (outcome), controlling for supplier tier (confounder)?</p>
+  </div>
+
+  <!-- S4 -->
+  <div class="ls">
+    <h2>📚 4 — Connecting to AI Engineering (Ch. 3 + Ch. 4)</h2>
+    <p>Huyen does not use the term "causal inference" in Chapters 3 and 4, but the causal reasoning problems are everywhere in both chapters. Reading them with causal eyes reveals how much of what Huyen calls data quality and evaluation quality problems are really confounding problems.</p>
+    <h3>Chapter 3: Data — Where Confounders Enter</h3>
+    <p>Huyen discusses data collection bias: training data that over-represents certain conditions will produce models that underperform on under-represented conditions. In causal terms, data collection process is a confounder. If your training data was collected when the system was operated by experienced users, user experience confounds the model's apparent performance — it is not learning the true relationship between inputs and outputs, it is learning the relationship conditioned on experienced-user behavior. Deployed to novice users, performance degrades not because the model is wrong, but because the confounder changed.</p>
+    <h3>Chapter 4: Evaluation — Where Spurious Correlations Mislead</h3>
+    <p>Huyen's evaluation framework rewards predictive accuracy on a held-out set. But if the held-out set is drawn from the same confounded distribution as the training set, a model can achieve high evaluation scores by learning spurious correlations rather than causal mechanisms. The model that scores 91% on the held-out evaluation and 54% on production (the pharma RAG example from Week 10) is exactly this phenomenon: excellent at predicting the evaluation distribution, poor at generalizing to the deployment distribution — which has different confounding structure.</p>
+    <div class="hl-amber"><strong>The practical implication:</strong> Whenever you are using a model's predictions to drive decisions — not just reporting predictions, but acting on them — you should ask: is this a prediction task or a causal task? If acting on the prediction changes the environment in ways the model was not trained on, you are in causal territory. The model's prediction accuracy does not tell you whether the action will work.</div>
+  </div>
+
+  <!-- S5 -->
+  <div class="ls">
+    <h2>🏭 5 — ISE Applications: Causality in Engineering Practice</h2>
+    <p>Industrial and systems engineering contexts are particularly rich with causal questions. This section maps the causal framework onto the domains ISE students encounter most.</p>
+    <div class="cgrid">
+      <div class="cc-card">
+        <div class="cc-lbl">Application 1</div>
+        <div class="cc-t">Predictive Maintenance</div>
+        <div class="cc-d">Sensor X predicts failure. Should you intervene on sensor X? Only if X is causal. If X is a symptom (caused by the underlying failure mode) rather than a cause, intervening on X changes the reading but not the failure rate. DoWhy helps you distinguish symptom from cause using DAG structure.</div>
+      </div>
+      <div class="cc-card">
+        <div class="cc-lbl">Application 2</div>
+        <div class="cc-t">Process Improvement</div>
+        <div class="cc-d">Shift A has 3× better quality than Shift B. Is the shift supervisor causing quality differences? Or are other factors confounded — different machine sets, different raw material batches, different product mix? Answering this requires causal analysis, not correlation analysis.</div>
+      </div>
+      <div class="cc-card">
+        <div class="cc-lbl">Application 3</div>
+        <div class="cc-t">Supply Chain Decisions</div>
+        <div class="cc-d">Supplier lead time correlates with defect rate in your data. Should you switch to a different supplier tier? The correlation may be confounded by product complexity — complex products take longer and have more defects. Adjusting for complexity may eliminate the lead time effect entirely.</div>
+      </div>
+      <div class="cc-card">
+        <div class="cc-lbl">Application 4</div>
+        <div class="cc-t">A/B Testing</div>
+        <div class="cc-d">Why does random assignment work? Because randomization makes treatment independent of all confounders — it breaks the back-door paths in the DAG. An A/B test is the experimental equivalent of do(T): you forcibly assign treatment, removing the natural causes of who would have received it.</div>
+      </div>
+    </div>
+    <div class="hl"><strong>The ISE connection to Six Sigma:</strong> The "C" in DMAIC — Control — implicitly requires causal understanding. Controlling a process means knowing which input variables causally drive output quality. A correlation-based model can tell you which variables are associated with quality, but only a causal model can tell you which ones to control and how. DoWhy makes explicit what experienced engineers have always known intuitively: you need to understand the mechanism, not just the association.</div>
+  </div>
+
+  <!-- S6 -->
+  <div class="ls">
+    <h2>💬 6 — When Is Prediction Not Enough?</h2>
+    <p>This is your Canvas discussion question, and it is the synthesis question for Week 12.</p>
+    <p>Prediction is sufficient when you are reporting on a fixed environment — forecasting demand, flagging anomalies for human review, generating a summary. In these cases, you are not acting on the environment; you are observing it. The conditional probability P(Y|X) is exactly what you need.</p>
+    <p>Prediction is insufficient when your action changes the environment in ways the model did not see. When you recommend a drug, the patient takes it and their physiology changes. When you change a supplier, your supply chain dynamics change. When you adjust a process parameter, downstream processes react. In all these cases, you are asking P(Y|do(T)) and your model only knows P(Y|T). The gap between those two quantities is exactly how much your decision could go wrong.</p>
+    <p>The cleanest test: does your action break any of the causal arrows in the data-generating process that your model was trained on? If yes, you are in causal territory and you need causal tools.</p>
+    <div class="btn-row mt4" style="justify-content:flex-start">
+      <button class="btn btn-ind" onclick="show('demo')">🔬 Try the Intervention Demo</button>
+      <button class="btn btn-s" onclick="show('frameworks')">🗺 Causal Frameworks Reference</button>
+    </div>
+  </div>
+</div>
+
+<!-- FRAMEWORKS -->
+<div class="page" id="page-frameworks">
+  <div class="hero">
+    <div class="badge">🗺 Causal Frameworks</div>
+    <h1>Two Frameworks, <span>One Goal</span></h1>
+    <p>Causal inference has two dominant frameworks — Pearl's structural causal models (SCM/DAG) and Rubin's potential outcomes. They are mathematically equivalent, but they provide different intuitions and lead to different tools.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-icon ci">🗺</div><div class="card-title">Framework Comparison</div></div>
+    <table class="cmp-tbl">
+      <tr><th>Dimension</th><th>Pearl — SCM / DAGs</th><th>Rubin — Potential Outcomes</th></tr>
+      <tr><td>Core object</td><td>Causal graph (DAG) + structural equations</td><td>Potential outcomes Y(0), Y(1) for each unit</td></tr>
+      <tr><td>Causal effect</td><td>P(Y|do(T)) via graph surgery</td><td>ATE = E[Y(1) - Y(0)]</td></tr>
+      <tr><td>Key assumption</td><td>Graph faithfulness (no missing edges)</td><td>Ignorability (no unmeasured confounders)</td></tr>
+      <tr><td>Best for</td><td>Complex systems, mediation, mechanisms</td><td>Simple treatment effects, A/B testing, RCTs</td></tr>
+      <tr><td>Tool in this course</td><td>DoWhy (DAG-based)</td><td>Propensity score methods within DoWhy</td></tr>
+      <tr><td>ISE analogy</td><td>Process flow diagram with causal labels</td><td>Control group vs. treatment group experiment</td></tr>
+    </table>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon ca">📐</div><div class="card-title">Key Causal Quantities</div></div>
+    <table class="cmp-tbl">
+      <tr><th>Quantity</th><th>Formula</th><th>Meaning</th></tr>
+      <tr><td><strong>ATE</strong></td><td>E[Y(1) − Y(0)]</td><td>Average treatment effect across the full population</td></tr>
+      <tr><td><strong>ATT</strong></td><td>E[Y(1) − Y(0) | T=1]</td><td>Average treatment effect on the treated subgroup</td></tr>
+      <tr><td><strong>CATE</strong></td><td>E[Y(1) − Y(0) | X=x]</td><td>Conditional ATE — effect for units with features X=x</td></tr>
+      <tr><td><strong>Confounder</strong></td><td>C → T, C → Y</td><td>Variable causing both treatment and outcome; creates spurious correlation</td></tr>
+      <tr><td><strong>Mediator</strong></td><td>T → M → Y</td><td>Variable on the causal path; explains how T affects Y</td></tr>
+      <tr><td><strong>Collider</strong></td><td>T → C ← Y</td><td>Common effect of T and Y; conditioning on it opens a spurious path</td></tr>
+    </table>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon cg">🔍</div><div class="card-title">Identification Strategies</div></div>
+    <table class="cmp-tbl">
+      <tr><th>Strategy</th><th>When applicable</th><th>DoWhy support</th></tr>
+      <tr><td><strong>Back-door adjustment</strong></td><td>All confounders observed and measured</td><td>✅ Primary estimator</td></tr>
+      <tr><td><strong>Front-door adjustment</strong></td><td>Unobserved confounder but observed mediator</td><td>✅ Supported</td></tr>
+      <tr><td><strong>Instrumental variables</strong></td><td>Instrument Z affects T but not Y except through T</td><td>✅ Supported</td></tr>
+      <tr><td><strong>Regression discontinuity</strong></td><td>Treatment assigned by threshold rule</td><td>✅ Supported</td></tr>
+      <tr><td><strong>Difference-in-differences</strong></td><td>Pre/post panel data with control group</td><td>✅ Supported</td></tr>
+      <tr><td><strong>Randomized experiment (RCT)</strong></td><td>Full control over treatment assignment</td><td>N/A — removes the need for adjustment</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- DEMO -->
+<div class="page" id="page-demo">
+  <div class="hero">
+    <div class="badge">🔬 Interactive Demo</div>
+    <h1>Prediction vs. <span>Intervention</span></h1>
+    <p>Two demos: explore how confounders create spurious correlations, and see how the do-operator isolates the true causal effect.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-icon ci">⚖️</div><div class="card-title">Demo 1 — Observational vs. Causal Inference</div></div>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">Switch between three scenarios. Each shows a correlation that looks actionable — but the causal structure reveals whether intervening on the treatment will actually change the outcome.</p>
+    <div class="int-demo">
+      <h4>Scenario Explorer</h4>
+      <div class="scenario-tabs">
+        <button class="st on" onclick="switchScenario(0)">🍦 Ice Cream</button>
+        <button class="st" onclick="switchScenario(1)">🔩 Maintenance</button>
+        <button class="st" onclick="switchScenario(2)">📦 Supply Chain</button>
+      </div>
+
+      <div class="scenario-body on" id="sc0">
+        <div class="split">
+          <div class="side-box">
+            <div class="side-lbl sl-obs">📊 Observational Model: P(Y|T)</div>
+            <div class="obs-val" style="color:var(--rose)">r = 0.82</div>
+            <div class="obs-sub">Ice cream sales strongly predict drowning rate. A prediction model built on this data will advise: "reduce ice cream sales to reduce drownings."</div>
+          </div>
+          <div class="side-box">
+            <div class="side-lbl sl-int">🎯 Causal Model: P(Y|do(T))</div>
+            <div class="obs-val" style="color:var(--green)">ATE ≈ 0.00</div>
+            <div class="obs-sub">After adjusting for temperature (the confounder), the causal effect of ice cream on drowning is zero. Banning ice cream changes nothing. The intervention fails.</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding:12px;background:var(--surface);border-radius:8px;border:1px solid var(--border);font-size:.83rem;color:var(--muted)"><strong style="color:var(--amber)">Confounder:</strong> Ambient temperature → ice cream sales AND temperature → swimming → drowning. The back-door path T ← C → Y inflates the observational correlation.</div>
+      </div>
+
+      <div class="scenario-body" id="sc1">
+        <div class="split">
+          <div class="side-box">
+            <div class="side-lbl sl-obs">📊 Observational Model: P(Y|T)</div>
+            <div class="obs-val" style="color:var(--rose)">r = 0.71</div>
+            <div class="obs-sub">Vibration sensor reading (X) strongly predicts bearing failure. Engineering team proposes: "adjust the sensor threshold to reduce failures."</div>
+          </div>
+          <div class="side-box">
+            <div class="side-lbl sl-int">🎯 Causal Model: P(Y|do(T))</div>
+            <div class="obs-val" style="color:var(--amber)">ATE ≈ 0.00</div>
+            <div class="obs-sub">The sensor is a symptom, not a cause. Adjusting the threshold changes the reading without changing the failure rate. The correct intervention is on the upstream cause: lubrication schedule.</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding:12px;background:var(--surface);border-radius:8px;border:1px solid var(--border);font-size:.83rem;color:var(--muted)"><strong style="color:var(--amber)">Causal structure:</strong> Poor lubrication → bearing wear → high vibration (symptom). Poor lubrication → bearing failure (outcome). Vibration is a mediator/symptom, not a cause. Intervening on the symptom changes nothing about the mechanism.</div>
+      </div>
+
+      <div class="scenario-body" id="sc2">
+        <div class="split">
+          <div class="side-box">
+            <div class="side-lbl sl-obs">📊 Observational Model: P(Y|T)</div>
+            <div class="obs-val" style="color:var(--rose)">r = 0.65</div>
+            <div class="obs-sub">Long supplier lead time correlates with higher defect rate. Procurement proposes: switch all orders to fast suppliers to reduce defects.</div>
+          </div>
+          <div class="side-box">
+            <div class="side-lbl sl-int">🎯 Causal Model: P(Y|do(T))</div>
+            <div class="obs-val" style="color:var(--green)">ATE ≈ 0.05</div>
+            <div class="obs-sub">After adjusting for product complexity (the confounder), lead time has a small but real causal effect on defect rate. The intervention is valid — but much smaller than the raw correlation suggested.</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding:12px;background:var(--surface);border-radius:8px;border:1px solid var(--border);font-size:.83rem;color:var(--muted)"><strong style="color:var(--amber)">Confounder:</strong> Product complexity → longer lead time AND complexity → more defects. After adjusting for complexity, the residual causal effect of lead time on defects is small. The decision to switch suppliers may not be cost-justified.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon ca">✍️</div><div class="card-title">Demo 2 — The Do-Operator</div></div>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">See how conditioning and intervening produce different quantities from the same data — and why only the causal quantity supports valid decisions.</p>
+    <div class="do-demo">
+      <h4>Prediction vs. Intervention — Formal Notation</h4>
+      <div class="formula">
+        <span class="obs">P(Y | T=high)</span> — <em style="color:var(--muted);font-size:.83rem">conditional: "among cases where T was high, what is Y?"</em><br>
+        Includes all confounding paths. Valid for prediction. <strong style="color:var(--rose)">Not valid for intervention decisions.</strong>
+      </div>
+      <div class="formula">
+        <span class="do">P(Y | do(T=high))</span> — <em style="color:var(--muted);font-size:.83rem">interventional: "if I force T to high, what is Y?"</em><br>
+        Cuts all incoming arrows to T. Removes confounding. <strong style="color:var(--green)">Valid for decisions.</strong>
+      </div>
+      <div class="formula">
+        <span class="obs">P(Y|T)</span> <span class="notequal"> ≠ </span> <span class="do">P(Y|do(T))</span> <em style="color:var(--muted);font-size:.83rem"> whenever there exists a confounder C with C→T and C→Y</em>
+      </div>
+      <div style="margin-top:14px">
+        <p style="font-size:.83rem;font-weight:700;color:var(--ind);margin-bottom:8px">Back-door adjustment formula (Pearl, 2009):</p>
+        <div class="formula">
+          <span class="do">P(Y|do(T)) = Σ<sub>c</sub></span> P(Y|T, C=c) · P(C=c)
+        </div>
+        <p style="font-size:.82rem;color:var(--muted);margin-top:8px">Average the conditional effect of T on Y over the distribution of confounders C. DoWhy's <code>identify_effect()</code> and <code>estimate_effect()</code> automate this calculation.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DISCUSSION -->
+<div class="page" id="page-discussion">
+  <div class="hero">
+    <div class="badge">💬 Canvas Discussion — Week 12</div>
+    <h1>When Is Prediction <span>Insufficient?</span></h1>
+    <p>Post by Thursday. Reply to at least one classmate by Sunday. Take a position — identify a specific scenario and defend your answer.</p>
+  </div>
+
+  <div class="discussion-card">
+    <h3 style="color:var(--ind);font-size:1rem;font-weight:700;margin-bottom:12px">📌 The Prompt</h3>
+    <div style="font-size:.9rem;color:var(--text);line-height:1.7;margin-bottom:16px;font-style:italic">"Machine learning prediction is useful but not always sufficient for decision-making. Pick a specific scenario in engineering, operations, healthcare, or supply chain where an accurate predictive model would lead to a wrong or harmful decision if used directly to guide action. Identify the confounder or causal structure that creates the problem. Explain what additional information or method you would need to make the right decision — and what that decision would actually be."</div>
+    <p style="color:var(--muted);font-size:.85rem">200–350 words. Reference at least one concept from the lecture: confounder, do-operator, back-door adjustment, potential outcomes, or DAG. Concrete beats abstract — a specific scenario with real numbers is much stronger than a general argument.</p>
+  </div>
+
+  <div class="ls">
+    <h2>🧠 Entry Points</h2>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:12px;background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)"><span style="font-size:1.1rem">🏭</span><div><strong style="color:var(--text);font-size:.88rem">Manufacturing:</strong><span style="font-size:.84rem;color:var(--muted)"> A defect prediction model with 95% accuracy recommends scrapping product batch 4 whenever operator experience is low. But operator experience is a confounder — junior operators are assigned to simpler products, and simple products have lower defect rates from other causes. Scrapping based on operator experience treats the symptom.</span></div></div>
+      <div style="display:flex;gap:12px;background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)"><span style="font-size:1.1rem">💊</span><div><strong style="color:var(--text);font-size:.88rem">Healthcare:</strong><span style="font-size:.84rem;color:var(--muted)"> A model predicts hospital readmission from patient features. Intervening by extending hospital stays may not reduce readmission if the root cause is post-discharge social conditions — a confounder the model cannot adjust for by extending stay alone.</span></div></div>
+      <div style="display:flex;gap:12px;background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)"><span style="font-size:1.1rem">📦</span><div><strong style="color:var(--text);font-size:.88rem">Supply Chain:</strong><span style="font-size:.84rem;color:var(--muted)"> Inventory level predicts stockout probability. But inventory level and stockout are both caused by demand volatility. Increasing inventory to match the prediction curve may not reduce stockouts if the underlying demand driver has changed.</span></div></div>
+      <div style="display:flex;gap:12px;background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)"><span style="font-size:1.1rem">💻</span><div><strong style="color:var(--text);font-size:.88rem">Software/ML Systems:</strong><span style="font-size:.84rem;color:var(--muted)"> A recommendation algorithm predicts engagement from content features. Adding more content of the predicted type may not increase engagement if engagement is actually driven by novelty — which decreases as the predicted content type saturates the feed.</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ASSIGNMENT 5 -->
+<div class="page" id="page-assignment">
+  <div class="hero">
+    <div class="badge">📋 Assignment 5 — Graded</div>
+    <h1>Causal <span>Mini-Study</span></h1>
+    <p>Apply causal reasoning to a real or realistic dataset. The deliverable is a short but complete causal analysis: model, identify, estimate, refute, and interpret.</p>
+    <div class="chips">
+      <div class="chip">Graded assignment</div>
+      <div class="chip">Due: end of Week 12</div>
+      <div class="chip">Canvas → Assignments → Assignment 5</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-icon ci">📋</div><div class="card-title">Assignment 5 Specification</div></div>
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:16px">Complete all four components. Use your own dataset or the provided starter dataset in the Colab notebook (manufacturing process data with treatment = machine setting, outcome = product quality, confounder = operator shift).</p>
+
+    <div style="background:var(--s2);border-radius:10px;padding:15px;margin-bottom:12px;border:1px solid var(--border)">
+      <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ind);margin-bottom:8px">Component 1 — Causal Model (DAG)</div>
+      <p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin-bottom:8px">Draw or specify a causal DAG for your scenario. Identify: treatment variable, outcome variable, at least one confounder, and any mediators. Justify each edge — why does A cause B in your domain?</p>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:5px">
+        <li style="font-size:.8rem;color:var(--muted);display:flex;gap:7px"><span style="color:var(--ind)">□</span>DAG drawn or specified as edge list</li>
+        <li style="font-size:.8rem;color:var(--muted);display:flex;gap:7px"><span style="color:var(--ind)">□</span>At least one confounder identified and justified</li>
+        <li style="font-size:.8rem;color:var(--muted);display:flex;gap:7px"><span style="color:var(--ind)">□</span>Treatment and outcome defined with units</li>
+      </ul>
+    </div>
+
+    <div style="background:var(--s2);border-radius:10px;padding:15px;margin-bottom:12px;border:1px solid var(--border)">
+      <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ind);margin-bottom:8px">Component 2 — DoWhy Analysis (Colab)</div>
+      <p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin-bottom:8px">Run the full four-step DoWhy workflow in the Colab notebook.</p>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:5px">
+        <li style="font-size:.8rem;color:var(--muted);display:flex;gap:7px"><span style="color:var(--ind)">□</span><code>CausalModel()</code> defined from your DAG</li>
+        <li style="font-size:.8rem;color:var(--muted);display:flex;gap:7px"><span style="color:var(--ind)">□</span><code>identify_effect()</code> returns a valid estimand</li>
+        <li style="font-size:.8rem;color:var(--muted);display:flex;gap:7px"><span style="color:var(--ind)">□</span><code>estimate_effect()</code> returns an ATE with confidence interval</li>
+        <li style="font-size:.8rem;color:var(--muted);display:flex;gap:7px"><span style="color:var(--ind)">□</span>At least one refutation test run and interpreted</li>
+      </ul>
+    </div>
+
+    <div style="background:var(--s2);border-radius:10px;padding:15px;border:1px solid var(--border)">
+      <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ind);margin-bottom:8px">Component 3 — Decision Recommendation</div>
+      <p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin-bottom:8px">Based on your causal estimate, write a 150-word decision recommendation. What should a decision-maker do? What would have gone wrong if they had used the raw observational correlation instead?</p>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:5px">
+        <li style="font-size:.8rem;color:var(--muted);display:flex;gap:7px"><span style="color:var(--ind)">□</span>Recommended action stated with causal justification</li>
+        <li style="font-size:.8rem;color:var(--muted);display:flex;gap:7px"><span style="color:var(--ind)">□</span>Comparison of observational vs. causal estimate</li>
+        <li style="font-size:.8rem;color:var(--muted);display:flex;gap:7px"><span style="color:var(--ind)">□</span>At least one assumption limitation acknowledged</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon ca">📋</div><div class="card-title">Assignment 5 Rubric</div></div>
+    <table class="cmp-tbl">
+      <tr><th>Category</th><th>Points</th><th>Meets</th><th>Exceeds</th></tr>
+      <tr><td style="font-weight:700;color:var(--ind)">Causal Model (DAG)</td><td style="font-weight:800">1.5</td><td>DAG present; confounder identified; edges justified</td><td>Mediator or collider also identified; domain justification is precise</td></tr>
+      <tr><td style="font-weight:700;color:var(--ind)">DoWhy Analysis</td><td style="font-weight:800">2.0</td><td>All four steps run; ATE reported; one refutation test</td><td>Two refutation tests; confidence interval reported; refutation result interpreted</td></tr>
+      <tr><td style="font-weight:700;color:var(--ind)">Decision Recommendation</td><td style="font-weight:800">1.5</td><td>Recommendation present; observational vs. causal compared</td><td>Quantifies the decision error from ignoring causality; connects to Huyen Ch.3/4</td></tr>
+    </table>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon cg">✅</div><div class="card-title">Pre-Submission Checklist</div></div>
+    <ul class="chklist">
+      <li><div class="chk" onclick="ck(this)"></div>Runtime → Restart and run all — notebook runs without errors</li>
+      <li><div class="chk" onclick="ck(this)"></div>DAG has at least one confounder with justified edges</li>
+      <li><div class="chk" onclick="ck(this)"></div>All four DoWhy steps completed and output visible</li>
+      <li><div class="chk" onclick="ck(this)"></div>ATE and confidence interval reported in the notebook</li>
+      <li><div class="chk" onclick="ck(this)"></div>At least one refutation test run and interpreted</li>
+      <li><div class="chk" onclick="ck(this)"></div>150-word decision recommendation written</li>
+      <li><div class="chk" onclick="ck(this)"></div>Submitted to Canvas → Assignments → Assignment 5</div></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+function show(p){document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.tb').forEach(e=>e.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');const idx={home:0,lecture:1,frameworks:2,demo:3,discussion:4,assignment:5};if(idx[p]!==undefined)document.querySelectorAll('.tb')[idx[p]].classList.add('active');window.scrollTo(0,0);}
+function ck(el){el.classList.toggle('on');el.textContent=el.classList.contains('on')?'✓':'';}
+function switchScenario(i){
+  document.querySelectorAll('.scenario-body').forEach((e,j)=>e.classList.toggle('on',j===i));
+  document.querySelectorAll('.st').forEach((b,j)=>b.classList.toggle('on',j===i));
+}
+</script>
+</body>
+</html>
