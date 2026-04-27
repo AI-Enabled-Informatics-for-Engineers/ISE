@@ -1,5 +1,6 @@
 # Week 13 — Responsible AI + cybersecurity + encryption basics for AI systems
 **Lecture: https://htmlpreview.github.io/?https://github.com/AI-Enabled-Informatics-for-Engineers/ISE/blob/main/notebooks/week13/lecture13.html
+
 **Dates:** Apr 28–May 4
 **Primary text:** Chip Huyen, *AI Engineering* — Chapter 4 (revisited)
 
