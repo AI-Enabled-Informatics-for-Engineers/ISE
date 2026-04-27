@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 13 · Responsible AI + Cybersecurity + Encryption</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--s2:#22263a;--border:#2e3352;--em:#10b981;--amber:#f59e0b;--red:#ef4444;--ind:#6366f1;--cyan:#22d3ee;--rose:#f43f5e;--text:#e2e8f0;--muted:#94a3b8;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+nav{display:flex;align-items:center;gap:8px;padding:12px 28px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.nav-logo{font-weight:800;font-size:1.05rem;color:var(--em);white-space:nowrap}
+.nav-tabs{display:flex;gap:4px;margin-left:10px;flex-wrap:wrap}
+.tb{padding:5px 13px;border-radius:8px;border:none;cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s;background:transparent;color:var(--muted)}
+.tb.active{background:var(--em);color:#fff}
+.tb:hover:not(.active){background:var(--s2);color:var(--text)}
+.page{display:none;padding:28px;max-width:980px;margin:0 auto}
+.page.active{display:block}
+.hero{background:linear-gradient(135deg,#1a1d27,#042b1e 50%,#0f1117);border:1px solid var(--border);border-radius:var(--r);padding:40px 36px;text-align:center;margin-bottom:28px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 60% 30%,rgba(16,185,129,.1),transparent 60%);pointer-events:none}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.35);color:var(--em);padding:3px 12px;border-radius:20px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px}
+.hero h1{font-size:2rem;font-weight:800;margin-bottom:8px;line-height:1.2}
+.hero h1 span{color:var(--em)}
+.hero p{color:var(--muted);font-size:.92rem;max-width:620px;margin:0 auto 22px;line-height:1.6}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:20px}
+.chip{display:flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border);padding:5px 12px;border-radius:20px;font-size:.78rem;color:var(--muted)}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{padding:9px 20px;border-radius:9px;border:none;cursor:pointer;font-weight:700;font-size:.86rem;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+.btn-em{background:var(--em);color:#fff}.btn-em:hover{background:#059669;transform:translateY(-1px)}
+.btn-s{background:var(--s2);color:var(--text);border:1px solid var(--border)}.btn-s:hover{border-color:var(--em);color:var(--em)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:18px}
+.card-h{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.card-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.ce{background:rgba(16,185,129,.15)}.cg{background:rgba(16,185,129,.12)}.ca{background:rgba(245,158,11,.12)}.cr{background:rgba(239,68,68,.15)}.ci{background:rgba(99,102,241,.15)}
+.card-title{font-size:1rem;font-weight:700}
+.ls{margin-bottom:30px}
+.ls h2{font-size:1.2rem;font-weight:700;color:var(--em);border-bottom:1px solid var(--border);padding-bottom:9px;margin-bottom:18px}
+.ls h3{font-size:.96rem;font-weight:700;color:var(--amber);margin:16px 0 8px}
+.ls p{color:var(--muted);line-height:1.75;margin-bottom:12px;font-size:.9rem}
+.ls ul{list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.ls li{font-size:.88rem;color:var(--muted);display:flex;gap:8px;line-height:1.5}
+.ls li::before{content:"▸";color:var(--em);flex-shrink:0;margin-top:2px}
+.hl{border-left:3px solid var(--em);background:rgba(16,185,129,.07);border-radius:0 8px 8px 0;padding:14px 18px;margin:14px 0;font-size:.88rem;color:var(--muted);line-height:1.7}
+.hl strong{color:var(--text)}
+.hl-amber{border-color:var(--amber);background:rgba(245,158,11,.07)}
+.hl-amber strong{color:var(--amber)}
+.hl-red{border-color:var(--red);background:rgba(239,68,68,.07)}
+.hl-red strong{color:var(--red)}
+.hl-ind{border-color:var(--ind);background:rgba(99,102,241,.07)}
+.hl-ind strong{color:#a5b4fc}
+.flow{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.fstep{display:flex;align-items:flex-start;gap:13px;background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)}
+.fn{background:var(--em);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:.77rem;font-weight:800;flex-shrink:0;margin-top:1px}
+.fn-red{background:var(--red)}
+.fn-amber{background:var(--amber)}
+.fbody strong{font-size:.88rem;display:block;margin-bottom:4px;color:var(--text)}
+.fbody p{font-size:.81rem;color:var(--muted);margin:0;line-height:1.55}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:13px;margin:14px 0}
+.cc-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:15px}
+.cc-lbl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--em);margin-bottom:5px}
+.cc-t{font-weight:700;font-size:.88rem;margin-bottom:5px}
+.cc-d{font-size:.8rem;color:var(--muted);line-height:1.5}
+.cmp-tbl{width:100%;border-collapse:collapse;font-size:.84rem;margin:14px 0}
+.cmp-tbl th{background:var(--s2);font-weight:700;padding:9px 13px;text-align:left;border-bottom:1px solid var(--border);color:var(--em)}
+.cmp-tbl th:first-child{color:var(--muted)}
+.cmp-tbl td{padding:9px 13px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top;font-size:.83rem}
+.cmp-tbl tr:last-child td{border-bottom:none}
+code{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-family:'Courier New',monospace;font-size:.82em;color:var(--em)}
+/* STRIDE threat grid */
+.stride-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:11px;margin:14px 0}
+.stride-card{background:var(--s2);border-radius:10px;padding:14px;border-left:4px solid var(--em);border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.stride-letter{font-size:1.5rem;font-weight:900;color:var(--em);margin-bottom:3px}
+.stride-name{font-size:.85rem;font-weight:700;margin-bottom:5px}
+.stride-desc{font-size:.79rem;color:var(--muted);line-height:1.5;margin-bottom:7px}
+.stride-ai{font-size:.75rem;color:#6ee7b7;background:rgba(16,185,129,.1);border-radius:5px;padding:4px 8px}
+/* NIST RMF boxes */
+.rmf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:11px;margin:14px 0}
+.rmf-card{background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)}
+.rmf-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.rmf-name{font-weight:700;font-size:.9rem;margin-bottom:5px}
+.rmf-desc{font-size:.79rem;color:var(--muted);line-height:1.5}
+/* Crypto demo */
+.crypto-demo{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:16px 0}
+.crypto-demo h4{font-size:.88rem;font-weight:700;color:var(--cyan);margin-bottom:14px}
+.key-box{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 16px;margin-bottom:10px;font-family:'Courier New',monospace;font-size:.8rem;word-break:break-all;color:var(--em)}
+.key-lbl{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px;font-family:'Segoe UI',sans-serif}
+.btn-gen{background:var(--em);color:#fff;border:none;border-radius:7px;padding:7px 16px;cursor:pointer;font-size:.82rem;font-weight:700;margin-bottom:12px;transition:all .2s}
+.btn-gen:hover{background:#059669}
+.enc-steps{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0;font-size:.83rem}
+.enc-step{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 12px;text-align:center}
+.enc-arrow{color:var(--em);font-weight:700;font-size:1.1rem}
+/* Threat model builder */
+.threat-builder{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:16px 0}
+.threat-builder h4{font-size:.88rem;font-weight:700;color:var(--amber);margin-bottom:14px}
+.tb-select{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 11px;color:var(--text);font-size:.83rem;margin-right:8px;margin-bottom:8px}
+.threat-table{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:12px}
+.threat-table th{background:rgba(16,185,129,.15);color:var(--em);font-weight:700;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.threat-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top}
+.threat-table tr:hover td{background:rgba(16,185,129,.04)}
+.sev-high{display:inline-block;padding:1px 7px;border-radius:20px;font-size:.7rem;font-weight:700;background:rgba(239,68,68,.15);color:#fca5a5}
+.sev-med{display:inline-block;padding:1px 7px;border-radius:20px;font-size:.7rem;font-weight:700;background:rgba(245,158,11,.15);color:#fde68a}
+.sev-low{display:inline-block;padding:1px 7px;border-radius:20px;font-size:.7rem;font-weight:700;background:rgba(16,185,129,.15);color:#6ee7b7}
+/* Checklist */
+.chklist{list-style:none}
+.chklist li{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);font-size:.88rem}
+.chklist li:last-child{border-bottom:none}
+.chk{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;transition:all .2s}
+.chk.on{background:var(--em);border-color:var(--em);color:#fff}
+.discussion-card{background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(99,102,241,.04));border:1px solid rgba(16,185,129,.25);border-radius:var(--r);padding:22px;margin:16px 0}
+.mt4{margin-top:18px}
+@media(max-width:640px){.page{padding:14px}.hero{padding:24px 16px}}
+</style>
+</head>
+<body>
+<nav>
+  <span class="nav-logo">ISE 16:540</span>
+  <div class="nav-tabs">
+    <button class="tb active" onclick="show('home')">Home</button>
+    <button class="tb" onclick="show('lecture')">Lecture</button>
+    <button class="tb" onclick="show('threats')">Threat Modeling</button>
+    <button class="tb" onclick="show('demo')">Demo</button>
+    <button class="tb" onclick="show('discussion')">Discussion</button>
+    <button class="tb" onclick="show('m6')">Milestone M6</button>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="badge">📅 Week 13 · Apr 28–May 4</div>
+    <h1>Responsible AI + Cybersecurity + <span>Encryption Basics</span></h1>
+    <p>Weeks 9–12 built capability. This week you learn to deploy it responsibly — protecting the system, the data, the users, and the organization. Responsible AI, threat modeling, and cryptographic fundamentals are not optional add-ons. They are deployment requirements.</p>
+    <div class="chips">
+      <div class="chip">📚 Huyen Ch. 4 (revisited)</div>
+      <div class="chip">🏛 NIST AI RMF</div>
+      <div class="chip">🔒 OWASP LLM Top 10</div>
+      <div class="chip">🔑 Crypto 101 + NIST SP 800-57</div>
+      <div class="chip">🏗 M6 — Trust &amp; Security Package</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-em" onclick="show('lecture')">📖 Read Lecture</button>
+      <button class="btn btn-s" onclick="show('threats')">🎯 Threat Modeling Reference</button>
+      <button class="btn btn-s" onclick="show('demo')">🔬 Try the Demo</button>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:20px">
+    <div class="card">
+      <div class="card-h"><div class="card-icon ce">🛡</div><div class="card-title">Week 13 Objectives</div></div>
+      <ul class="ls"><ul>
+        <li>Apply the NIST AI RMF Govern–Map–Measure–Manage framework to an AI system</li>
+        <li>Build a structured threat model using STRIDE and OWASP LLM Top 10</li>
+        <li>Explain symmetric vs. asymmetric encryption and when to use each</li>
+        <li>Articulate key management principles from NIST SP 800-57</li>
+        <li>Produce the M6 Trust &amp; Security Package for your course project</li>
+      </ul></ul>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-icon cg">✅</div><div class="card-title">Week 13 Checklist</div></div>
+      <ul class="chklist">
+        <li><div class="chk" onclick="ck(this)"></div>Read NIST AI RMF overview (link in Canvas)</li>
+        <li><div class="chk" onclick="ck(this)"></div>Read OWASP LLM Top 10 (from Week 11)</li>
+        <li><div class="chk" onclick="ck(this)"></div>Skim Crypto 101 Ch. 1–3 (link in Canvas)</li>
+        <li><div class="chk" onclick="ck(this)"></div>Watch recorded Zoom lecture</li>
+        <li><div class="chk" onclick="ck(this)"></div>Read the Lecture tab on this page</li>
+        <li><div class="chk" onclick="ck(this)"></div>Run the Colab notebook</li>
+        <li><div class="chk" onclick="ck(this)"></div>Post Canvas discussion by Thursday</li>
+        <li><div class="chk" onclick="ck(this)"></div>Submit M6 Trust &amp; Security Package</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-h"><div class="card-icon ca">🗺</div><div class="card-title">Three Threads — How They Connect</div></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:10px;margin-top:4px">
+      <div style="background:var(--s2);border-radius:9px;padding:14px;border-left:3px solid var(--em);border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border)"><div style="font-size:.72rem;font-weight:700;color:var(--em);margin-bottom:6px">THREAD 1 — RESPONSIBLE AI</div><div style="font-size:.82rem;color:var(--muted)">Harms, fairness, transparency, accountability. NIST AI RMF gives you the governance framework. Huyen Ch. 4 gives you the measurement tools.</div></div>
+      <div style="background:var(--s2);border-radius:9px;padding:14px;border-left:3px solid var(--amber);border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border)"><div style="font-size:.72rem;font-weight:700;color:var(--amber);margin-bottom:6px">THREAD 2 — THREAT MODELING</div><div style="font-size:.82rem;color:var(--muted)">STRIDE methodology applied to AI systems. OWASP LLM Top 10 as the threat library. Structured identification of assets, threats, and controls.</div></div>
+      <div style="background:var(--s2);border-radius:9px;padding:14px;border-left:3px solid var(--cyan);border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border)"><div style="font-size:.72rem;font-weight:700;color:var(--cyan);margin-bottom:6px">THREAD 3 — CRYPTOGRAPHY</div><div style="font-size:.82rem;color:var(--muted)">Symmetric and asymmetric encryption, key management lifecycle (NIST SP 800-57). How to protect data in AI pipelines — at rest, in transit, in computation.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- LECTURE -->
+<div class="page" id="page-lecture">
+  <div class="hero">
+    <div class="badge">📖 Week 13 Lecture</div>
+    <h1>Responsible AI + Cybersecurity + <span>Encryption Basics</span></h1>
+    <p>Six sections connecting responsible AI governance, threat modeling, and cryptographic fundamentals to your AI engineering coursework and the M6 deliverable.</p>
+  </div>
+
+  <!-- S1: Responsible AI -->
+  <div class="ls">
+    <h2>🏛 1 — Responsible AI: Harms, Governance, and the NIST AI RMF</h2>
+    <p>Responsible AI is not a set of ethical aspirations. It is a set of engineering requirements. A system that produces biased outputs, fails to explain its decisions, or causes demonstrable harm to identifiable groups is not a responsible AI system — regardless of its accuracy on benchmark evaluations.</p>
+    <p>The NIST AI Risk Management Framework (AI RMF) provides a practical governance structure organized around four functions: Govern, Map, Measure, and Manage. These are not sequential phases — they are concurrent disciplines that operate continuously throughout the AI system lifecycle.</p>
+    <div class="rmf-grid">
+      <div class="rmf-card">
+        <div class="rmf-label" style="color:var(--em)">Govern</div>
+        <div class="rmf-name">Establish policies and accountability</div>
+        <div class="rmf-desc">Define who is responsible for AI risk. Establish policies for responsible development and deployment. Create organizational processes for oversight.</div>
+      </div>
+      <div class="rmf-card">
+        <div class="rmf-label" style="color:var(--amber)">Map</div>
+        <div class="rmf-name">Identify risks in context</div>
+        <div class="rmf-desc">Identify who uses the system, who is affected by it, and what harms could result. Understand the deployment context: what decisions does the system inform?</div>
+      </div>
+      <div class="rmf-card">
+        <div class="rmf-label" style="color:var(--cyan)">Measure</div>
+        <div class="rmf-name">Quantify and evaluate risks</div>
+        <div class="rmf-desc">Implement evaluation metrics for fairness, robustness, privacy, and safety. This is where Huyen Ch. 4's evaluation framework applies — extended to responsible AI dimensions.</div>
+      </div>
+      <div class="rmf-card">
+        <div class="rmf-label" style="color:var(--ind)">Manage</div>
+        <div class="rmf-name">Treat, monitor, and respond</div>
+        <div class="rmf-desc">Apply mitigations, monitor deployed systems, and respond to incidents. Includes documentation, transparency reports, and stakeholder communication.</div>
+      </div>
+    </div>
+    <h3>Connecting to Huyen Chapter 4 — Evaluation as Responsible AI Infrastructure</h3>
+    <p>Huyen's Chapter 4 frames evaluation as a technical problem: how do you measure whether a model is doing what you want? Week 13 extends this framing. The evaluation infrastructure Huyen describes — held-out test sets, multiple metrics, sliced evaluation across subgroups — is exactly the Measure function of the NIST AI RMF.</p>
+    <p>Sliced evaluation is the critical technique for responsible AI measurement. You do not just measure average performance — you measure performance broken down by demographic group, by use case type, by input complexity, by geographic region. A model with 92% overall accuracy and 61% accuracy for a protected subgroup is not a responsible AI system, even if the overall number looks good. Sliced evaluation surfaces the gap that average metrics hide.</p>
+    <div class="hl"><strong>The responsible AI audit checklist — minimum viable for production deployment:</strong> (1) Fairness evaluation across relevant subgroups with documented thresholds. (2) Transparency documentation: what the model does, what it cannot do, and what data it was trained on. (3) Human oversight mechanism for high-stakes decisions. (4) Incident response plan: what happens when the model fails. (5) Regular re-evaluation schedule as deployment conditions change.</div>
+  </div>
+
+  <!-- S2: Bias and Fairness -->
+  <div class="ls">
+    <h2>⚖️ 2 — Bias, Fairness, and What Huyen's Evaluation Framework Misses</h2>
+    <p>Huyen's evaluation framework is technically rigorous. It is also incomplete for responsible AI deployment, because it optimizes for predictive accuracy on a distribution — not for equitable outcomes across subgroups. Bias and fairness require a different evaluation lens.</p>
+    <h3>Sources of Bias in AI Systems</h3>
+    <div class="cgrid">
+      <div class="cc-card">
+        <div class="cc-lbl">Source 1</div>
+        <div class="cc-t">Training Data Bias</div>
+        <div class="cc-d">Historical data encodes historical inequities. A hiring model trained on past hiring decisions learns patterns that reflect past discrimination. Even without protected attributes in the input, proxies (zip code, university attended) recreate the bias.</div>
+      </div>
+      <div class="cc-card">
+        <div class="cc-lbl">Source 2</div>
+        <div class="cc-t">Label Bias</div>
+        <div class="cc-d">Labels assigned by human annotators reflect annotator demographics, incentives, and biases. If annotators from one background label content from another background, systematic errors can masquerade as ground truth.</div>
+      </div>
+      <div class="cc-card">
+        <div class="cc-lbl">Source 3</div>
+        <div class="cc-t">Feedback Loop Bias</div>
+        <div class="cc-d">Model predictions influence future data collection. A recommendation system that shows certain content more often to certain groups generates biased training data for the next version. This is a causal structure problem — exactly Week 12's territory.</div>
+      </div>
+      <div class="cc-card">
+        <div class="cc-lbl">Source 4</div>
+        <div class="cc-t">Deployment Context Mismatch</div>
+        <div class="cc-d">A model performs equally well across groups in evaluation but is deployed in a context where one group interacts with it very differently. The distributional shift creates performance disparities that were invisible in evaluation.</div>
+      </div>
+    </div>
+    <h3>Fairness Metrics — Selecting the Right One</h3>
+    <p>There is no single fairness metric that is correct in all contexts. The right metric depends on the deployment decision and what kind of equity you are trying to achieve.</p>
+    <table class="cmp-tbl">
+      <tr><th>Fairness Criterion</th><th>Definition</th><th>Best For</th></tr>
+      <tr><td><strong>Demographic Parity</strong></td><td>Equal positive prediction rate across groups</td><td>High-stakes allocation (loans, hiring) where representation matters</td></tr>
+      <tr><td><strong>Equalized Odds</strong></td><td>Equal TPR and FPR across groups</td><td>Binary classification where both errors matter equally</td></tr>
+      <tr><td><strong>Equal Opportunity</strong></td><td>Equal TPR (recall) across groups</td><td>When false negatives are the primary harm (disease screening)</td></tr>
+      <tr><td><strong>Predictive Parity</strong></td><td>Equal PPV (precision) across groups</td><td>When false positives are the primary harm (recidivism prediction)</td></tr>
+      <tr><td><strong>Individual Fairness</strong></td><td>Similar individuals receive similar predictions</td><td>When group membership is less relevant than individual similarity</td></tr>
+    </table>
+    <div class="hl-amber"><strong>Critical limitation:</strong> Multiple fairness criteria are mathematically incompatible when base rates differ across groups (Chouldechova, 2017). You cannot simultaneously satisfy demographic parity, equalized odds, and predictive parity in a real system with different class prevalences. Selecting a fairness criterion is a normative decision, not a technical one — it requires engagement with affected communities, not just engineers.</div>
+  </div>
+
+  <!-- S3: Threat Modeling -->
+  <div class="ls">
+    <h2>🎯 3 — Threat Modeling for AI Systems — STRIDE + OWASP</h2>
+    <p>Threat modeling is the practice of systematically identifying what can go wrong in a system before it goes wrong. For AI systems, threat modeling has to address both the traditional software security threats and the AI-specific threats documented in the OWASP LLM Top 10.</p>
+    <p>The STRIDE framework provides a structured vocabulary for threats. Applied to an AI system, each STRIDE category maps to specific AI attack vectors.</p>
+    <div class="stride-grid">
+      <div class="stride-card">
+        <div class="stride-letter">S</div>
+        <div class="stride-name">Spoofing</div>
+        <div class="stride-desc">Impersonating a legitimate identity to gain unauthorized access or trust.</div>
+        <div class="stride-ai">AI context: model or API endpoint impersonation; prompt injection mimicking system instructions</div>
+      </div>
+      <div class="stride-card">
+        <div class="stride-letter" style="color:var(--amber)">T</div>
+        <div class="stride-name">Tampering</div>
+        <div class="stride-desc">Unauthorized modification of data, model weights, or system behavior.</div>
+        <div class="stride-ai">AI context: training data poisoning (OWASP LLM03); model weight modification; RAG index injection</div>
+      </div>
+      <div class="stride-card">
+        <div class="stride-letter" style="color:var(--ind)">R</div>
+        <div class="stride-name">Repudiation</div>
+        <div class="stride-desc">Denying that an action was taken; absence of audit evidence.</div>
+        <div class="stride-ai">AI context: no audit log of model decisions or agent actions (directly addressed by Week 11 audit log pattern)</div>
+      </div>
+      <div class="stride-card">
+        <div class="stride-letter" style="color:var(--red)">I</div>
+        <div class="stride-name">Information Disclosure</div>
+        <div class="stride-desc">Exposing sensitive information to unauthorized parties.</div>
+        <div class="stride-ai">AI context: training data memorization; model inversion; sensitive info in context window (OWASP LLM06)</div>
+      </div>
+      <div class="stride-card">
+        <div class="stride-letter" style="color:var(--rose)">D</div>
+        <div class="stride-name">Denial of Service</div>
+        <div class="stride-desc">Making a system unavailable by overwhelming its resources.</div>
+        <div class="stride-ai">AI context: adversarial prompt flooding; recursive agent loops; expensive generation attacks (OWASP LLM04)</div>
+      </div>
+      <div class="stride-card">
+        <div class="stride-letter" style="color:var(--cyan)">E</div>
+        <div class="stride-name">Elevation of Privilege</div>
+        <div class="stride-desc">Gaining access beyond what is authorized.</div>
+        <div class="stride-ai">AI context: prompt injection bypassing safety filters; jailbreaking; agent tool privilege escalation (OWASP LLM08)</div>
+      </div>
+    </div>
+    <h3>The Threat Modeling Process — Four Steps</h3>
+    <div class="flow">
+      <div class="fstep"><div class="fn">1</div><div class="fbody"><strong>Define the system and its assets</strong><p>Draw the system boundary. Identify assets: model weights, training data, user data, API keys, inference outputs, audit logs. An asset is anything of value that a threat actor would want to steal, corrupt, or deny access to.</p></div></div>
+      <div class="fstep"><div class="fn">2</div><div class="fbody"><strong>Identify threat actors and their capabilities</strong><p>Who would attack your system? External adversaries (prompt injection, jailbreaking), malicious insiders (data exfiltration), competitors (model extraction), regulators (compliance failures). Each actor has different motivations and capabilities.</p></div></div>
+      <div class="fstep"><div class="fn">3</div><div class="fbody"><strong>Enumerate threats using STRIDE × OWASP</strong><p>For each asset, apply the STRIDE categories. Cross-reference with the OWASP LLM Top 10 for AI-specific threats. Document the attack vector, the asset at risk, and the potential impact. See the Threat Modeling tab for the full reference.</p></div></div>
+      <div class="fstep"><div class="fn">4</div><div class="fbody"><strong>Define controls and mitigations</strong><p>For each threat, identify the control: prevent (make the attack impossible), detect (know when it happens), respond (contain damage when detected). Map controls to the NIST AI RMF Manage function. This mapping becomes the M6 mitigation and audit plan.</p></div></div>
+    </div>
+    <div class="hl"><strong>The M6 deliverable is this threat model.</strong> Your threat model should cover: the three most critical assets in your system, at least five threats mapped to STRIDE categories and OWASP risks, and a control for each threat. The Threat Modeling tab on this page provides the full reference template and the OWASP-to-STRIDE mapping table.</div>
+  </div>
+
+  <!-- S4: Cryptography -->
+  <div class="ls">
+    <h2>🔑 4 — Cryptography Fundamentals for AI Engineers</h2>
+    <p>You do not need to implement cryptography. You need to understand it well enough to make correct architectural decisions about data protection, key management, and secure communication in AI systems. The goal is informed use of cryptographic primitives — not implementation.</p>
+    <h3>Symmetric Encryption — One Key, High Speed</h3>
+    <p>Symmetric encryption uses the same key to encrypt and decrypt. It is computationally efficient and appropriate for large data volumes — bulk data at rest, large context windows, training data stores. The dominant standard is AES (Advanced Encryption Standard) with 256-bit keys. AES-256 in GCM mode provides both encryption and authentication (authenticated encryption), which is what NIST SP 800-57 recommends for data at rest in AI systems.</p>
+    <p>The critical constraint: both parties must share the key securely. Key distribution is the hard problem in symmetric cryptography. You cannot send the symmetric key over an unencrypted channel — which is where asymmetric cryptography becomes necessary.</p>
+    <h3>Asymmetric Encryption — Key Pairs, Secure Exchange</h3>
+    <p>Asymmetric encryption uses mathematically linked key pairs: a public key (freely distributable) and a private key (never shared). Data encrypted with the public key can only be decrypted with the corresponding private key. RSA-2048 and NIST-approved elliptic curve algorithms (ECDH, ECDSA) are the current standards.</p>
+    <p>The primary use case for asymmetric encryption in AI systems is key exchange — using asymmetric cryptography to securely establish a shared symmetric key, then using symmetric encryption for the actual data. This is the TLS handshake: asymmetric for authentication and key exchange, symmetric for the bulk data stream. Your API calls to model providers, your user data in transit, your audit log exports — all use this pattern.</p>
+    <h3>NIST SP 800-57 — Key Management Lifecycle</h3>
+    <p>NIST SP 800-57 Part 1 provides the authoritative guidance on cryptographic key management. For AI engineers, the critical concepts are the key lifecycle states and the key management requirements that apply at each state.</p>
+    <table class="cmp-tbl">
+      <tr><th>Lifecycle State</th><th>Description</th><th>AI System Application</th></tr>
+      <tr><td><strong>Pre-activation</strong></td><td>Key generated, not yet in use</td><td>Generate encryption keys before provisioning AI infrastructure; store securely in a key management service (KMS)</td></tr>
+      <tr><td><strong>Active</strong></td><td>Key in use for protection and recovery</td><td>Encrypt training data, model artifacts, API secrets, user PII; rotate on defined schedule</td></tr>
+      <tr><td><strong>Deactivated</strong></td><td>No longer used to protect new data; still needed for existing data</td><td>After key rotation: retain for decrypting existing encrypted training data; do not use for new operations</td></tr>
+      <tr><td><strong>Compromised</strong></td><td>Key suspected or confirmed compromised</td><td>Immediately revoke; re-encrypt all data protected with the compromised key; incident response</td></tr>
+      <tr><td><strong>Destroyed</strong></td><td>Key permanently deleted</td><td>After retention period; must cryptographically verify destruction; document in audit log</td></tr>
+    </table>
+    <div class="hl-ind"><strong>The four key management requirements every AI system must satisfy (NIST SP 800-57):</strong> (1) Keys must be generated by approved algorithms with sufficient entropy. (2) Keys must be stored in a protected key store — not hardcoded in source code, not in environment variables that end up in logs, not in a spreadsheet. (3) Keys must be rotated on a defined schedule — typically annually for long-term keys, more frequently for session keys. (4) Key use must be logged — every encryption and decryption operation associated with an audit entry.</div>
+  </div>
+
+  <!-- S5: Data Protection in AI Pipelines -->
+  <div class="ls">
+    <h2>🔒 5 — Data Protection in AI Pipelines</h2>
+    <p>An AI system handles sensitive data at every stage of its lifecycle: training data collection and storage, model training (gradient exposure), inference (user queries and context), and output logging. Each stage requires specific protection measures.</p>
+    <h3>Data at Rest</h3>
+    <p>Training data, model weights, fine-tuning datasets, and audit logs must be encrypted at rest using AES-256 (or equivalent). Cloud provider managed encryption (AWS KMS, Azure Key Vault, Google Cloud KMS) provides the correct implementation for most AI engineering contexts. The key management service handles key generation, rotation, and access control — your application never handles raw key material.</p>
+    <h3>Data in Transit</h3>
+    <p>All API calls to model providers, all user queries, all retrieved context (RAG pipeline), and all model outputs must traverse TLS 1.2 or higher. Do not use HTTP for any component of an AI pipeline that handles user data. Validate TLS certificates — do not disable certificate verification even in development, because that habit will end up in production code.</p>
+    <h3>Data in Context — The Unique AI Problem</h3>
+    <p>The RAG context window creates a data protection problem that traditional software does not have: user data, retrieved documents, and system instructions all exist together in the prompt. If the context window is logged (as it should be, for debugging and audit), the log contains potentially sensitive information from multiple sources simultaneously.</p>
+    <div class="hl-red"><strong>The context window security requirement:</strong> Audit logs of context windows must be treated as sensitive data — encrypted at rest, access-controlled, and subject to the same retention policies as the most sensitive data they contain. A context window log containing PII is PII data and must be protected as such. This is frequently overlooked in AI system design and is a direct OWASP LLM06 (Sensitive Information Disclosure) risk.</div>
+    <h3>Model Weight Protection</h3>
+    <p>Fine-tuned model weights are a high-value asset — they represent significant investment and may encode proprietary data. Model weights should be: encrypted at rest, access-controlled with least-privilege principles, versioned with integrity checksums, and subject to change management processes. A tampered model weight is the Training Data Poisoning threat (OWASP LLM03) post-training — an adversary who can modify weights can modify model behavior arbitrarily.</p>
+  </div>
+
+  <!-- S6: Putting It Together -->
+  <div class="ls">
+    <h2>🏗 6 — Putting It Together: The Trust &amp; Security Package (M6)</h2>
+    <p>M6 requires you to produce a Trust &amp; Security Package for your course project. It has three components: a threat model, a logging and audit plan, and a responsible AI notes document. These are not separate documents — they are three views of the same underlying analysis.</p>
+    <div class="flow">
+      <div class="fstep"><div class="fn">1</div><div class="fbody"><strong>Threat Model</strong><p>Assets identified and prioritized. Threats enumerated using STRIDE with OWASP LLM Top 10 cross-reference. Controls mapped to each threat (prevent/detect/respond). Risk level assigned to each threat (High/Medium/Low). This is the security engineering view of your system.</p></div></div>
+      <div class="fstep"><div class="fn">2</div><div class="fbody"><strong>Logging and Audit Plan</strong><p>What is logged, where, in what format, with what retention period, and with what access controls. Minimum log events: model inputs and outputs (sanitized), gate decisions (from M6 Week 11 work), authentication events, data access events, key usage events. This is the accountability view of your system.</p></div></div>
+      <div class="fstep"><div class="fn">3</div><div class="fbody"><strong>Responsible AI Notes</strong><p>Harms inventory: what could go wrong for users, third parties, and society. Bias evaluation: what subgroups exist in your system's user base and how will you measure differential performance. Transparency: what will you tell users about how the system works and what it cannot do. Human oversight: what decisions require human review. This is the governance view of your system.</p></div></div>
+    </div>
+    <div class="hl-amber"><strong>The M6 insight:</strong> These three components are not independent — they inform each other. A threat in the threat model may require a new log event in the audit plan. A harm in the responsible AI notes may require a new control in the threat model. A fairness evaluation gap may surface a bias-amplification threat. Build all three components iteratively, not sequentially.</div>
+    <div class="btn-row mt4" style="justify-content:flex-start">
+      <button class="btn btn-em" onclick="show('threats')">🎯 Full Threat Modeling Reference</button>
+      <button class="btn btn-s" onclick="show('m6')">📋 M6 Specification</button>
+    </div>
+  </div>
+</div>
+
+<!-- THREATS TAB -->
+<div class="page" id="page-threats">
+  <div class="hero">
+    <div class="badge">🎯 Threat Modeling Reference</div>
+    <h1>STRIDE × OWASP — <span>AI System Threat Library</span></h1>
+    <p>Use this reference when building your M6 threat model. Each threat is mapped to its STRIDE category, OWASP LLM risk, severity, and control.</p>
+  </div>
+  <div class="card">
+    <div class="card-h"><div class="card-icon cr">⚠️</div><div class="card-title">AI Threat Library — STRIDE × OWASP Mapping</div></div>
+    <table class="threat-table">
+      <tr><th>Threat</th><th>STRIDE</th><th>OWASP LLM</th><th>Severity</th><th>Control</th></tr>
+      <tr><td><strong>Prompt Injection</strong> — malicious content in inputs hijacks model behavior</td><td>E (Elevation)</td><td>LLM01</td><td><span class="sev-high">HIGH</span></td><td>Input sanitization; output filtering; approval gate for consequential actions</td></tr>
+      <tr><td><strong>Insecure Output Handling</strong> — model output passed to downstream tools without sanitization</td><td>T (Tampering)</td><td>LLM02</td><td><span class="sev-high">HIGH</span></td><td>Sanitize all model outputs before downstream use; schema validation</td></tr>
+      <tr><td><strong>Training Data Poisoning</strong> — malicious data injected into training pipeline</td><td>T (Tampering)</td><td>LLM03</td><td><span class="sev-high">HIGH</span></td><td>Data provenance tracking; integrity checksums; anomaly detection on training data</td></tr>
+      <tr><td><strong>Model Denial of Service</strong> — resource exhaustion via expensive prompts or recursive agent loops</td><td>D (Denial)</td><td>LLM04</td><td><span class="sev-med">MED</span></td><td>Rate limiting; max token budget; iteration count limits; cost alerting</td></tr>
+      <tr><td><strong>Supply Chain Compromise</strong> — compromised model weights, libraries, or plugins</td><td>T (Tampering)</td><td>LLM05</td><td><span class="sev-med">MED</span></td><td>Dependency scanning; model card review; integrity verification of downloaded artifacts</td></tr>
+      <tr><td><strong>Sensitive Information Disclosure</strong> — PII in context window, memorized training data</td><td>I (Disclosure)</td><td>LLM06</td><td><span class="sev-high">HIGH</span></td><td>PII detection and redaction pre-prompt; encrypted audit logs; data minimization</td></tr>
+      <tr><td><strong>Insecure Plugin/Tool Design</strong> — agent tools with excessive permissions or weak auth</td><td>E (Elevation)</td><td>LLM07</td><td><span class="sev-high">HIGH</span></td><td>Least-privilege tool design; tool authentication; input validation on all tool parameters</td></tr>
+      <tr><td><strong>Excessive Agency</strong> — agent takes consequential actions without human oversight</td><td>E (Elevation)</td><td>LLM08</td><td><span class="sev-high">HIGH</span></td><td>Approval gate (Week 11 pattern); audit log; max autonomy scope definition</td></tr>
+      <tr><td><strong>Overreliance</strong> — system used beyond its validated scope without oversight</td><td>R (Repudiation)</td><td>LLM09</td><td><span class="sev-med">MED</span></td><td>Capability disclosure; confidence scores; mandatory human review for edge cases</td></tr>
+      <tr><td><strong>Model Theft</strong> — model weights extracted via systematic API queries</td><td>I (Disclosure)</td><td>LLM10</td><td><span class="sev-med">MED</span></td><td>Rate limiting; API key rotation; output perturbation; usage anomaly detection</td></tr>
+      <tr><td><strong>API Key Compromise</strong> — credentials stolen from code, logs, or config files</td><td>S (Spoofing)</td><td>—</td><td><span class="sev-high">HIGH</span></td><td>Secrets manager (not env vars); key rotation policy; audit log of key usage</td></tr>
+      <tr><td><strong>Audit Log Tampering</strong> — attacker modifies or deletes audit evidence</td><td>T+R (Tamper+Repud)</td><td>—</td><td><span class="sev-med">MED</span></td><td>Write-once audit storage; cryptographic log signing; off-system backup</td></tr>
+    </table>
+  </div>
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon ca">📋</div><div class="card-title">M6 Threat Model Template</div></div>
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:14px">Use this structure for your threat model. Populate all three sections for your specific system.</p>
+    <div style="background:var(--s2);border-radius:10px;padding:16px;margin-bottom:12px;border:1px solid var(--border)">
+      <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--em);margin-bottom:10px">Section 1 — Assets</div>
+      <p style="font-size:.84rem;color:var(--muted)">List and prioritize your system's assets. For each: what is it, who owns it, what is its sensitivity level (Public / Internal / Confidential / Restricted), and what is the impact if it is compromised?</p>
+    </div>
+    <div style="background:var(--s2);border-radius:10px;padding:16px;margin-bottom:12px;border:1px solid var(--border)">
+      <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--amber);margin-bottom:10px">Section 2 — Threats</div>
+      <p style="font-size:.84rem;color:var(--muted)">For each threat from the library above that applies to your system: STRIDE category, OWASP risk (if applicable), affected asset, attack vector, likelihood (1–3), impact (1–3), risk score (likelihood × impact).</p>
+    </div>
+    <div style="background:var(--s2);border-radius:10px;padding:16px;border:1px solid var(--border)">
+      <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--cyan);margin-bottom:10px">Section 3 — Controls</div>
+      <p style="font-size:.84rem;color:var(--muted)">For each identified threat: control type (Prevent / Detect / Respond), specific control implementation, who is responsible, and how you will verify it is working (test or metric).</p>
+    </div>
+  </div>
+</div>
+
+<!-- DEMO -->
+<div class="page" id="page-demo">
+  <div class="hero">
+    <div class="badge">🔬 Interactive Demo</div>
+    <h1>Threat Model Builder + <span>Crypto Concepts</span></h1>
+    <p>Two demos: build a threat model for a simulated AI system, and explore how symmetric vs. asymmetric encryption protect different parts of an AI pipeline.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-icon cr">🎯</div><div class="card-title">Demo 1 — AI System Threat Model Builder</div></div>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">Select a system component. The builder shows which threats apply, their STRIDE category, and the recommended control.</p>
+    <div class="threat-builder">
+      <h4>Select a System Component</h4>
+      <div style="margin-bottom:12px">
+        <select class="tb-select" id="comp-select" onchange="buildThreatTable()">
+          <option value="api">API Gateway / Model Endpoint</option>
+          <option value="rag">RAG Pipeline (retriever + context)</option>
+          <option value="agent">Agentic System (tools + execution)</option>
+          <option value="training">Training Data Pipeline</option>
+          <option value="audit">Audit Log System</option>
+        </select>
+      </div>
+      <div id="threat-output"></div>
+    </div>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon ci">🔑</div><div class="card-title">Demo 2 — Encryption in an AI Pipeline</div></div>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">Visualize how symmetric and asymmetric encryption protect different parts of an AI system. Click to generate illustrative keys and trace data through the encryption lifecycle.</p>
+    <div class="crypto-demo">
+      <h4>Key Generation &amp; Data Protection Flow</h4>
+      <button class="btn-gen" onclick="generateKeys()">🔑 Generate Example Keys</button>
+      <div id="key-display" style="display:none">
+        <div class="key-lbl">AES-256 Symmetric Key (data at rest — never transmitted)</div>
+        <div class="key-box" id="sym-key">—</div>
+        <div class="key-lbl">RSA Public Key (shared freely — for key exchange)</div>
+        <div class="key-box" id="pub-key" style="color:var(--cyan);font-size:.72rem">—</div>
+        <div class="key-lbl">RSA Private Key (never shared — held by your system)</div>
+        <div class="key-box" id="priv-key" style="color:var(--amber);font-size:.72rem">—</div>
+      </div>
+      <div style="margin-top:16px">
+        <p style="font-size:.82rem;font-weight:700;color:var(--em);margin-bottom:10px">Data Protection Flow — AI Pipeline</p>
+        <div class="enc-steps">
+          <div class="enc-step"><div style="font-size:.72rem;color:var(--muted);margin-bottom:3px">User Query (PII)</div><div style="font-weight:700;color:var(--text)">Plaintext</div></div>
+          <div class="enc-arrow">→</div>
+          <div class="enc-step" style="border-color:var(--cyan)"><div style="font-size:.72rem;color:var(--cyan);margin-bottom:3px">TLS 1.3</div><div style="font-weight:700;color:var(--text)">In Transit</div></div>
+          <div class="enc-arrow">→</div>
+          <div class="enc-step" style="border-color:var(--em)"><div style="font-size:.72rem;color:var(--em);margin-bottom:3px">AES-256-GCM</div><div style="font-weight:700;color:var(--text)">At Rest</div></div>
+          <div class="enc-arrow">→</div>
+          <div class="enc-step" style="border-color:var(--amber)"><div style="font-size:.72rem;color:var(--amber);margin-bottom:3px">Audit Log</div><div style="font-weight:700;color:var(--text)">Encrypted + Signed</div></div>
+        </div>
+        <p style="font-size:.8rem;color:var(--muted);margin-top:10px">The symmetric AES-256 key is itself encrypted with the RSA public key for storage. Only the holder of the RSA private key can retrieve the AES key. This is the envelope encryption pattern recommended by NIST SP 800-57 for key wrapping.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DISCUSSION -->
+<div class="page" id="page-discussion">
+  <div class="hero">
+    <div class="badge">💬 Canvas Discussion — Week 13</div>
+    <h1>Threat Model <span>Your System</span></h1>
+    <p>Post by Thursday. Reply to at least one classmate by Sunday. Be specific — abstract threat descriptions earn no credit.</p>
+  </div>
+  <div class="discussion-card">
+    <h3 style="color:var(--em);font-size:1rem;font-weight:700;margin-bottom:12px">📌 The Prompt</h3>
+    <div style="font-size:.9rem;color:var(--text);line-height:1.7;margin-bottom:16px;font-style:italic">"Pick your course project AI system (or any AI system you interact with professionally). Identify three specific threats it faces using the STRIDE framework and cross-reference each with the OWASP LLM Top 10 where applicable. For each threat: state the attack vector concretely (not 'someone could inject a prompt' but exactly how in your system context), assign a severity, and propose a specific control. Then identify the single responsible AI risk you are most concerned about and explain how you would measure whether it is being managed effectively."</div>
+    <p style="color:var(--muted);font-size:.85rem">250–400 words. Reference at least one STRIDE letter and one OWASP LLM risk number. Concrete scenarios and specific technical controls are required — generic descriptions will not earn full credit.</p>
+  </div>
+  <div class="ls">
+    <h2>🧠 Discussion Entry Points</h2>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:12px;background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)"><span style="font-size:1.1rem">🔒</span><div><strong style="color:var(--text);font-size:.88rem">Security angle:</strong><span style="font-size:.84rem;color:var(--muted)"> Pick the threat you think is most likely to be exploited in your system and build the most realistic attack scenario you can. What does the attacker know? How do they access the system? What do they do? What would they gain? Then build the most specific control you can that would stop that exact attack.</span></div></div>
+      <div style="display:flex;gap:12px;background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)"><span style="font-size:1.1rem">⚖️</span><div><strong style="color:var(--text);font-size:.88rem">Responsible AI angle:</strong><span style="font-size:.84rem;color:var(--muted)"> Identify the population of users who interact with your system. Which subgroup is at the highest risk of harm from system failure? What does that failure look like specifically? What would a fairness metric for that harm look like, and what threshold would you set?</span></div></div>
+      <div style="display:flex;gap:12px;background:var(--s2);border-radius:10px;padding:14px;border:1px solid var(--border)"><span style="font-size:1.1rem">🔑</span><div><strong style="color:var(--text);font-size:.88rem">Cryptography angle:</strong><span style="font-size:.84rem;color:var(--muted)"> Where in your system does sensitive data exist at rest, in transit, and in computation? Which of those three states is least well protected? What specific cryptographic control would you add first, and how would you manage the key lifecycle?</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- M6 -->
+<div class="page" id="page-m6">
+  <div class="hero">
+    <div class="badge">🏗 Project Milestone M6 — 4 pts</div>
+    <h1>Trust &amp; Security <span>Package</span></h1>
+    <p>Demonstrate responsible AI and cybersecurity readiness for your course project. Three interlocking components, built iteratively.</p>
+    <div class="chips">
+      <div class="chip">Graded milestone · 4 pts</div>
+      <div class="chip">Due: end of Week 13</div>
+      <div class="chip">Canvas → Assignments → M6</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><div class="card-icon cr">🎯</div><div class="card-title">Component 1 — Threat Model (1.5 pts)</div></div>
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:14px">A structured threat model covering the three most critical assets in your system, with at least five threats and a control for each.</p>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:6px">
+      <li style="font-size:.84rem;color:var(--muted);display:flex;gap:8px"><span style="color:var(--em)">□</span>Assets: list at least three, with sensitivity level and impact-if-compromised</li>
+      <li style="font-size:.84rem;color:var(--muted);display:flex;gap:8px"><span style="color:var(--em)">□</span>At least five threats: STRIDE category, OWASP cross-reference where applicable, likelihood, impact, risk score</li>
+      <li style="font-size:.84rem;color:var(--muted);display:flex;gap:8px"><span style="color:var(--em)">□</span>One control per threat: type (Prevent/Detect/Respond), specific implementation, verification method</li>
+      <li style="font-size:.84rem;color:var(--muted);display:flex;gap:8px"><span style="color:var(--em)">□</span>Required references: OWASP LLM Top 10, NIST SP 800-57 (for any cryptographic controls)</li>
+    </ul>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon ca">📋</div><div class="card-title">Component 2 — Logging &amp; Audit Plan (1.5 pts)</div></div>
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:14px">A complete specification of what your system logs, where, in what format, with what retention and access controls.</p>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:6px">
+      <li style="font-size:.84rem;color:var(--muted);display:flex;gap:8px"><span style="color:var(--em)">□</span>Log events table: event type, trigger, data logged, sensitivity level, retention period</li>
+      <li style="font-size:.84rem;color:var(--muted);display:flex;gap:8px"><span style="color:var(--em)">□</span>Minimum events: model inputs/outputs, gate decisions (from Week 11 work), auth events, data access events</li>
+      <li style="font-size:.84rem;color:var(--muted);display:flex;gap:8px"><span style="color:var(--em)">□</span>Storage: where logs are stored, encryption method, access control (who can read/write)</li>
+      <li style="font-size:.84rem;color:var(--muted);display:flex;gap:8px"><span style="color:var(--em)">□</span>Audit trail: explain how the log supports accountability and incident investigation for each threat in Component 1</li>
+    </ul>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon ci">⚖️</div><div class="card-title">Component 3 — Responsible AI Notes (1.0 pt)</div></div>
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:14px">Document harms, oversight, and transparency commitments for your system.</p>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:6px">
+      <li style="font-size:.84rem;color:var(--muted);display:flex;gap:8px"><span style="color:var(--em)">□</span>Harms inventory: at least three potential harms, who is affected, likelihood, severity</li>
+      <li style="font-size:.84rem;color:var(--muted);display:flex;gap:8px"><span style="color:var(--em)">□</span>Bias evaluation plan: which subgroups, what metric, what threshold — mapped to NIST AI RMF Measure function</li>
+      <li style="font-size:.84rem;color:var(--muted);display:flex;gap:8px"><span style="color:var(--em)">□</span>Transparency disclosure: one paragraph suitable for user-facing documentation — what the system does, what it cannot do, what data it uses</li>
+      <li style="font-size:.84rem;color:var(--muted);display:flex;gap:8px"><span style="color:var(--em)">□</span>Human oversight: which decisions require human review and at what trigger condition</li>
+    </ul>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon ce">📊</div><div class="card-title">M6 Rubric</div></div>
+    <table class="cmp-tbl">
+      <tr><th>Category</th><th>Points</th><th>Meets</th><th>Exceeds</th></tr>
+      <tr><td style="font-weight:700;color:var(--em)">Threat Modeling</td><td style="font-weight:800">1.5</td><td>Five threats with STRIDE labels; controls present</td><td>Realistic, system-specific attack vectors; OWASP cross-references; risk scoring; verification methods for each control</td></tr>
+      <tr><td style="font-weight:700;color:var(--em)">Mitigation &amp; Audit</td><td style="font-weight:800">1.5</td><td>Log events defined; storage specified</td><td>All events mapped to specific threats; encryption method specified; retention justified; audit trail connects to each threat</td></tr>
+      <tr><td style="font-weight:700;color:var(--em)">Responsible AI</td><td style="font-weight:800">1.0</td><td>Harms mentioned; oversight noted</td><td>Concrete harm-reduction steps with specific controls; bias metric with threshold; transparency disclosure draft ready to publish</td></tr>
+    </table>
+  </div>
+
+  <div class="card mt4">
+    <div class="card-h"><div class="card-icon cg">✅</div><div class="card-title">Pre-Submission Checklist</div></div>
+    <ul class="chklist">
+      <li><div class="chk" onclick="ck(this)"></div>Threat model has at least three assets with sensitivity levels</li>
+      <li><div class="chk" onclick="ck(this)"></div>At least five threats with STRIDE categories and risk scores</li>
+      <li><div class="chk" onclick="ck(this)"></div>OWASP LLM Top 10 referenced for at least three threats</li>
+      <li><div class="chk" onclick="ck(this)"></div>NIST SP 800-57 referenced for any cryptographic controls</li>
+      <li><div class="chk" onclick="ck(this)"></div>Logging plan covers all five required event types</li>
+      <li><div class="chk" onclick="ck(this)"></div>Audit trail connects logs to at least three threats</li>
+      <li><div class="chk" onclick="ck(this)"></div>Responsible AI notes include harms inventory, bias plan, and transparency disclosure</li>
+      <li><div class="chk" onclick="ck(this)"></div>Submitted to Canvas → Assignments → M6</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+function show(p){document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.tb').forEach(e=>e.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');const idx={home:0,lecture:1,threats:2,demo:3,discussion:4,m6:5};if(idx[p]!==undefined)document.querySelectorAll('.tb')[idx[p]].classList.add('active');window.scrollTo(0,0);}
+function ck(el){el.classList.toggle('on');el.textContent=el.classList.contains('on')?'✓':'';}
+
+// Threat model builder data
+const COMPONENT_THREATS = {
+  api:[
+    {threat:"Prompt Injection via user input",stride:"E",owasp:"LLM01",sev:"HIGH",control:"Input validation + output filtering + rate limiting"},
+    {threat:"API key theft from client-side code",stride:"S",owasp:"—",sev:"HIGH",control:"Secrets manager; server-side key storage; key rotation"},
+    {threat:"Model Denial of Service via long prompts",stride:"D",owasp:"LLM04",sev:"MED",control:"Max token budget; per-user rate limits; cost alerting"},
+    {threat:"Sensitive data in API response logs",stride:"I",owasp:"LLM06",sev:"HIGH",control:"PII detection pre-log; encrypted log storage; access control"},
+  ],
+  rag:[
+    {threat:"Prompt injection in retrieved documents",stride:"E",owasp:"LLM01",sev:"HIGH",control:"Treat retrieved content as untrusted; content sandboxing"},
+    {threat:"RAG index poisoning (malicious doc injected)",stride:"T",owasp:"LLM03",sev:"HIGH",control:"Document provenance validation; index integrity checksums"},
+    {threat:"PII exposure via retrieved context",stride:"I",owasp:"LLM06",sev:"HIGH",control:"PII redaction before indexing; access-controlled retrieval"},
+    {threat:"Insecure output from retrieved→tool chain",stride:"T",owasp:"LLM02",sev:"MED",control:"Sanitize retrieved content before tool call parameters"},
+  ],
+  agent:[
+    {threat:"Injected instruction in environment data hijacks agent",stride:"E",owasp:"LLM01",sev:"HIGH",control:"Approval gate for all high-risk actions; untrusted content sandboxing"},
+    {threat:"Agent executes irreversible action without oversight",stride:"E",owasp:"LLM08",sev:"HIGH",control:"Mandatory human approval for HIGH-risk actions; audit log"},
+    {threat:"Tool with excessive permissions enables data exfiltration",stride:"I",owasp:"LLM07",sev:"HIGH",control:"Least-privilege tool design; tool authentication; parameter validation"},
+    {threat:"Runaway agent loop exhausts API budget",stride:"D",owasp:"LLM04",sev:"MED",control:"Max iteration count; hard cost budget; automatic stop on budget exceeded"},
+    {threat:"No audit trail — agent actions repudiable",stride:"R",owasp:"LLM09",sev:"MED",control:"Append-only audit log with all agent actions, parameters, gate decisions"},
+  ],
+  training:[
+    {threat:"Malicious data poisoning in training pipeline",stride:"T",owasp:"LLM03",sev:"HIGH",control:"Data provenance tracking; hash verification; anomaly detection"},
+    {threat:"Training data contains PII leaking into model",stride:"I",owasp:"LLM06",sev:"HIGH",control:"PII scrubbing pipeline; differential privacy during training"},
+    {threat:"Compromised third-party dataset or embedding model",stride:"T",owasp:"LLM05",sev:"MED",control:"Dependency scanning; model card review; integrity verification"},
+    {threat:"Unauthorized access to training data store",stride:"I",owasp:"—",sev:"HIGH",control:"Encryption at rest (AES-256); RBAC; access logging; MFA"},
+  ],
+  audit:[
+    {threat:"Attacker modifies audit logs to hide activity",stride:"T",owasp:"—",sev:"HIGH",control:"Write-once storage; cryptographic log signing; off-system backup"},
+    {threat:"Audit logs expose sensitive user data to unauthorized reader",stride:"I",owasp:"LLM06",sev:"HIGH",control:"Encrypted audit storage; strict RBAC; data minimization in log fields"},
+    {threat:"Audit trail deleted — no accountability evidence",stride:"R",owasp:"—",sev:"HIGH",control:"Retention policy enforcement; automated backup verification; integrity alerts"},
+  ],
+};
+
+function buildThreatTable(){
+  const comp = document.getElementById('comp-select').value;
+  const threats = COMPONENT_THREATS[comp] || [];
+  const rows = threats.map(t=>`<tr>
+    <td>${t.threat}</td>
+    <td style="font-weight:700;color:var(--em)">${t.stride}</td>
+    <td style="color:#94a3b8">${t.owasp}</td>
+    <td><span class="sev-${t.sev.toLowerCase()}">${t.sev}</span></td>
+    <td>${t.control}</td>
+  </tr>`).join('');
+  document.getElementById('threat-output').innerHTML = `<table class="threat-table">
+    <tr><th>Threat</th><th>STRIDE</th><th>OWASP</th><th>Severity</th><th>Control</th></tr>
+    ${rows}
+  </table>`;
+}
+buildThreatTable();
+
+// Crypto demo
+function rand(len){
+  const hex='0123456789abcdef';
+  return Array.from({length:len},()=>hex[Math.floor(Math.random()*16)]).join('');
+}
+function generateKeys(){
+  document.getElementById('sym-key').textContent = rand(64);
+  document.getElementById('pub-key').textContent = 
+    '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA' + rand(64) +
+    '\n' + rand(64) + rand(32) + '\nIDAQAB\n-----END PUBLIC KEY-----';
+  document.getElementById('priv-key').textContent =
+    '-----BEGIN PRIVATE KEY----- [PROTECTED — never logged, never transmitted]\n' +
+    rand(64) + '\n' + rand(64) + '\n-----END PRIVATE KEY-----';
+  document.getElementById('key-display').style.display='block';
+}
+</script>
+</body>
+</html>
