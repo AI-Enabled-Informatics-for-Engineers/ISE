@@ -19,7 +19,7 @@
 
 ## Coding lab (Colab)
 - Notebook stub
-  - Notebook: `notebooks/week13/00_stub.ipynb`
+  - Notebook: `https://github.com/AI-Enabled-Informatics-for-Engineers/ISE/blob/main/notebooks/week13/week13_lab.ipynb
   - Open in Colab: https://colab.research.google.com/github/AI-Enabled-Informatics-for-Engineers/ISE/blob/main/notebooks/week13/00_stub.ipynb
 
 ## Canvas discussion prompt
