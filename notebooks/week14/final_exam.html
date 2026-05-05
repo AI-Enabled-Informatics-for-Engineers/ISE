@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Final Exam · ISE 16:540 · AI-Enabled Informatics</title>
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--s2:#22263a;--border:#2e3352;--gold:#d97706;--gold-l:#fbbf24;--green:#10b981;--red:#ef4444;--teal:#14b8a6;--ind:#6366f1;--amber:#f59e0b;--text:#e2e8f0;--muted:#94a3b8;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+nav{display:flex;align-items:center;gap:8px;padding:12px 28px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.nav-logo{font-weight:800;font-size:1.05rem;color:var(--gold);white-space:nowrap}
+.nav-badge{background:rgba(217,119,6,.18);border:1px solid rgba(217,119,6,.4);color:var(--gold-l);padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;margin-left:6px}
+.nav-tabs{display:flex;gap:4px;margin-left:10px;flex-wrap:wrap}
+.tb{padding:5px 13px;border-radius:8px;border:none;cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s;background:transparent;color:var(--muted)}
+.tb.active{background:var(--gold);color:#fff}
+.tb:hover:not(.active){background:var(--s2);color:var(--text)}
+.page{display:none;padding:28px;max-width:980px;margin:0 auto}
+.page.active{display:block}
+.hero{background:linear-gradient(135deg,#1a1d27,#2a1a00 50%,#0f1117);border:1px solid var(--border);border-radius:var(--r);padding:40px 36px;text-align:center;margin-bottom:28px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 60% 30%,rgba(217,119,6,.12),transparent 60%);pointer-events:none}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(217,119,6,.15);border:1px solid rgba(217,119,6,.4);color:var(--gold-l);padding:3px 12px;border-radius:20px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px}
+.hero h1{font-size:2rem;font-weight:800;margin-bottom:8px;line-height:1.2}
+.hero h1 span{color:var(--gold-l)}
+.hero p{color:var(--muted);font-size:.92rem;max-width:620px;margin:0 auto 18px;line-height:1.6}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:22px}
+.info-box{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.info-val{font-size:1.4rem;font-weight:800;color:var(--gold-l);margin-bottom:3px}
+.info-lbl{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.btn{padding:9px 20px;border-radius:9px;border:none;cursor:pointer;font-weight:700;font-size:.86rem;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+.btn-gold{background:var(--gold);color:#fff}.btn-gold:hover{background:#b45309}
+.btn-s{background:var(--s2);color:var(--text);border:1px solid var(--border)}.btn-s:hover{border-color:var(--gold);color:var(--gold)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:18px}
+.ci{background:rgba(217,119,6,.15);width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+/* Identity gate */
+#identity-gate{max-width:560px;margin:0 auto}
+.idf{margin-bottom:14px}
+.idf label{display:block;font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.idinp{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-size:.9rem;transition:border-color .2s}
+.idinp:focus{outline:none;border-color:var(--gold)}
+.honor{display:flex;gap:12px;align-items:flex-start;background:rgba(217,119,6,.07);border:1px solid rgba(217,119,6,.25);border-radius:9px;padding:14px;margin:16px 0;font-size:.82rem;color:var(--muted);line-height:1.6}
+.honor input{margin-top:3px;flex-shrink:0;accent-color:var(--gold)}
+/* Exam chrome */
+.eh{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:18px}
+.eh-l h3{font-size:.95rem;font-weight:800;color:var(--gold-l)}
+.eh-l p{font-size:.8rem;color:var(--muted);margin-top:3px}
+.sbw{flex:1;min-width:200px}
+.sbt{display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px;color:var(--muted)}
+.sb{background:var(--s2);border-radius:20px;height:6px;overflow:hidden;margin-bottom:8px}
+.sf{background:var(--gold);height:100%;border-radius:20px;transition:width .3s}
+/* Section tabs */
+.sec-tabs{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap}
+.st{padding:4px 10px;border-radius:7px;border:none;cursor:pointer;font-size:.75rem;font-weight:700;background:var(--s2);color:var(--muted);border:1px solid var(--border);transition:all .2s}
+.st.sa{background:#0d9488;border-color:#0d9488;color:#fff}
+.st.sb{background:#4f46e5;border-color:#4f46e5;color:#fff}
+.st.sc{background:#7c3aed;border-color:#7c3aed;color:#fff}
+.st.sd{background:#059669;border-color:#059669;color:#fff}
+.st.se{background:var(--gold);border-color:var(--gold);color:#fff}
+/* Dots */
+.qdots{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+.dot{width:22px;height:22px;border-radius:6px;background:var(--s2);border:1px solid var(--border);font-size:.7rem;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);transition:all .2s;font-weight:700}
+.dot.answered{background:rgba(16,185,129,.25);border-color:var(--green);color:var(--green)}
+.dot.current{border-color:var(--gold);color:var(--gold-l)}
+/* Question card */
+.qcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;display:none}
+.qcard.active{display:block}
+.qhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.qnum{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.qpts{background:rgba(217,119,6,.15);border:1px solid rgba(217,119,6,.35);color:var(--gold-l);padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:700}
+.sec-lbl{padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:700;text-transform:uppercase}
+.sl-0{background:rgba(13,148,136,.18);color:#5eead4}
+.sl-1{background:rgba(79,70,229,.18);color:#a5b4fc}
+.sl-2{background:rgba(124,58,237,.18);color:#c4b5fd}
+.sl-3{background:rgba(5,150,105,.18);color:#6ee7b7}
+.sl-4{background:rgba(217,119,6,.18);color:var(--gold-l)}
+/* Context box */
+.ctx-box{background:var(--s2);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:14px;font-size:.87rem;color:var(--muted);line-height:1.75;white-space:pre-wrap}
+/* Code display */
+.code-disp{background:#0d1117;border:1px solid var(--border);border-radius:9px;padding:14px 16px;margin:10px 0;font-family:'Courier New',monospace;font-size:.82rem;color:#a5f3fc;line-height:1.75;overflow-x:auto;white-space:pre}
+/* Table */
+.qtbl{width:100%;border-collapse:collapse;font-size:.82rem;margin:10px 0}
+.qtbl th{background:var(--s2);font-weight:700;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);color:var(--gold)}
+.qtbl td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top}
+.qtbl tr:last-child td{border-bottom:none}
+/* Question text */
+.qtxt{font-size:.92rem;font-weight:700;color:var(--text);line-height:1.6;margin-bottom:12px}
+/* Textarea */
+.sa-guide{font-size:.78rem;color:var(--muted);margin-bottom:7px;display:flex;justify-content:space-between;align-items:center}
+.wc{font-size:.75rem;color:var(--muted)}
+.qtarea{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:12px 14px;color:var(--text);font-size:.87rem;line-height:1.7;resize:vertical;transition:border-color .2s;font-family:inherit;min-height:120px}
+.qtarea:focus{outline:none;border-color:var(--gold)}
+.qtarea.mono{font-family:'Courier New',monospace;font-size:.82rem}
+/* Nav buttons */
+.qnav{display:flex;justify-content:space-between;align-items:center;margin-top:18px;flex-wrap:wrap;gap:8px}
+.prev-btn,.next-btn,.fin-btn{padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-size:.84rem;font-weight:700;transition:all .2s}
+.prev-btn{background:var(--s2);color:var(--text);border:1px solid var(--border)}
+.prev-btn:hover{border-color:var(--gold)}
+.next-btn{background:var(--gold);color:#fff}
+.next-btn:hover{background:#b45309}
+.fin-btn{background:var(--green);color:#fff;font-size:.88rem;padding:9px 22px}
+/* Results */
+.res{display:none;max-width:620px;margin:0 auto;text-align:center;padding:20px 0}
+.res.show{display:block}
+.sring{position:relative;width:140px;height:140px;margin:20px auto}
+.sring svg{width:140px;height:140px;transform:rotate(-90deg)}
+.sring circle{fill:none;stroke:var(--s2);stroke-width:12}
+.ring-fill{stroke:var(--gold);stroke-width:12;stroke-linecap:round;transition:stroke-dashoffset 1.2s ease}
+.ring-ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-n{font-size:2rem;font-weight:900;color:var(--gold-l)}
+.ring-l{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:left;margin:16px 0}
+.ri{background:var(--s2);border-radius:9px;padding:14px;border:1px solid var(--border)}
+.ri-l{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px}
+.ri-v{font-size:1.05rem;font-weight:800;color:var(--text)}
+.ri-s{font-size:.73rem;color:var(--muted);margin-top:3px}
+.exprev{background:var(--s2);border-radius:8px;padding:12px;font-family:'Courier New',monospace;font-size:.72rem;color:var(--muted);text-align:left;max-height:140px;overflow-y:auto;margin:12px 0;display:none}
+/* Checklist */
+.chklist{list-style:none}
+.chklist li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.87rem;color:var(--muted)}
+.chklist li:last-child{border-bottom:none}
+.chk{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.75rem;transition:all .2s}
+.chk.on{background:var(--green);border-color:var(--green);color:#fff}
+code{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:'Courier New',monospace;font-size:.83em;color:var(--teal)}
+#toast{position:fixed;bottom:22px;right:22px;background:var(--surface);border:1px solid var(--gold);border-radius:10px;padding:12px 18px;font-size:.87rem;display:none;z-index:999;color:var(--text)}
+#toast.on{display:block}
+@media(max-width:640px){.page{padding:14px}.hero{padding:24px 16px}.rgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <span class="nav-logo">ISE 16:540</span>
+  <span class="nav-badge">Final Exam</span>
+  <div class="nav-tabs">
+    <button class="tb active" onclick="show('home')">Home</button>
+    <button class="tb" onclick="show('exam')">Exam</button>
+    <button class="tb" onclick="show('ref')">Quick Reference</button>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="badge">🎓 Final Exam — Weeks 9–13</div>
+    <h1>Applied AI Engineering — <span>Design Decisions</span></h1>
+    <p>Every question asks you to build an argument, diagnose a problem, or defend a decision. There is no multiple choice. Vague answers earn partial credit. Answers grounded in your specific project, system, and domain earn full credit.</p>
+  </div>
+  <div class="info-grid">
+    <div class="info-box"><div class="info-val">15</div><div class="info-lbl">Points · 15% of Grade</div></div>
+    <div class="info-box"><div class="info-val">15</div><div class="info-lbl">Questions</div></div>
+    <div class="info-box"><div class="info-val">90 min</div><div class="info-lbl">Suggested Time</div></div>
+    <div class="info-box"><div class="info-val">Async</div><div class="info-lbl">No countdown timer</div></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px"><div class="ci">📋</div><strong style="font-size:.95rem">Five Sections — 3 pts each</strong></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px">
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border-left:3px solid #0d9488"><div style="font-size:.7rem;font-weight:700;color:#5eead4;margin-bottom:4px">A · RAG &amp; RETRIEVAL</div><div style="font-size:.82rem;color:var(--muted)">Diagnose a broken eval function, design chunking strategy, prescribe grounding fix</div></div>
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border-left:3px solid #4f46e5"><div style="font-size:.7rem;font-weight:700;color:#a5b4fc;margin-bottom:4px">B · AGENTS</div><div style="font-size:.82rem;color:var(--muted)">Write classify_risk(), design minimum useful autonomy, diagnose a broken audit log</div></div>
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border-left:3px solid #7c3aed"><div style="font-size:.7rem;font-weight:700;color:#c4b5fd;margin-bottom:4px">C · CAUSALITY</div><div style="font-size:.82rem;color:var(--muted)">Define a causal DAG, interpret a failed refutation, defend a process intervention decision</div></div>
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border-left:3px solid #059669"><div style="font-size:.7rem;font-weight:700;color:#6ee7b7;margin-bottom:4px">D · SECURITY</div><div style="font-size:.82rem;color:var(--muted)">Fairness criterion + ADEA, write HMAC signing, NIST 800-57 key compromise response</div></div>
+      <div style="background:var(--s2);border-radius:9px;padding:12px;border-left:3px solid var(--gold)"><div style="font-size:.7rem;font-weight:700;color:var(--gold-l);margin-bottom:4px">E · YOUR PROJECT</div><div style="font-size:.82rem;color:var(--muted)">Threat model, evaluation plan, and defend one design decision — all from your own system</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px"><div class="ci">⚡</div><strong style="font-size:.95rem">What earns full credit vs. partial credit</strong></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);border-radius:9px;padding:14px">
+        <div style="font-size:.72rem;font-weight:700;color:var(--green);margin-bottom:8px;text-transform:uppercase">FULL CREDIT</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;font-size:.82rem;color:var(--muted)">
+          <li style="display:flex;gap:6px"><span style="color:var(--green)">✓</span>Precise — names the specific metric, OWASP number, STRIDE letter, or NIST state</li>
+          <li style="display:flex;gap:6px"><span style="color:var(--green)">✓</span>Domain-grounded — explains why in manufacturing / supply chain / ISE terms</li>
+          <li style="display:flex;gap:6px"><span style="color:var(--green)">✓</span>Committed — takes a position and defends it, does not hedge every sentence</li>
+          <li style="display:flex;gap:6px"><span style="color:var(--green)">✓</span>Project-specific (Section E) — references your actual system, not a generic system</li>
+        </ul>
+      </div>
+      <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.25);border-radius:9px;padding:14px">
+        <div style="font-size:.72rem;font-weight:700;color:var(--red);margin-bottom:8px;text-transform:uppercase">PARTIAL CREDIT</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;font-size:.82rem;color:var(--muted)">
+          <li style="display:flex;gap:6px"><span style="color:var(--red)">✗</span>Generic — "the model could hallucinate" with no system-specific context</li>
+          <li style="display:flex;gap:6px"><span style="color:var(--red)">✗</span>Lists concepts without applying them — restating definitions earns no points</li>
+          <li style="display:flex;gap:6px"><span style="color:var(--red)">✗</span>Section E answers that could describe any system, not yours specifically</li>
+          <li style="display:flex;gap:6px"><span style="color:var(--red)">✗</span>Hedging every claim with "it depends" without committing to an answer</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px"><div class="ci">⚠️</div><strong style="font-size:.95rem">Before you begin</strong></div>
+    <ul class="chklist">
+      <li><div class="chk" onclick="ck(this)"></div>Review your project notes before starting Section E</li>
+      <li><div class="chk" onclick="ck(this)"></div>Keep the Quick Reference tab open — it is available during the exam</li>
+      <li><div class="chk" onclick="ck(this)"></div>Have your RUID and NetID available for the identity gate</li>
+      <li><div class="chk" onclick="ck(this)"></div>You must download your answer file at the end and upload to Canvas</li>
+      <li><div class="chk" onclick="ck(this)"></div>Progress is autosaved — if you close the tab, reopen and continue from where you left off</li>
+    </ul>
+    <div style="margin-top:12px;padding:12px;background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.3);border-radius:9px;font-size:.84rem;color:var(--muted)">
+      <strong style="color:var(--gold-l)">Asynchronous.</strong> No countdown timer. Work at your own pace within the Canvas submission window. Your answer file includes a timestamp. Canvas independently records your login and submission time.
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:20px">
+    <button class="btn btn-gold" onclick="show('exam')">📝 Go to Exam →</button>
+  </div>
+</div>
+
+<!-- EXAM PAGE -->
+<div class="page" id="page-exam">
+  <div id="identity-gate">
+    <div class="hero" style="padding:30px;margin-bottom:20px">
+      <div class="badge">🔐 Identity Verification</div>
+      <h1 style="font-size:1.5rem">Before You Begin</h1>
+      <p style="margin-bottom:0">Your information is embedded in your downloaded answer file and tied to your Canvas submission.</p>
+    </div>
+    <div class="idf"><label>Full Name (as in Canvas)</label><input class="idinp" id="id-name" placeholder="e.g., Jordan Lee"></div>
+    <div class="idf"><label>Rutgers RUID (9 digits)</label><input class="idinp" id="id-ruid" placeholder="123456789" maxlength="9"></div>
+    <div class="idf"><label>NetID</label><input class="idinp" id="id-netid" placeholder="e.g., jl1234"></div>
+    <div class="honor">
+      <input type="checkbox" id="honor-box">
+      <label for="honor-box">I affirm that this work is my own, completed without unauthorized AI assistance for generating answers. I understand Canvas records my login timestamp and submission IP. I commit to upholding the Rutgers Academic Integrity Policy.</label>
+    </div>
+    <button class="btn btn-gold" style="width:100%;justify-content:center;padding:12px" onclick="beginExam()">Begin Final Exam</button>
+    <p style="font-size:.75rem;color:var(--muted);text-align:center;margin-top:10px">Canvas records your session independently. Submit your downloaded answer file before the deadline.</p>
+  </div>
+
+  <div id="exam-active" style="display:none">
+    <div class="eh">
+      <div class="eh-l"><h3>Final Exam — ISE 16:540</h3><p id="exam-lbl">15 questions · 15 points · Asynchronous</p></div>
+      <div class="sbw">
+        <div class="sbt"><span id="prog-l">Q1 of 15</span><span id="prog-p" style="color:var(--gold-l)">0 answered</span></div>
+        <div class="sb"><div class="sf" id="prog-f" style="width:0%"></div></div>
+        <div class="sec-tabs" id="sec-tabs"></div>
+        <div class="qdots" id="qdots"></div>
+      </div>
+    </div>
+    <div id="qwrap"></div>
+  </div>
+
+  <div class="res" id="results">
+    <div class="badge">✅ Exam Submitted</div>
+    <h2 style="font-size:1.6rem;font-weight:800;margin:12px 0">Answers Recorded</h2>
+    <div class="sring">
+      <svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="60"/><circle class="ring-fill" id="ring-fill" cx="75" cy="75" r="60" stroke-dasharray="377" stroke-dashoffset="377"/></svg>
+      <div class="ring-ctr"><div class="ring-n" id="ring-n">-</div><div class="ring-l">answered</div></div>
+    </div>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px">Grading is done by your instructor in Canvas. No scores are computed here.</p>
+    <div class="rgrid" id="rgrid"></div>
+    <div style="background:rgba(217,119,6,.08);border:2px solid rgba(217,119,6,.4);border-radius:var(--r);padding:20px;margin:18px 0;text-align:left">
+      <h4 style="font-size:.95rem;font-weight:800;color:var(--gold-l);margin-bottom:12px">📥 Download + Submit to Canvas</h4>
+      <p style="font-size:.84rem;color:var(--muted);margin-bottom:14px">Download your answer file, then upload it to <strong style="color:var(--text)">Canvas → Assignments → Final Exam</strong>. Nothing is submitted automatically from this page.</p>
+      <button class="btn btn-gold" onclick="downloadAnswers()" style="width:100%;justify-content:center">⬇️ Download Answer File (.txt)</button>
+      <pre class="exprev" id="exprev"></pre>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK REFERENCE -->
+<div class="page" id="page-ref">
+  <div class="hero" style="padding:30px">
+    <div class="badge">📚 Quick Reference</div>
+    <h1 style="font-size:1.6rem">Course Concepts — <span>Open During Exam</span></h1>
+    <p style="margin-bottom:0">These are reminders of definitions and formulas, not answers. Questions require application and argument, not recitation.</p>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px"><div class="ci">🏭</div><strong>Apex Advanced Manufacturing (AAM) — Scenario Context</strong></div>
+    <div style="font-size:.87rem;color:var(--muted);line-height:1.75">
+      <strong style="color:var(--text)">System:</strong> AI platform across four domains: quality control RAG, procurement agent, process optimization (causal), workforce scheduling.<br>
+      <strong style="color:var(--text)">RAG corpus:</strong> 12,000 SOPs, process specs, quality manuals — two document types (short self-contained specs; long hierarchical manuals).<br>
+      <strong style="color:var(--text)">Agent tools:</strong> read_inventory, calculate_reorder_qty, draft_purchase_order, send_supplier_inquiry, submit_purchase_order, update_supplier_record, expedite_existing_po, cancel_purchase_order, delete_draft.<br>
+      <strong style="color:var(--text)">Workforce:</strong> 340 production workers, 3 plants. Sliced groups: age cohorts, accommodation status.
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="card">
+      <strong style="color:#5eead4;font-size:.85rem;display:block;margin-bottom:10px">🔄 RAG Metrics (Week 10)</strong>
+      <div style="font-size:.82rem;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--text)">Precision@K</strong> = hits / K (fraction retrieved that are relevant)<br>
+        <strong style="color:var(--text)">Recall@K</strong> = hits / |relevant| (fraction of relevant docs retrieved)<br>
+        <strong style="color:var(--text)">MRR</strong> = mean 1/rank of first relevant doc<br>
+        <strong style="color:var(--text)">Local consistency</strong>: entailment-based NLI (requires ground-truth context)<br>
+        <strong style="color:var(--text)">Global consistency</strong>: SelfCheckGPT (no ground truth needed)<br>
+        <strong style="color:var(--text)">RAGAS faithfulness</strong>: fraction of claims supported by retrieved context
+      </div>
+    </div>
+    <div class="card">
+      <strong style="color:#a5b4fc;font-size:.85rem;display:block;margin-bottom:10px">🤖 Agent Concepts (Week 11)</strong>
+      <div style="font-size:.82rem;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--text)">ReAct:</strong> Think → Act → Observe → repeat<br>
+        <strong style="color:var(--text)">Gate levels:</strong> LOW=auto, MEDIUM=async flag, HIGH=synchronous block<br>
+        <strong style="color:var(--text)">Audit log fields:</strong> timestamp, session_id, step, action_type, tool, parameters, risk_level, status, notes<br>
+        <strong style="color:var(--text)">LLM01</strong> Prompt injection · <strong style="color:var(--text)">LLM08</strong> Excessive Agency<br>
+        <strong style="color:var(--text)">LLM04</strong> DoS · <strong style="color:var(--text)">LLM09</strong> Overreliance
+      </div>
+    </div>
+    <div class="card">
+      <strong style="color:#c4b5fd;font-size:.85rem;display:block;margin-bottom:10px">🧠 Causality (Week 12)</strong>
+      <div style="font-size:.82rem;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--text)">P(Y|X)</strong>: conditional (observational) — includes confounders<br>
+        <strong style="color:var(--text)">P(Y|do(X))</strong>: interventional — severs back-door paths<br>
+        <strong style="color:var(--text)">Confounder:</strong> C→T and C→Y (spurious correlation)<br>
+        <strong style="color:var(--text)">Back-door:</strong> P(Y|do(T)) = Σ P(Y|T,C=c)·P(C=c)<br>
+        <strong style="color:var(--text)">DoWhy steps:</strong> Model → Identify → Estimate → Refute<br>
+        <strong style="color:var(--text)">Placebo fail:</strong> ATE≠0 → unmeasured confounder likely
+      </div>
+    </div>
+    <div class="card">
+      <strong style="color:#6ee7b7;font-size:.85rem;display:block;margin-bottom:10px">🔒 Security (Week 13)</strong>
+      <div style="font-size:.82rem;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--text)">STRIDE:</strong> S Spoofing · T Tampering · R Repudiation · I Disclosure · D Denial · E Elevation<br>
+        <strong style="color:var(--text)">NIST AI RMF:</strong> Govern → Map → Measure → Manage<br>
+        <strong style="color:var(--text)">Fairness:</strong> Dem. Parity · Equalized Odds · Equal Opportunity · Predictive Parity<br>
+        <strong style="color:var(--text)">Key lifecycle:</strong> Pre-activation → Active → Deactivated → Compromised → Destroyed<br>
+        <strong style="color:var(--text)">Envelope encryption:</strong> AES-256 data key wrapped with RSA public key<br>
+        <strong style="color:var(--text)">HMAC:</strong> integrity without encryption; compare_digest prevents timing attacks
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const S={name:'',ruid:'',netid:'',started:false,done:false,cur:0,ans:{},ts0:null};
+
+const SECS=[
+  {label:'A · RAG & Retrieval',color:'#0d9488',cls:'sa'},
+  {label:'B · Agents',color:'#4f46e5',cls:'sb'},
+  {label:'C · Causality',color:'#7c3aed',cls:'sc'},
+  {label:'D · Security',color:'#059669',cls:'sd'},
+  {label:'E · Your Project',color:'#d97706',cls:'se'},
+];
+
+const QS=[
+{
+  id:"q1",sec:0,type:"diag",pts:1,
+  context:"Apex Advanced Manufacturing (AAM) has deployed a RAG pipeline over 12,000 quality SOPs and process specifications. A junior engineer wrote the following retrieval evaluation function and reported \"our Precision@5 is 0.94 \u2014 we are done.\"",
+  code:"def evaluate_retrieval(query_results):\n    scores = []\n    for result in query_results:\n        retrieved = result[\"retrieved_chunks\"]   # list of 5 retrieved chunks\n        relevant  = result[\"ground_truth\"]       # list of all relevant chunks\n        score = len(retrieved) / len(relevant)   # <-- line under review\n        scores.append(score)\n    return sum(scores) / len(scores)",
+  text:"(a) Name the metric this function actually computes and explain what it measures. (b) State why \"0.94\" is misleading for a RAG system used by engineers to look up specific process steps \u2014 give a concrete failure scenario where this score is high but the system is useless. (c) Write the correct Precision@K formula as a one-line Python expression and name the complementary metric that must be reported alongside it. (~100 words)",
+  rows:9,
+  fb:"(a) len(retrieved)/len(relevant) is Recall@K \u2014 the fraction of all relevant chunks that were retrieved. Not precision. (b) Failure scenario: a query about welding rod specifications has 20 relevant chunks in the corpus. The system retrieves 5, all of which happen to be relevant (precision=1.0) but misses 15 others containing critical safety tolerances. Recall=5/20=0.25. An engineer using this system to find all applicable specs will miss most of them. High recall score masks this completely. (c) Precision@K = hits/len(retrieved). Complementary metric: Recall@K (or MRR for ranking quality).",
+},
+{
+  id:"q2",sec:0,type:"sa",pts:1,
+  context:"AAM's SOP corpus contains two document types: (A) single-process specs, typically 2-4 pages, self-contained, one procedure per document; and (B) quality manuals, 40-80 pages, hierarchical, with sections like \"3.4.2 Exception Handling \u2014 see also \u00a77.1 and Appendix C.\" The team uses fixed 512-token chunks with no overlap across both types. Retrieval Precision@5: Type A = 0.89, Type B = 0.47.",
+  text:"(a) Explain specifically why fixed-size chunking performs poorly on Type B documents \u2014 what structural property of quality manuals causes the gap? (b) Propose one chunking strategy for Type B that addresses the root cause, and explain what metadata you would store alongside each chunk to enable cross-reference resolution. (c) Should you use the same embedding model for both document types, or different ones? Justify in two sentences. (~130 words)",
+  rows:10,
+  fb:"(a) Quality manuals have hierarchical cross-references (\"see also \u00a77.1\") and conditional logic spanning multiple sections. Fixed-size chunks cut at arbitrary token boundaries, splitting exception conditions from their parent procedures and severing cross-references mid-sentence. A chunk containing \"if nonconformance exceeds threshold \u2014 see \u00a77.1\" is useless without \u00a77.1. (b) Semantic/hierarchical chunking: split on section boundaries (H1/H2/H3 headings); store metadata: document_id, section_number, parent_section, cross_references_cited, page_range. Use these to retrieve parent and referenced sections as supplementary context during generation. (c) Same model is acceptable if both types are in the same technical domain/language. If manuals contain highly specialized standards language (ISO, ASTM), a domain-fine-tuned embedding model improves semantic alignment.",
+},
+{
+  id:"q3",sec:0,type:"sa",pts:1,
+  context:"AAM's RAG pipeline surfaces process specs to engineers during nonconformance investigations. Weekly evaluation results:\n  \u2022 Retrieval Precision@5: 0.88\n  \u2022 Retrieval Recall@5:    0.81\n  \u2022 Factual Consistency (entailment-based): 0.52\n  \u2022 Groundedness (RAGAS faithfulness):       0.49\n\nThe team is debating two proposals:\nEngineer A: \"Replace the embedding model \u2014 it is clearly not finding the right chunks.\"\nEngineer B: \"The retrieval numbers are fine. This is a generation problem.\"",
+  text:"Who is correct, and what specifically is failing? Write a precise diagnosis (name the failure mode and cite one concept or metric name from Week 10), then prescribe two targeted interventions in order of implementation priority. For each intervention, specify what it changes and how you would measure whether it worked. (~150 words)",
+  rows:11,
+  fb:"Engineer B is correct. Retrieval precision 0.88 and recall 0.81 indicate the right chunks are being retrieved. The bottleneck is generation: the model is not grounding its outputs to the retrieved context \u2014 it is mixing in parametric knowledge from training. This is the hallucination-in-generation failure mode (local factual inconsistency, Week 10). Intervention 1 (first): Strengthen the grounding constraint in the system prompt \u2014 \"Answer only using information from the provided context. If the answer is not present, say 'I cannot find this in the available specifications.'\" Measure: re-run RAGAS faithfulness; target >0.80. Intervention 2: Add a post-generation entailment check using an NLI classifier (e.g., DeBERTa fine-tuned on NLI) that scores each generated claim against its source chunk. Flag low-scoring responses for human review before serving. Measure: factual consistency score; monitor weekly alongside retrieval metrics.",
+},
+{
+  id:"q4",sec:1,type:"code",pts:1,
+  context:"AAM is deploying a procurement agent that can take the following actions on their ERP system. Your approval gate must classify each action before it executes.",
+  code_stub:"def classify_risk(action: dict) -> str:\n    name = action[\"name\"]\n    tool = action[\"tool\"]\n\n    # YOUR CLASSIFICATION LOGIC HERE\n    # Return \"LOW\", \"MEDIUM\", or \"HIGH\"\n    pass\n\n# (a) Hardest to classify:\n\n# (b) Design principle:",
+  table:[["Action name", "Tool", "What it does"], ["read_inventory", "query_erp", "Read-only inventory level query"], ["calculate_reorder_qty", "calc_engine", "Computes EOQ \u2014 no side effects"], ["draft_purchase_order", "create_draft", "Creates internal PO draft, not submitted"], ["send_supplier_inquiry", "send_email", "Sends email to supplier contact"], ["submit_purchase_order", "submit_erp", "Commits a legally binding PO to supplier"], ["update_supplier_record", "write_erp", "Updates supplier contact/pricing record"], ["expedite_existing_po", "write_erp", "Flags existing PO for rush processing (+$150 fee)"], ["cancel_purchase_order", "cancel_erp", "Cancels submitted PO (may incur cancellation fee)"], ["delete_draft", "delete_erp", "Permanently deletes a draft PO record"]],
+  text:"Write the complete body of classify_risk(action) returning \"LOW\", \"MEDIUM\", or \"HIGH\". Then answer: (a) Which two actions were the hardest to classify and why? (b) State your governing design principle for the HIGH boundary in one sentence that references a specific OWASP LLM risk number. (~120 words total for a+b)",
+  rows:14,
+  fb:"Correct classification: LOW: read_inventory, calculate_reorder_qty (no side effects, read-only). MEDIUM: draft_purchase_order (internal state, reversible), update_supplier_record (internal write, correctable). HIGH: send_supplier_inquiry (leaves system boundary \u2014 external communication, cannot be unsent), submit_purchase_order (financial commitment, legally binding), expedite_existing_po (financial impact, external consequence), cancel_purchase_order (irreversible financial consequence \u2014 cancellation fee), delete_draft (irreversible deletion). (a) Hardest: send_supplier_inquiry (might seem low-stakes but sets external expectations and cannot be recalled \u2014 external boundary is the key); expedite_existing_po (small financial impact but still an external commitment). (b) Design principle: HIGH actions either cross the system boundary (external communication or commitment) or are irreversible \u2014 this directly mitigates LLM08 (Excessive Agency) by constraining the agent to its authorized financial and communication scope.",
+},
+{
+  id:"q5",sec:1,type:"design",pts:1,
+  context:"AAM is expanding the procurement agent. The engineering team proposes giving it \"full procurement autonomy\" \u2014 the ability to submit purchase orders, send supplier emails, and cancel or modify existing orders without human review, to eliminate the 2-3 hour approval delay that currently slows the operation. The COO supports this. The supply chain manager is concerned.",
+  text:"Define the smallest level of autonomy that still eliminates the 2-3 hour bottleneck without unacceptable financial or operational risk. Your answer must: (1) State exactly which actions run autonomously, which get async human review, and which require synchronous approval \u2014 and the threshold that determines each. (2) Explain what you log at each gate decision and why that specific data is necessary. (3) Identify the one scenario in which you would immediately reduce autonomy and what metric would trigger that reduction. (~180 words)",
+  rows:13,
+  fb:"(1) Autonomous (no delay): read_inventory, calculate_reorder_qty, draft_purchase_order \u2014 these address the bottleneck without risk. Async review (logged, human sees within 4h): update_supplier_record, send_supplier_inquiry (for routine catalog requests below $X threshold). Synchronous approval (blocks until approved): submit_purchase_order, cancel_purchase_order, expedite_existing_po, any external communication above $threshold. This eliminates the drafting bottleneck while keeping financial commitments under human control. (2) Log: timestamp, action_type, tool, parameters (including PO value), risk_level, gate_decision, approver_id, time_to_approval. The PO value is critical \u2014 enables retroactive audit of whether high-value orders received appropriate review. (3) Immediately reduce autonomy if: denial rate for HIGH-risk actions exceeds 15% (signals the agent is proposing actions humans regularly reject \u2014 underlying classification or model behavior needs review before autonomous scope can expand). Also trigger on any single unauthorized external commitment above $X, regardless of rate.",
+},
+{
+  id:"q6",sec:1,type:"diag",pts:1,
+  context:"A security reviewer examines the audit log produced by the Week 11 procurement agent lab. They find this entry for a high-risk action:",
+  code:"{\n  \"step\": 5,\n  \"action\": \"submit_purchase_order\",\n  \"status\": \"APPROVED\",\n  \"timestamp\": \"2026-04-28T14:32:00\"\n}",
+  text:"(a) List every required audit log field that is missing from this entry. For each missing field, write one sentence explaining the specific accountability or security function it serves \u2014 do not just name the field. (b) This entry records status=\"APPROVED\" but there is no record of who approved it or how. Which STRIDE threat category does this gap create, and which OWASP LLM risk does it leave unmitigated? (c) Write the corrected log entry as a Python dict with all required fields populated with realistic example values. (~130 words)",
+  rows:14,
+  fb:"(a) Missing fields and their functions: session_id \u2014 links this action to the full agent session for traceability; tool \u2014 identifies which ERP function was called, enabling audit of tool usage patterns; parameters \u2014 records what was ordered, from whom, at what price (without this, the \"approved\" record is meaningless for financial audit); risk_level \u2014 documents why this action required approval; approver_id \u2014 who approved it; notes \u2014 captures the reason for the decision. (b) STRIDE R \u2014 Repudiation: without approver_id, the approver can deny they approved the action, and the organization cannot prove otherwise. OWASP LLM09 (Overreliance) \u2014 the system appears to be operating without meaningful human accountability, creating false confidence in oversight. (c) Corrected entry should include all 9 required fields: timestamp, session_id, step, action_type, tool, parameters (as JSON string), risk_level, status, notes/approver_id.",
+},
+{
+  id:"q7",sec:2,type:"sa",pts:1,
+  context:"AAM's process engineering team observes that production lines running at higher machine speeds (T) have a 28% lower defect rate (Y), with r = 0.71. The plant manager proposes increasing machine speed across all lines to reduce defects.\n\nA systems engineer points out: newer machines run faster by design AND produce fewer defects due to tighter mechanical tolerances \u2014 machine age is correlated with both speed and defect rate.",
+  text:"(a) Define the proposed treatment T, outcome Y, and confounder C in precise terms. (b) Draw the causal DAG as an edge list (three edges minimum) and label each arrow with a one-phrase domain justification. (c) Explain in one sentence why P(defect_rate | speed=high) \u2260 P(defect_rate | do(speed=high)). (d) If DoWhy returns ATE = 0.03 (95% CI: \u22120.01 to 0.07, p = 0.18) after back-door adjustment for machine age, what should the plant manager do \u2014 and what should the actual intervention target? (~140 words)",
+  rows:11,
+  fb:"(a) T = machine operating speed (RPM or % of rated speed); Y = defect rate (defects per 1000 units); C = machine age (years since installation or model generation). (b) Edges: machine_age \u2192 machine_speed (newer machines run faster by design); machine_age \u2192 defect_rate (newer machines have tighter tolerances, fewer defects); machine_speed \u2192 defect_rate (proposed causal path \u2014 effect unknown post-adjustment). (c) P(Y|T) includes the back-door path through machine age, inflating the observed correlation beyond any direct causal effect; P(Y|do(T)) severs the age\u2192speed arrow and measures only the direct effect of forcing speed to change. (d) ATE 0.03 is not statistically significant (p=0.18, CI crosses zero). Do not increase speed. The true intervention target is machine age \u2014 the causal driver is equipment vintage. The plant manager should prioritize equipment refresh or maintenance, not operational speed changes.",
+},
+{
+  id:"q8",sec:2,type:"diag",pts:1,
+  context:"An AAM process engineer runs a DoWhy analysis on the effect of a new operator training module (T) on first-pass yield (Y), controlling for line assignment and product complexity.\n\nResults:\n  ATE estimate:                   +0.14 (95% CI: 0.10\u20130.18, p < 0.001)\n  Random common cause refutation: new ATE = 0.13  \u2705  passes\n  Placebo treatment refutation:   new ATE = 0.11  \u274c  FAILS (p = 0.003)\n\nThe engineer says: \"The ATE is strong and the random common cause test passed \u2014 I'm confident the training works. The placebo result is probably noise.\"",
+  text:"(a) Is the engineer's interpretation correct? (b) Explain precisely what the placebo treatment refutation tests and what a large, statistically significant placebo ATE means \u2014 use the word \"confounder\" correctly. (c) The random common cause test passed \u2014 why does that not rescue the estimate? (d) State the two actions the engineer must take before this estimate can be used to justify a company-wide training rollout. (~140 words)",
+  rows:11,
+  fb:"(a) No \u2014 the engineer is wrong to dismiss the placebo failure. (b) The placebo refutation replaces the real treatment with a randomly permuted variable that has no causal relationship to the outcome. If the causal model is correctly specified, the placebo ATE should be near zero. A placebo ATE of 0.11 (p=0.003) means the model is picking up a spurious association \u2014 there is likely an unmeasured confounder causing both training completion and higher first-pass yield (e.g., operator motivation, line supervisor quality, or shift timing). (c) The random common cause test only checks sensitivity to adding an additional confound \u2014 it does not detect existing unmeasured confounders. Passing it provides weak evidence. Failing the placebo test provides strong evidence of misspecification. (d) (1) Revisit the DAG \u2014 identify and measure any unmeasured confounders (operator tenure, supervisor rating, shift). (2) Re-run DoWhy with additional covariates until the placebo test passes.",
+},
+{
+  id:"q9",sec:2,type:"design",pts:1,
+  context:"AAM runs a DoWhy analysis on the effect of coolant temperature setting (T, continuous, \u00b0C) on surface finish defect rate (Y, defects per 100 parts). Confounder declared: alloy type (C).\n\nDoWhy output:\n  ATE:             \u22120.41 defects/100 parts per +1\u00b0C  (95% CI: \u22120.55 to \u22120.27, p < 0.001)\n  Placebo:         ATE = 0.02  \u2705  passes\n  Random cause:    ATE = \u22120.40  \u2705  passes\n  Current setting: 18\u00b0C. Proposed change: increase to 24\u00b0C.\n\nThe causal estimate is statistically strong and robustly identified. The plant manager wants to raise coolant temperature immediately across all 40 lines.",
+  text:"The DoWhy result is valid. The manager's instinct is directionally correct. Write the engineering case for or against immediate full-fleet implementation \u2014 commit to a position and defend it. Your answer must address: (1) what the ATE of \u22120.41 actually means in operational terms, (2) one assumption in the causal model that could make the fleet-wide intervention fail or backfire, (3) the implementation approach you recommend instead of (or before) full-fleet rollout, and why that approach is better even if the causal estimate is correct. (~170 words)",
+  rows:12,
+  fb:"Strong answer argues AGAINST immediate full-fleet rollout, even with a valid causal estimate. (1) ATE of \u22120.41 means on average, raising coolant temperature by 1\u00b0C reduces surface defects by 0.41 per 100 parts. Across 40 lines this could be significant if the effect holds uniformly. (2) Key assumption to challenge: the DAG adjusts for alloy type, but coolant temperature interacts differently with different alloy families \u2014 the ATE may be an average that masks heterogeneous treatment effects (CATE). Raising temperature for an alloy where the optimal coolant is 15\u00b0C could increase defects. Also: 24\u00b0C may be beyond the validated operating range for certain machine models, creating equipment risk not captured in the causal model. (3) Recommend: staged rollout \u2014 pilot on 4\u20136 lines with mixed alloy types, measure actual defect rates against prediction, then expand. This validates external validity of the causal estimate before committing all 40 lines. The cost of being wrong on 6 lines is far lower than being wrong on 40.",
+},
+{
+  id:"q10",sec:3,type:"sa",pts:1,
+  context:"AAM's workforce scheduling AI recommends shift assignments for 340 production workers across three plants. The model predicts \"productivity score\" per worker per shift and optimizes total output. Overall model accuracy: 89%.\n\nSliced evaluation reveals:\n  \u2022 Workers aged 22\u201335:  accuracy 93%, false-low rate 6%\n  \u2022 Workers aged 50\u201365:  accuracy 71%, false-low rate 31%\n  \u2022 Workers with accommodations: accuracy 64%, false-low rate 44%\n\n(False-low = model predicts low productivity when actual productivity is high, leading to less desirable shift assignments.)",
+  text:"(a) Identify which NIST AI RMF function this evaluation falls under and state specifically what it reveals \u2014 do not just describe the numbers. (b) Select the correct fairness criterion for this scenario. The answer is NOT demographic parity \u2014 explain why the correct criterion is more appropriate for this specific harm. (c) The engineering team proposes fixing this by retraining on a \"balanced dataset.\" Identify one additional intervention that addresses the root cause more directly, and one regulatory/legal risk the current system creates that retraining alone does not eliminate. (~160 words)",
+  rows:12,
+  fb:"(a) NIST AI RMF Measure function \u2014 quantifying differential risk across subgroups. It reveals the model systematically disadvantages older workers and workers with accommodations by predicting low productivity at 4\u20137\u00d7 the rate of the youngest cohort, directly affecting their shift assignments regardless of actual performance. (b) Equal Opportunity (equal true positive rate / equal false negative rate across groups). The primary harm is false-lows \u2014 qualified productive workers wrongly assigned to undesirable shifts. Demographic parity would equalize assignment rates regardless of productivity, which is wrong. Equal opportunity equalizes the miss rate for high-productivity workers across demographic groups \u2014 the correct equity objective when false negatives are the harm. (c) Root cause intervention: audit the feature set for proxies correlated with age (years of service, physical task codes, accommodation status) and remove or debias them before retraining. Regulatory risk: the ADEA (Age Discrimination in Employment Act) prohibits employment decisions that systematically disadvantage workers over 40 \u2014 a 31% false-low rate for the 50-65 group creates direct legal exposure regardless of intent, and retraining on \"balanced\" data does not eliminate past decisions already made.",
+},
+{
+  id:"q11",sec:3,type:"code",pts:1,
+  context:"AAM stores all agent audit log entries in a database. A security reviewer notes that the current implementation has no tamper detection \u2014 an insider could modify a log entry (e.g., change status=\"DENIED\" to status=\"APPROVED\") with no forensic evidence. You are implementing HMAC-based integrity protection for each log entry, as recommended by NIST SP 800-57 for audit log integrity.",
+  code_stub:"import hmac, hashlib, json\n\nSIGNING_KEY = b\"<stored-in-secrets-manager-not-here>\"\n\ndef sign_entry(entry: dict) -> dict:\n    \"\"\"Add an HMAC-SHA256 signature to a log entry.\"\"\"\n    # YOUR CODE HERE\n    pass\n\ndef verify_entry(entry: dict) -> bool:\n    \"\"\"Return True if entry is untampered, False if signature fails.\"\"\"\n    # YOUR CODE HERE\n    pass\n\n# Test your implementation:\ntest_entry = {\n    \"session_id\": \"sess-a1b2\",\n    \"step\": 5,\n    \"action_type\": \"submit_purchase_order\",\n    \"tool\": \"submit_erp\",\n    \"parameters\": '{\"po_number\": \"PO-2241\", \"value\": 4800.00}',\n    \"risk_level\": \"HIGH\",\n    \"status\": \"APPROVED\",\n    \"approver_id\": \"eng.lee@apex.com\"\n}\n\nsigned   = sign_entry(test_entry)\nprint(\"Signature:\", signed[\"_hmac\"][:20], \"...\")\nprint(\"Valid:    \", verify_entry(signed))\n\n# Simulate tampering\ntampered = dict(signed)\ntampered[\"status\"] = \"DENIED\"\nprint(\"Tampered: \", verify_entry(tampered))   # should print False",
+  text:"Write the complete bodies of sign_entry() and verify_entry(). Then answer: (a) Why must you use hmac.compare_digest() instead of == to compare signatures? Name the specific attack this prevents. (b) The SIGNING_KEY comment says \"not here\" \u2014 where should it actually be stored and what NIST SP 800-57 lifecycle state should it be in during normal operation? (~80 words for a+b)",
+  rows:18,
+  fb:"sign_entry: serialize entry (excluding any existing _hmac) with json.dumps(sort_keys=True), compute hmac.new(SIGNING_KEY, serialized.encode(), \"sha256\").hexdigest(), return {**entry, \"_hmac\": signature}. verify_entry: extract stored_hmac, rebuild entry without _hmac, recompute expected signature, return hmac.compare_digest(stored, expected). (a) compare_digest uses constant-time comparison. Regular == short-circuits as soon as characters differ \u2014 this creates a timing side-channel. An attacker can measure response times to forge signatures character by character (timing attack). compare_digest prevents this. (b) Stored in a secrets manager or HSM (never in source code or environment variables). NIST SP 800-57 lifecycle state: ACTIVE \u2014 in use for current signing operations, with a defined rotation schedule.",
+},
+{
+  id:"q12",sec:3,type:"sa",pts:1,
+  context:"An AAM DevOps engineer discovers that the AES-256 key used to encrypt the production training dataset (containing 5 years of quality inspection records, operator performance data, and proprietary process parameters) was stored in plaintext in a .env file. The .env file was accidentally committed to a semi-public internal GitLab repository accessible to all 280 employees. It has been there for approximately 11 days. You are the on-call security lead.",
+  text:"Using NIST SP 800-57 terminology precisely: (a) State the immediate required key lifecycle state transition \u2014 name the target state and explain in one sentence why that specific state applies rather than DESTROYED. (b) Describe step-by-step what must happen to all data encrypted with this key \u2014 be specific about sequence and what happens to the old key after re-encryption completes. (c) Beyond re-encryption, identify two organizational controls that would have prevented this incident, each referencing a specific NIST SP 800-57 key management requirement. (~150 words)",
+  rows:12,
+  fb:"(a) Transition to COMPROMISED (not DESTROYED). COMPROMISED means the key's secrecy cannot be assured but it is still needed to decrypt existing ciphertexts \u2014 it must remain accessible for decryption until all data is re-encrypted, but must not be used for any new encryption operations. DESTROYED would make existing data permanently unrecoverable before re-encryption. (b) Sequence: (1) immediately revoke key access in the KMS \u2014 prevent new encryption operations; (2) generate a new AES-256 key via the KMS (approved algorithm, sufficient entropy); (3) in a secure offline environment, decrypt all datasets using the compromised key; (4) re-encrypt all datasets with the new key; (5) verify integrity of all re-encrypted data; (6) transition compromised key to DESTROYED and document destruction. (c) Control 1: NIST SP 800-57 requires keys be stored in a protected key store \u2014 implement a KMS (AWS KMS, Azure Key Vault) so keys never appear in files. Control 2: NIST SP 800-57 requires key usage logging \u2014 a pre-commit hook scanning for cryptographic material in code commits would have caught this before it reached the repository.",
+},
+{
+  id:"q13",sec:4,type:"project",pts:1,
+  context:"This question is about YOUR course project system. You will not receive full credit for generic answers \u2014 your response must reference the specific architecture, data, and users of your project.",
+  text:"Build a complete threat model entry for the single highest-severity threat your project system faces. Your entry must include: (a) The asset at risk \u2014 name it specifically and state its sensitivity classification. (b) STRIDE category (letter + full name) and OWASP LLM risk number + name, if applicable. (c) Attack vector \u2014 two sentences describing exactly how an attacker exploits this vulnerability in YOUR system, including who the attacker is and what access they start with. (d) Risk score \u2014 assign likelihood (1\u20133) and impact (1\u20133), show the score, and justify both numbers. (e) Control \u2014 type (Prevent/Detect/Respond), specific technical implementation, and one verifiable test that confirms the control works. (~200 words)",
+  rows:16,
+  fb:"Full credit requires system-specific content throughout. Generic threat descriptions (e.g., \"prompt injection could affect my system\") earn at most 50% credit. Strong answers: name a specific asset with its actual sensitivity level from the project; describe an attack vector that is only possible given the specific architecture (e.g., specific API endpoint, specific data source, specific user population); justify risk scores with reference to the actual deployment context (who realistically has access, what the actual failure impact is for this use case); specify a control that is implementable given the project's actual technology stack. OWASP reference is required when the threat is AI-specific; STRIDE letter is required for all entries. The verifiable test must be concrete \u2014 \"red team it\" or \"test it\" is insufficient.",
+},
+{
+  id:"q14",sec:4,type:"project",pts:1,
+  context:"This question is about YOUR course project system. You will not receive full credit for generic answers \u2014 your response must reference the specific architecture, data, and users of your project.",
+  text:"Design the quarterly evaluation plan for your project's AI system. Your plan must include: (a) Two retrieval or generation metrics from Huyen's framework \u2014 for each: name the metric, state what it specifically measures in your system's domain, and describe how you compute it (what ground truth you use, how you sample). (b) A sliced evaluation plan \u2014 identify which subgroups of users or inputs in your specific system require separate measurement, which metric applies to each, and the performance gap threshold you would set before halting deployment. (c) One metric that Huyen's technical evaluation framework does not cover but that is essential for responsible deployment of your specific system \u2014 explain why it cannot be derived from standard NLP metrics. (~200 words)",
+  rows:16,
+  fb:"Full credit requires metrics that are concretely grounded in the project domain. Generic answers (e.g., \"Precision@K measures retrieval quality\") earn 30% credit. Strong answers: describe what \"relevant\" means in the specific domain (e.g., \"relevant = chunk cites the applicable ISO 9001 clause for this nonconformance type\"); describe realistic ground truth (e.g., \"engineer annotations on a sample of 50 queries per week drawn from real system usage\"); identify subgroups that actually exist in the project's user or data population (not hypothetical groups); set a threshold that makes sense for the risk level of the application; propose a domain-specific metric that genuinely cannot be captured by F1, NDCG, or entailment scores \u2014 e.g., regulatory compliance completeness, safety-critical recall, or decision consistency across similar cases.",
+},
+{
+  id:"q15",sec:4,type:"project",pts:1,
+  context:"This question is about YOUR course project system. You will not receive full credit for generic answers \u2014 your response must reference the specific architecture, data, and users of your project.",
+  text:"Identify the single most consequential design decision you made (or would make) in your project across any of these dimensions: retrieval architecture, chunking strategy, agent autonomy level, fairness criterion, or cryptographic protection approach. Write the engineering case defending that decision: (1) State the decision precisely \u2014 not \"we used RAG\" but the specific parameter or policy choice. (2) Describe the alternative you rejected and why the tradeoff favors your choice given your specific system constraints. (3) Identify the one condition under which your chosen approach fails \u2014 be specific about what that failure looks like in your deployment context. (4) State what you would monitor to detect that failure condition early. (~180 words)",
+  rows:14,
+  fb:"This question is intentionally open-ended. Full credit requires: (1) A decision stated with enough precision that an engineer could implement it (e.g., \"semantic chunking on section boundaries with 100-token overlap\" not \"semantic chunking\"); (2) A genuine tradeoff analysis where both options have real merit \u2014 the rejected alternative must be plausible, not obviously worse; (3) A failure condition that is specific to the project's architecture and deployment context \u2014 generic answers (\"the model could hallucinate\") earn no credit here; (4) A monitoring metric or signal that is observable and actionable \u2014 the student should be able to describe what dashboard or log event would trigger review. Strong answers demonstrate that the student understands their own system well enough to reason about its failure modes without prompting.",
+},
+];
+
+const TYPE_LABEL={diag:'Diagnostic',sa:'Short Answer',code:'Code Task',design:'Design / Defend',project:'Your Project'};
+
+function show(p){
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.tb').forEach(e=>e.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const idx={home:0,exam:1,ref:2};
+  if(idx[p]!==undefined) document.querySelectorAll('.tb')[idx[p]].classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function beginExam(){
+  const nm=document.getElementById('id-name').value.trim();
+  const ru=document.getElementById('id-ruid').value.trim();
+  const ni=document.getElementById('id-netid').value.trim();
+  if(!nm||!ru||!ni){toast('Fill in all identity fields.',3000);return;}
+  if(ru.length!==9||!/^\d+$/.test(ru)){toast('RUID must be exactly 9 digits.',3000);return;}
+  if(!document.getElementById('honor-box').checked){toast('Accept the integrity pledge to proceed.',3000);return;}
+  S.name=nm;S.ruid=ru;S.netid=ni;S.started=true;S.ts0=new Date().toISOString();
+  document.getElementById('identity-gate').style.display='none';
+  document.getElementById('exam-active').style.display='block';
+  buildExam();
+  loadSaved();
+  showQ(0);
+}
+
+function buildExam(){
+  // Section tabs
+  const st=document.getElementById('sec-tabs');
+  SECS.forEach((sec,i)=>{
+    const b=document.createElement('button');
+    b.className=`st ${sec.cls}`;b.textContent=sec.label;
+    b.style.background='transparent';b.style.color='var(--muted)';
+    b.onclick=()=>{const qi=QS.findIndex(q=>q.sec===i);if(qi>=0)showQ(qi);};
+    st.appendChild(b);
+  });
+  // Dots
+  const dc=document.getElementById('qdots');
+  QS.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='dot';d.id=`dot-${i}`;d.textContent=i+1;
+    d.onclick=()=>showQ(i);
+    dc.appendChild(d);
+  });
+  // Cards
+  const wrap=document.getElementById('qwrap');
+  QS.forEach((q,i)=>{
+    const div=document.createElement('div');
+    div.className='qcard';div.id=`qcard-${i}`;
+    div.innerHTML=buildCard(q,i);
+    wrap.appendChild(div);
+  });
+}
+
+function buildCard(q,i){
+  const sec=SECS[q.sec];
+  let h=`<div class="qhdr">
+    <span class="qnum">Q${i+1} of ${QS.length} · ${TYPE_LABEL[q.type]||q.type}</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="sec-lbl sl-${q.sec}">${sec.label}</span>
+      <span class="qpts">${q.pts} pt</span>
+    </div>
+  </div>`;
+  if(q.context) h+=`<div class="ctx-box">${escHtml(q.context)}</div>`;
+  if(q.code)    h+=`<div class="code-disp">${escHtml(q.code)}</div>`;
+  if(q.table){
+    h+='<table class="qtbl"><tr>';
+    q.table[0].forEach(th=>h+=`<th>${th}</th>`);
+    h+='</tr>';
+    q.table.slice(1).forEach(row=>{h+='<tr>';row.forEach(td=>h+=`<td>${td}</td>`);h+='</tr>';});
+    h+='</table>';
+  }
+  h+=`<div class="qtxt">${q.text}</div>`;
+  const isMono=q.type==='code';
+  const guide={diag:'Diagnose precisely — name the bug, the metric, or the threat explicitly.',
+                sa:'Be specific. Generic answers earn partial credit.',
+                code:'Write working code, then answer the follow-up questions.',
+                design:'Commit to a position. Defend it. Hedge nothing.',
+                project:'Reference your actual project system — not a generic example.'};
+  h+=`<div class="sa-guide"><span>${guide[q.type]||''}</span><span class="wc" id="wc-${i}"></span></div>`;
+  const saved=S.ans[i]||'';
+  h+=`<textarea class="qtarea${isMono?' mono':''}" rows="${q.rows}" id="ta-${i}"
+    oninput="saveSA(${i},this.value)">${escHtml(saved)}</textarea>`;
+  const isLast=i===QS.length-1;
+  h+=`<div class="qnav">
+    ${i>0?`<button class="prev-btn" onclick="showQ(${i-1})">← Previous</button>`:'<span></span>'}
+    ${isLast
+      ?`<button class="fin-btn" onclick="finishExam()">✅ Finish &amp; Submit</button>`
+      :`<button class="next-btn" onclick="showQ(${i+1})">Next Question →</button>`
+    }
+  </div>`;
+  return h;
+}
+
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function saveSA(qi,val){
+  if(S.done)return;
+  S.ans[qi]=val;
+  const wc=val.trim().split(/\s+/).filter(Boolean).length;
+  const el=document.getElementById(`wc-${qi}`);
+  if(el) el.textContent=wc+' words';
+  updDot(qi,'answered');
+  updProg();
+  persist();
+}
+
+function showQ(i){
+  document.querySelectorAll('.qcard').forEach(c=>c.classList.remove('active'));
+  document.getElementById(`qcard-${i}`)?.classList.add('active');
+  document.querySelectorAll('.dot').forEach(d=>{d.classList.remove('current');});
+  document.getElementById(`dot-${i}`)?.classList.add('current');
+  // Restore textarea content
+  const ta=document.getElementById(`ta-${i}`);
+  if(ta && S.ans[i]!==undefined && ta.value!==S.ans[i]) ta.value=S.ans[i];
+  // Update wc
+  if(ta){
+    const wc=ta.value.trim().split(/\s+/).filter(Boolean).length;
+    const el=document.getElementById(`wc-${i}`);
+    if(el&&ta.value.trim()) el.textContent=wc+' words';
+  }
+  // Highlight section tab
+  document.querySelectorAll('.st').forEach((b,j)=>{
+    if(j===QS[i].sec){b.style.background=SECS[j].color;b.style.color='#fff';b.style.borderColor=SECS[j].color;}
+    else{b.style.background='transparent';b.style.color='var(--muted)';b.style.borderColor='var(--border)';}
+  });
+  S.cur=i;
+  updProg();
+  window.scrollTo(0,120);
+}
+
+function updDot(i,cls){
+  const d=document.getElementById(`dot-${i}`);
+  if(!d)return;
+  if(cls==='answered')d.classList.add('answered');
+}
+
+function updProg(){
+  const a=Object.keys(S.ans).filter(k=>S.ans[k]&&String(S.ans[k]).trim()).length;
+  document.getElementById('prog-l').textContent=`Q${S.cur+1} of ${QS.length}`;
+  document.getElementById('prog-p').textContent=`${a} answered`;
+  document.getElementById('prog-f').style.width=Math.round(a/QS.length*100)+'%';
+}
+
+function persist(){
+  try{localStorage.setItem('ise540_final_v2',JSON.stringify({ans:S.ans,ruid:S.ruid,ts0:S.ts0}));}catch(e){}
+}
+
+function loadSaved(){
+  try{
+    const raw=localStorage.getItem('ise540_final_v2');
+    if(!raw)return;
+    const saved=JSON.parse(raw);
+    if(saved.ruid&&saved.ruid!==S.ruid)return;
+    if(saved.ans){
+      Object.entries(saved.ans).forEach(([qi,val])=>{
+        const i=parseInt(qi);
+        if(val&&String(val).trim()){
+          S.ans[i]=val;
+          updDot(i,'answered');
+        }
+      });
+      updProg();
+      toast('Progress restored from previous session.',4000);
+    }
+  }catch(e){}
+}
+
+function finishExam(){
+  if(S.done)return;
+  const answered=Object.keys(S.ans).filter(k=>S.ans[k]&&String(S.ans[k]).trim()).length;
+  if(answered<QS.length){
+    if(!confirm(`${QS.length-answered} question(s) have no answer. Submit anyway?\nYou cannot change answers after submitting.`))return;
+  }
+  S.done=true;
+  document.getElementById('exam-active').style.display='none';
+  document.getElementById('ring-n').textContent=answered;
+  setTimeout(()=>{
+    document.getElementById('ring-fill').style.strokeDashoffset=377*(1-answered/QS.length);
+  },300);
+  document.getElementById('rgrid').innerHTML=`
+    <div class="ri"><div class="ri-l">Questions Answered</div><div class="ri-v">${answered} / ${QS.length}</div><div class="ri-s">Saved in your answer file</div></div>
+    <div class="ri"><div class="ri-l">Student</div><div class="ri-v" style="font-size:.88rem">${S.name}</div><div class="ri-s">RUID: ${S.ruid}</div></div>
+    <div class="ri"><div class="ri-l">Submitted</div><div class="ri-v" style="font-size:.78rem">${new Date().toLocaleString()}</div><div class="ri-s">Local time</div></div>
+    <div class="ri"><div class="ri-l">File</div><div class="ri-v" style="font-size:.82rem">FinalExam_${S.ruid}.txt</div><div class="ri-s">Download below → Upload to Canvas</div></div>`;
+  document.getElementById('results').classList.add('show');
+  document.getElementById('results').scrollIntoView({behavior:'smooth'});
+  try{localStorage.removeItem('ise540_final_v2');}catch(e){}
+}
+
+function buildAnswerText(){
+  let t='ISE 16:540 — AI-ENABLED INFORMATICS — FINAL EXAM\n';
+  t+='=====================================================\n\n';
+  t+=`Student:    ${S.name}\nRUID:       ${S.ruid}\nNetID:      ${S.netid}\n`;
+  t+=`Started:    ${S.ts0}\nSubmitted:  ${new Date().toISOString()}\n\n`;
+  t+='Grading is instructor-performed in Canvas. No scores are computed in this file.\n\n';
+  t+='─'.repeat(60)+'\n\n';
+  QS.forEach((q,i)=>{
+    const lbl=TYPE_LABEL[q.type]||q.type;
+    t+=`Q${i+1} [${q.pts}pt · ${lbl} · ${SECS[q.sec].label}]\n`;
+    t+=q.text+'\n\n';
+    const ans=S.ans[i];
+    t+='YOUR ANSWER:\n'+(ans&&String(ans).trim()?ans:'[not answered]')+'\n\n';
+    t+='─'.repeat(60)+'\n\n';
+  });
+  t+='Upload this file to Canvas → Assignments → Final Exam.\n';
+  return t;
+}
+
+function downloadAnswers(){
+  const txt=buildAnswerText();
+  const prev=document.getElementById('exprev');
+  prev.textContent=txt.slice(0,500)+'...\n[full content in downloaded file]';
+  prev.style.display='block';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain'}));
+  a.download=`FinalExam_${S.ruid}_${S.name.replace(/\s+/g,'_')}.txt`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  toast('Answer file downloaded — upload to Canvas to complete submission.',5000);
+}
+
+function ck(el){el.classList.toggle('on');el.textContent=el.classList.contains('on')?'✓':'';}
+function toast(msg,dur=3000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),dur);}
+</script>
+</body>
+</html>
