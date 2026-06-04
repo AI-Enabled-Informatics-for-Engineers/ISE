@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enroute Mission Command — A Guided Walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500;700&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a1118; --panel:#111e2a; --ink:#e8f1f7; --mut:#8aa1b3; --dim:#5d7384;
+  --line:#1f3243; --line2:#26415a;
+  --go:#3fd07e; --go-dim:#1c6b44; --no:#ff5d5d; --no-dim:#7a2727;
+  --amber:#ffb13c; --amber2:#ff8a00; --blue:#5ab0ff; --beam:#ffd27a; --purple:#b48bff;
+  --shadow:0 18px 50px -18px rgba(0,0,0,.7);
+  --mono:"JetBrains Mono",monospace; --disp:"Bricolage Grotesque",sans-serif; --body:"Sora",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:
+  radial-gradient(1200px 700px at 80% -10%, #14304a55, transparent 60%),
+  radial-gradient(900px 600px at 0% 110%, #1a2c1e44, transparent 60%), var(--bg);
+  color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased}
+body{padding:0 0 90px}
+a{color:var(--amber)}
+.wrap{max-width:1200px;margin:0 auto;padding:0 22px}
+em{font-style:italic;color:var(--ink)}
+
+header{padding:34px 0 8px}
+.kick{font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:var(--amber);text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.kick::before{content:"";width:34px;height:2px;background:var(--amber)}
+h1{font-family:var(--disp);font-weight:800;line-height:.97;margin:.18em 0 .12em;font-size:clamp(28px,5vw,56px);letter-spacing:-.01em}
+h1 .hl{color:var(--amber)}
+.sub{color:var(--mut);max-width:820px;font-size:clamp(14px,1.6vw,16.5px);line-height:1.55}
+.tagline{display:inline-flex;align-items:center;gap:9px;margin-top:14px;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:#cfe0ee;background:#0c1925;border:1px solid var(--line2);padding:8px 13px;border-radius:999px}
+.tagline b{color:var(--amber)}
+
+/* how to read */
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
+.how .h{border:1px solid var(--line);border-radius:13px;background:var(--panel);padding:13px 15px;display:flex;gap:12px;align-items:flex-start}
+.how .n{font-family:var(--disp);font-weight:800;font-size:20px;color:var(--amber);line-height:1;flex:none}
+.how p{margin:0;font-size:12.5px;line-height:1.5;color:var(--mut)} .how b{color:var(--ink)}
+
+/* video */
+.videoblock{margin-top:22px;display:grid;grid-template-columns:1.5fr 1fr;gap:18px;align-items:stretch}
+.videoWrap{position:relative;padding-bottom:56.25%;height:0;border-radius:16px;overflow:hidden;border:1px solid var(--line2);background:#04101b center/cover no-repeat;box-shadow:var(--shadow)}
+.videoWrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.videoside{border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:18px 19px;display:flex;flex-direction:column;justify-content:center}
+.videoside .vk{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--amber);text-transform:uppercase}
+.videoside h3{font-family:var(--disp);font-weight:800;font-size:19px;margin:7px 0 8px;line-height:1.1}
+.videoside p{margin:0 0 10px;font-size:13px;line-height:1.55;color:var(--mut)}
+.videoside .meta{font-family:var(--mono);font-size:11px;color:var(--dim);line-height:1.7}
+.vlink{display:inline-flex;align-items:center;gap:7px;margin-top:12px;font-family:var(--mono);font-weight:700;font-size:12px;text-decoration:none;color:#1a1206;background:linear-gradient(180deg,var(--amber),var(--amber2));padding:9px 14px;border-radius:9px;width:fit-content}
+
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px;align-items:stretch}
+.ctl{background:linear-gradient(180deg,var(--panel),#0d1620);border:1px solid var(--line);border-radius:14px;padding:11px 13px;flex:1;min-width:200px}
+.ctl .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:8px}
+.seg{display:flex;background:#0a131b;border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;color:var(--mut);font-family:var(--mono);font-weight:700;font-size:11.5px;padding:9px 4px;border-radius:7px;cursor:pointer;transition:.16s;white-space:nowrap}
+.seg button.on{background:linear-gradient(180deg,#22384c,#16242f);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
+.seg.amber button.on{background:linear-gradient(180deg,var(--amber),var(--amber2));color:#1a1206}
+.seg.blue button.on{background:linear-gradient(180deg,#3a8fd6,#2f6fb0);color:#06121f}
+.gauge{display:flex;align-items:center;gap:12px;min-width:200px;background:linear-gradient(180deg,var(--panel),#0d1620);border:1px solid var(--line);border-radius:14px;padding:11px 14px}
+.dial{position:relative;width:54px;height:54px;flex:none}
+.dial svg{transform:rotate(-90deg)}
+.dial .ctr{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:13px}
+.gstat .small{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+.pill{display:inline-block;font-family:var(--mono);font-weight:700;font-size:11px;padding:3px 9px;border-radius:999px;letter-spacing:.08em;margin-top:6px}
+.pill.no{background:var(--no-dim);color:#ffd1d1} .pill.go{background:var(--go-dim);color:#c6ffe0}
+
+.cert{margin-top:14px;border-radius:14px;padding:14px 18px;display:flex;gap:14px;align-items:flex-start;border:1px solid var(--line)}
+.cert .badge{font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.08em;padding:6px 11px;border-radius:8px;flex:none}
+.cert .ctxt{font-size:13.5px;line-height:1.55} .cert .ctxt b{font-weight:600}
+.cert .cfg{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.05em;margin-bottom:3px}
+
+.stage{position:relative;margin-top:16px;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:linear-gradient(180deg,#06243f,#0a2f50 38%,#0c2236 70%,#0a141d);box-shadow:var(--shadow)}
+.scene{display:block;width:100%;height:auto}
+.scene-tag{position:absolute;top:13px;left:15px;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:#bcd6ea;text-transform:uppercase;background:#04101bbb;border:1px solid #1d3a52;padding:5px 10px;border-radius:8px}
+.scene-legend{position:absolute;bottom:12px;right:14px;display:flex;gap:13px;font-family:var(--mono);font-size:10px;color:#cfe0ee;background:#04101bbb;border:1px solid #1d3a52;padding:6px 11px;border-radius:9px}
+.scene-legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
+
+.stepbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;flex-wrap:wrap}
+.stepbtns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font-family:var(--mono);font-weight:700;font-size:12.5px;letter-spacing:.04em;border-radius:11px;padding:11px 16px;cursor:pointer;border:1px solid var(--line2);background:#13212e;color:var(--ink);transition:.16s}
+.btn:hover{border-color:var(--amber);color:var(--amber)}
+.btn.primary{background:linear-gradient(180deg,var(--amber),var(--amber2));color:#1a1206;border-color:transparent}
+.btn.primary:hover{filter:brightness(1.07);color:#1a1206}
+.btn:disabled{opacity:.35;cursor:not-allowed;border-color:var(--line);color:var(--dim)}
+.btn.ghost{background:transparent}
+.progress-txt{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--dim)}
+
+.rail{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-top:16px}
+.node{position:relative;border:1px solid var(--line);background:#0e1925;border-radius:12px;padding:11px 9px;cursor:pointer;transition:.16s;min-height:96px;display:flex;flex-direction:column;gap:6px}
+.node:hover{border-color:var(--line2);transform:translateY(-2px)}
+.node.active{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
+.node.up{background:linear-gradient(180deg,#0f241a,#0c1a14);border-color:var(--go-dim)}
+.node.down{background:linear-gradient(180deg,#1a0d0d,#1a0d0d);border-color:var(--no-dim)}
+.node .num{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.06em}
+.node .nm{font-family:var(--disp);font-weight:600;font-size:12px;line-height:1.1}
+.node .ic{font-size:16px}
+.node .ic svg{width:100%;height:100%;display:block}
+.node .dot{position:absolute;top:9px;right:9px;width:9px;height:9px;border-radius:50%;background:var(--dim);box-shadow:0 0 0 3px #0e1925}
+.node.up .dot{background:var(--go);box-shadow:0 0 0 3px #0c1a14,0 0 9px var(--go)}
+.node.down .dot{background:var(--no);box-shadow:0 0 0 3px #1a0d0d,0 0 9px var(--no);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+
+.detail{margin-top:16px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--panel)}
+.detail-top{display:flex;gap:16px;align-items:flex-start;padding:20px 22px 14px;background:linear-gradient(180deg,#16273588,transparent)}
+.detail-ic{font-size:30px;flex:none;line-height:1}
+.detail h3{font-family:var(--disp);font-weight:800;font-size:22px;margin:0 0 4px}
+.detail .role{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--amber);text-transform:uppercase}
+.detail .why{color:var(--ink);font-size:14.5px;line-height:1.62;margin:13px 0 0;max-width:800px}
+.grid3{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:1px;background:var(--line);margin-top:16px}
+.cell{background:var(--panel);padding:15px 18px}
+.cell h4{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--dim);text-transform:uppercase;margin:0 0 9px}
+.cell ul{margin:0;padding-left:16px} .cell li{font-size:13px;line-height:1.5;color:var(--mut);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;background:#0c1722;border:1px solid var(--line2);border-radius:8px;padding:5px 8px;color:#bcd2e2}
+.chip svg{width:15px;height:15px;flex:none}
+.fail{display:flex;gap:10px;align-items:flex-start;border-radius:11px;padding:13px 15px;margin:0 22px 20px}
+.fail .x{font-family:var(--mono);font-weight:700;flex:none;font-size:13px;margin-top:1px}
+.fail p{margin:0;font-size:13.5px;line-height:1.55}
+
+section.block{margin-top:46px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.26em;color:var(--amber);text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.eyebrow::before{content:"";width:26px;height:2px;background:var(--amber)}
+.h2{font-family:var(--disp);font-weight:800;font-size:clamp(22px,3.3vw,33px);letter-spacing:-.01em;margin:.28em 0 .14em}
+.lede{color:var(--mut);max-width:820px;line-height:1.55;font-size:15px}
+
+.tcmp{margin-top:22px;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.trow{display:grid;grid-template-columns:1.1fr 1fr 1fr;border-bottom:1px solid var(--line)}
+.trow:last-child{border-bottom:0}
+.trow>div{padding:13px 16px;font-size:13px;line-height:1.5}
+.trow .th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;background:#0d1925;display:flex;align-items:center}
+.trow.head>div{background:#13212e;font-family:var(--disp);font-weight:800;font-size:16px}
+.trow.head .geo{color:var(--beam)} .trow.head .sl{color:var(--blue)}
+
+.cmp{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+.card{border:1px solid var(--line);border-radius:18px;background:var(--panel);overflow:hidden;transition:.18s;cursor:pointer}
+.card.sel{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
+.card-h{padding:15px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,#16273588,transparent)}
+.card-h .glyph{width:42px;height:42px;flex:none}
+.card-h .t{font-family:var(--disp);font-weight:800;font-size:16px;line-height:1.05}
+.card-h .s{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--dim);text-transform:uppercase;margin-top:3px}
+.card-b{padding:14px 16px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.row:last-child{border:0}
+.row .k{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--dim);text-transform:uppercase;flex:none;width:44%}
+.row .v{font-size:12.5px;line-height:1.4;color:var(--ink);text-align:right}
+.row .v.hot{color:#ffd1a6} .row .v.cool{color:#c6ffe0}
+
+.callout{margin-top:16px;border:1px solid var(--no-dim);background:#1c0e0e;border-radius:13px;padding:15px 17px;display:flex;gap:12px}
+.callout .ic{font-size:20px;flex:none}
+.callout p{margin:0;font-size:13.5px;line-height:1.6;color:#f3c9c9} .callout b{color:#ffdede}
+
+.matwrap{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:14px}
+.mat{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--panel)}
+.mat-h{padding:12px 15px;border-bottom:1px solid var(--line);font-family:var(--disp);font-weight:800;font-size:15px}
+.mat-h .geo{color:var(--beam)} .mat-h .sl{color:var(--blue)}
+.mg{display:grid;grid-template-columns:78px 1fr 1fr 1fr}
+.mg div{padding:9px 6px;font-family:var(--mono);font-size:10px;text-align:center;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.mg .corner,.mg .colh{background:#0d1925;color:var(--dim);letter-spacing:.04em;display:flex;align-items:center;justify-content:center}
+.mg .rowh{background:#0d1925;color:#bcd2e2;justify-content:flex-start;text-align:left}
+.mc{font-weight:700;line-height:1.2}
+.matswitch{display:inline-flex;gap:4px;background:#0a131b;border:1px solid var(--line);border-radius:9px;padding:3px;margin-top:18px}
+.matswitch button{border:0;background:transparent;color:var(--mut);font-family:var(--mono);font-weight:700;font-size:11.5px;padding:8px 14px;border-radius:6px;cursor:pointer}
+.matswitch button.on{background:linear-gradient(180deg,var(--amber),var(--amber2));color:#1a1206}
+.matlegend{display:flex;flex-wrap:wrap;gap:13px;margin-top:14px;font-family:var(--mono);font-size:10.5px;color:var(--mut)}
+.matlegend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+
+/* routing */
+.svcsel{display:inline-flex;gap:4px;background:#0a131b;border:1px solid var(--line);border-radius:9px;padding:3px;margin-top:18px}
+.svcsel button{border:0;background:transparent;color:var(--mut);font-family:var(--mono);font-weight:700;font-size:11.5px;padding:9px 14px;border-radius:6px;cursor:pointer}
+.svcsel button.on{background:linear-gradient(180deg,#22384c,#16242f);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
+.svcdesc{font-size:14px;line-height:1.6;color:var(--mut);margin:14px 0 0;max-width:820px}
+.route{display:flex;align-items:stretch;gap:0;margin-top:16px;overflow-x:auto;padding-bottom:8px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
+.hop{min-width:142px;flex:1;padding:14px 12px;border-right:1px solid var(--line);position:relative;display:flex;flex-direction:column;gap:8px}
+.hop:last-child{border-right:0}
+.hop .av{display:flex;align-items:center;gap:7px}
+.hop .av svg{width:26px;height:26px;flex:none}
+.hop .hl2{font-family:var(--disp);font-weight:600;font-size:12.5px;line-height:1.15}
+.hop .ow{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--dim);text-transform:uppercase}
+.hop .arr{position:absolute;right:-7px;top:50%;transform:translateY(-50%);z-index:2;color:var(--amber);font-size:14px}
+.guardband{margin-top:12px;border:1px dashed var(--purple);background:#160f24;border-radius:13px;padding:13px 16px;display:flex;gap:11px;align-items:center}
+.guardband svg{width:30px;height:30px;flex:none}
+.guardband p{margin:0;font-size:13px;line-height:1.5;color:#d9c9ff} .guardband b{color:#fff}
+.ownct{font-family:var(--mono);font-size:11.5px;color:var(--amber);margin-top:12px;letter-spacing:.04em}
+
+/* phases */
+.phases{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+.phase{border:1px solid var(--line);border-radius:16px;background:var(--panel);overflow:hidden}
+.phase .ph-h{padding:13px 16px;font-family:var(--disp);font-weight:800;font-size:15px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#16273588,transparent)}
+.phase ul{list-style:none;margin:0;padding:8px 14px 14px}
+.phase li{display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line);font-size:12.5px;line-height:1.45;color:var(--mut)}
+.phase li:last-child{border:0}
+.phase li svg{width:18px;height:18px;flex:none;margin-top:1px}
+
+/* theaters */
+.thsel{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.thsel button{font-family:var(--mono);font-weight:700;font-size:12px;border:1px solid var(--line2);background:#13212e;color:var(--mut);border-radius:11px;padding:11px 15px;cursor:pointer;transition:.16s;text-align:left;line-height:1.3}
+.thsel button.on{background:linear-gradient(180deg,#22384c,#16242f);color:var(--ink);border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
+.thsel button span{display:block;font-size:9.5px;letter-spacing:.04em;color:var(--dim);font-weight:500;margin-top:3px}
+.thpanel{margin-top:16px;display:grid;grid-template-columns:1.3fr 1fr;gap:16px}
+.thmain{border:1px solid var(--line);border-radius:18px;background:var(--panel);padding:20px 22px}
+.thmain .org{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--amber);text-transform:uppercase}
+.thmain h3{font-family:var(--disp);font-weight:800;font-size:21px;margin:5px 0 2px}
+.thmain .geo-line{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
+.thmain p{font-size:13.5px;line-height:1.6;color:var(--mut);margin:13px 0 0}
+.thtags{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
+.thtag{font-family:var(--mono);font-size:10.5px;background:#0c1925;border:1px solid var(--line2);border-radius:7px;padding:5px 9px;color:#bcd2e2}
+.thmetrics{display:flex;flex-direction:column;gap:10px}
+.tm{border:1px solid var(--line);border-radius:13px;padding:13px 15px;background:var(--panel)}
+.tm .k{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;margin-bottom:7px}
+.bars{display:flex;gap:4px;align-items:center}
+.bars i{height:9px;flex:1;border-radius:2px;background:#22323f}
+.bars i.f{background:var(--go)} .bars.warn i.f{background:var(--amber)} .bars.bad i.f{background:var(--no)}
+.tm .vtxt{font-size:12.5px;color:var(--ink);margin-top:6px;line-height:1.4}
+
+.flow{display:flex;align-items:stretch;gap:0;margin-top:22px;flex-wrap:wrap;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--panel)}
+.fstep{flex:1;min-width:170px;padding:16px;border-right:1px solid var(--line)}
+.fstep:last-child{border-right:0}
+.fstep .fn{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--amber);text-transform:uppercase;margin-bottom:7px}
+.fstep .ft{font-family:var(--disp);font-weight:800;font-size:15px;margin-bottom:5px;line-height:1.1}
+.fstep .fd{font-size:12.5px;color:var(--mut);line-height:1.5}
+.fstep.target{background:linear-gradient(180deg,#10241a,#0c1a14)} .fstep.target .fn{color:var(--go)}
+.oversight{margin-top:12px;display:flex;gap:10px;align-items:center;border:1px dashed var(--line2);border-radius:12px;padding:11px 15px;background:#0c1925}
+.oversight .tag{font-family:var(--mono);font-weight:700;font-size:11px;color:#06121f;background:var(--blue);border-radius:7px;padding:5px 9px;flex:none}
+.oversight p{margin:0;font-size:13px;color:var(--mut);line-height:1.5}
+
+.emp{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+.empc{border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:17px 18px}
+.empc .et{font-family:var(--disp);font-weight:800;font-size:16px;margin-bottom:6px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.empc .badge2{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;padding:3px 7px;border-radius:6px}
+.empc p{font-size:13px;line-height:1.55;color:var(--mut);margin:0}
+
+.why-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:24px;margin-top:24px;align-items:start}
+.points{display:flex;flex-direction:column;gap:11px}
+.pt{display:flex;gap:13px;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px 15px}
+.pt .n{font-family:var(--disp);font-weight:800;font-size:21px;color:var(--amber);line-height:1;flex:none;width:28px}
+.pt h5{margin:0 0 4px;font-family:var(--disp);font-weight:600;font-size:15px} .pt p{margin:0;font-size:13px;line-height:1.55;color:var(--mut)}
+.modelcard{border:1px solid var(--line2);border-radius:18px;padding:20px;background:radial-gradient(420px 220px at 70% 0%, #1c344877, transparent 70%),linear-gradient(180deg,#10202d,#0a141d);position:sticky;top:18px}
+.modelcard h4{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--amber);text-transform:uppercase;margin:0 0 12px}
+.diagram{display:block;width:100%;height:auto}
+.modelnote{font-size:12.5px;line-height:1.55;color:var(--mut);margin-top:12px}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:30px}
+.kpi{border:1px solid var(--line);border-radius:14px;padding:15px;background:var(--panel)}
+.kpi .v{font-family:var(--disp);font-weight:800;font-size:24px;color:var(--amber);line-height:1}
+.kpi .k{font-size:12px;color:var(--mut);margin-top:6px;line-height:1.4}
+
+footer{margin-top:46px;border-top:1px solid var(--line);padding-top:18px}
+.disc{font-size:11.5px;color:var(--dim);line-height:1.65;max-width:1000px} .disc b{color:var(--mut)}
+
+/* TAKEAWAYS */
+.takeaways{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+.ta{border:1px solid var(--line2);border-radius:18px;padding:18px 18px 16px;background:linear-gradient(180deg,#13212e,#0c1620);cursor:pointer;transition:.16s;position:relative;overflow:hidden}
+.ta:hover{transform:translateY(-3px);border-color:var(--amber)}
+.ta .tn{font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.12em;color:#1a1206;background:linear-gradient(180deg,var(--amber),var(--amber2));width:fit-content;padding:4px 10px;border-radius:999px}
+.ta .tart{margin:12px 0 10px} .ta .tart svg{width:100%;height:78px;display:block}
+.ta h3{font-family:var(--disp);font-weight:800;font-size:17px;line-height:1.12;margin:0 0 7px}
+.ta p{margin:0;font-size:12.5px;line-height:1.5;color:var(--mut)} .ta p b{color:var(--ink)}
+.ta .more{font-family:var(--mono);font-size:10.5px;color:var(--amber);margin-top:10px;letter-spacing:.04em}
+
+/* per-turn cartoon */
+.turnart{flex:none;width:280px;border:1px solid var(--line2);border-radius:12px;background:#0b1620;padding:0;overflow:hidden}
+.turnart svg{display:block;width:100%;height:auto}
+@media(max-width:560px){.turnart{width:100%}}
+
+/* GALLERY */
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+.gcard{border:1px solid var(--line);border-radius:16px;background:var(--panel);overflow:hidden}
+.gcard .gimg{background:linear-gradient(180deg,#0c1c2b,#0a141d);padding:14px;border-bottom:1px solid var(--line)}
+.gcard .gimg svg{display:block;width:100%;height:auto}
+.gcard .gb{padding:13px 15px}
+.gcard .gt{font-family:var(--disp);font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.gcard .gtag{font-family:var(--mono);font-size:9px;letter-spacing:.06em;padding:3px 7px;border-radius:6px}
+.gcard p{margin:7px 0 0;font-size:12.5px;line-height:1.5;color:var(--mut)}
+
+/* CURRENT / FUTURE mediums */
+.medgrid{margin-top:14px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--panel)}
+.medrow{display:grid;grid-template-columns:1.3fr 1fr 1fr;border-bottom:1px solid var(--line)}
+.medrow:last-child{border-bottom:0}
+.medrow>div{padding:12px 15px;font-size:12.5px;line-height:1.4;display:flex;align-items:center}
+.medrow.head>div{background:#13212e;font-family:var(--disp);font-weight:800;font-size:14px}
+.medrow .mlab{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:#bcd2e2;background:#0d1925}
+.medrow .mlab b{color:var(--ink);font-family:var(--body);font-weight:600;font-size:13px}
+.mcell{font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.02em;border-left:1px solid var(--line)}
+.mcell .badge3{padding:3px 8px;border-radius:6px;line-height:1.3}
+.geo-col{color:var(--beam)} .leo-col{color:var(--blue)}
+
+/* COMPREHENSIVE ROUTING */
+.arch{margin-top:16px;display:flex;gap:10px;overflow-x:auto;padding-bottom:10px}
+.rtier{min-width:210px;flex:1;border:1px solid var(--line);border-radius:15px;background:var(--panel);display:flex;flex-direction:column;position:relative}
+.rtier .rt-h{padding:11px 13px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#16273588,transparent)}
+.rtier .rt-h .tt{font-family:var(--disp);font-weight:800;font-size:14px}
+.rtier .rt-h .ts{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;margin-top:2px}
+.rtier .rt-b{padding:10px;display:flex;flex-direction:column;gap:8px}
+.rcomp{display:flex;align-items:center;gap:8px;border:1px solid var(--line2);background:#0c1722;border-radius:10px;padding:8px 9px;cursor:pointer;transition:.14s}
+.rcomp:hover{border-color:var(--amber)} .rcomp.hot{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber);background:#15110a}
+.rcomp.sel{border-color:#fff}
+.rcomp svg{width:22px;height:22px;flex:none}
+.rcomp .rl{font-size:11.5px;line-height:1.2;font-weight:500} .rcomp .ro{font-family:var(--mono);font-size:8.5px;letter-spacing:.05em;color:var(--dim);text-transform:uppercase;margin-top:2px}
+.rtier .tarrow{position:absolute;right:-9px;top:50%;transform:translateY(-50%);z-index:3;color:var(--amber);font-size:15px}
+.compdesc{margin-top:12px;border:1px solid var(--line2);border-radius:12px;background:#0c1925;padding:13px 16px;font-size:13px;line-height:1.55;color:var(--ink);min-height:54px}
+.compdesc .cd-t{font-family:var(--disp);font-weight:800;font-size:14px;margin-bottom:3px}
+.compdesc .cd-o{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--amber);text-transform:uppercase;margin-bottom:6px}
+
+@media(max-width:920px){
+  .how,.videoblock,.phases,.cmp,.emp,.takeaways,.gallery{grid-template-columns:1fr}
+  .rail{grid-template-columns:repeat(4,1fr)} .grid3{grid-template-columns:1fr}
+  .matwrap{grid-template-columns:1fr} .thpanel{grid-template-columns:1fr}
+  .why-grid{grid-template-columns:1fr} .modelcard{position:static} .kpis{grid-template-columns:1fr 1fr}
+  .trow,.trow.head{grid-template-columns:1fr} .trow .th{border-bottom:1px solid var(--line)}
+  .detail-top{flex-direction:column}
+  .medrow,.medrow.head{grid-template-columns:1fr} .mcell{border-left:0;border-top:1px solid var(--line)}
+}
+@media(max-width:560px){ .rail{grid-template-columns:repeat(2,1fr)} .kpis{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kick">Signal Operations · Guided Walkthrough</div>
+    <h1>Enroute Mission Command, <span class="hl">one turn at a time.</span></h1>
+    <p class="sub">EMC keeps a commander on the net <em>while airborne</em> on an AMC C‑17, C‑130, or rotary‑wing aircraft — so the force arrives ready, not setting up. Eight turns show why the kit, antenna, airframe, transport, and data routing must all be integrated and rehearsed together — Army, Air Force, DISA, ARCYBER/NETCOM.</p>
+    <div class="tagline">⬡ &nbsp;<b>The objective — one dual‑use NGC2 baseband:</b> at‑the‑halt / on‑the‑ground <b>and</b> on‑the‑move, across air, land, and vessel / maritime. <span style="color:var(--dim)">(Today these are separate NGC2 / ESB‑E / EMC kits.)</span></div>
+
+    <div class="takeaways" id="takeaways"></div>
+
+    <div class="how">
+      <div class="h"><div class="n">1</div><p><b>Set the scenario.</b> Pick a transport, airframe, and aperture. The certification banner tells you instantly if that combination is even legal to fly today.</p></div>
+      <div class="h"><div class="n">2</div><p><b>Play the turns.</b> Step (or auto‑play) through the eight coordination turns. All eight must be green at once or it's a NO‑GO.</p></div>
+      <div class="h"><div class="n">3</div><p><b>Break a turn.</b> Click a green ● to snap a link and watch the commander lose the picture — that's the single‑point‑of‑failure story.</p></div>
+    </div>
+
+    <!-- VIDEO -->
+    <div class="videoblock">
+      <div class="videoWrap" style="background-image:url('https://d1ldvf68ux039x.cloudfront.net/thumbs/frames/video/2504/959656/DOD_110942511.1000000/1000w_q95.jpg')">
+        <iframe src="https://www.dvidshub.net/video/embed/959656" allowtransparency allowfullscreen title="EMC Revolutionizes Real-Time Military Coordination"></iframe>
+      </div>
+      <div class="videoside">
+        <div class="vk">▶ Reference video</div>
+        <h3>EMC Revolutionizes Real‑Time Military Coordination</h3>
+        <p>A one‑minute look at Enroute Mission Command as a force multiplier for rapidly deploying units in joint forcible‑entry operations — produced by the unit that owns EMC in Europe.</p>
+        <div class="meta">2d Theater Signal Brigade · Vicenza, Italy<br>U.S. Army video · 22 Apr 2025 · Public Domain</div>
+        <a class="vlink" href="https://www.dvidshub.net/video/959656/emc-revolutionizes-real-time-military-coordination" target="_blank" rel="noopener">Watch on DVIDS ↗</a>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls">
+      <div class="ctl"><div class="lbl">Transport</div>
+        <div class="seg blue" id="trSeg"><button data-tr="GEO" class="on">GEO SATCOM · Ka/Ku</button><button data-tr="SL">Starlink / Starshield · LEO</button></div></div>
+      <div class="ctl"><div class="lbl">Airframe</div>
+        <div class="seg" id="airSeg"><button data-air="C17" class="on">C‑17</button><button data-air="C130">C‑130</button><button data-air="ROTARY">Rotary</button></div></div>
+      <div class="ctl"><div class="lbl">Aperture</div>
+        <div class="seg amber" id="antSeg"><button data-ant="hatch" class="on">Hatch‑Mount</button><button data-ant="fixed">Fixed‑Fuselage · Starshield</button><button data-ant="mini">Starlink Mini</button></div></div>
+      <div class="gauge"><div class="dial"><svg width="54" height="54" viewBox="0 0 54 54"><circle cx="27" cy="27" r="22" fill="none" stroke="#1b2c3a" stroke-width="6"/><circle id="gaugeArc" cx="27" cy="27" r="22" fill="none" stroke="#ff5d5d" stroke-width="6" stroke-linecap="round" stroke-dasharray="138.2" stroke-dashoffset="138.2"/></svg><div class="ctr" id="gaugePct">0%</div></div>
+        <div class="gstat"><div class="small">Coordination</div><div class="pill no" id="goPill">NO‑GO</div></div></div>
+    </div>
+    <div class="cert" id="certBanner"></div>
+  </header>
+
+  <!-- SCENE -->
+  <div class="stage">
+    <div class="scene-tag" id="sceneTag">wheels‑up → objective</div>
+    <svg class="scene" viewBox="0 0 1200 470" id="scene" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id="beamG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd27a" stop-opacity="0"/><stop offset="1" stop-color="#ffd27a" stop-opacity=".22"/></linearGradient>
+        <linearGradient id="beamLive" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7af2b0" stop-opacity="0"/><stop offset="1" stop-color="#3fd07e" stop-opacity=".34"/></linearGradient>
+        <radialGradient id="cellG" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#5ab0ff" stop-opacity=".35"/><stop offset="1" stop-color="#5ab0ff" stop-opacity="0"/></radialGradient>
+        <radialGradient id="sun" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff3cf"/><stop offset="1" stop-color="#ffd27a" stop-opacity="0"/></radialGradient>
+        <filter id="soft"><feGaussianBlur stdDeviation="2.2"/></filter>
+      </defs>
+      <g id="stars" fill="#cfe6ff"></g>
+      <circle cx="1010" cy="60" r="55" fill="url(#sun)" opacity=".5"/>
+      <path d="M0 392 Q 300 372 600 388 T 1200 384 L1200 470 L0 470Z" fill="#0a161f"/>
+      <g id="sky"></g><g id="links"></g>
+      <g id="plane" transform="translate(190,250)"></g>
+      <g id="ground"></g><g id="overlay"></g>
+    </svg>
+    <div class="scene-legend"><span><i style="background:var(--go)"></i>Up</span><span><i style="background:var(--no)"></i>Down</span><span id="legBeam"><i style="background:var(--beam)"></i>Spot beam</span></div>
+  </div>
+
+  <div class="stepbar" id="sec-turns">
+    <div class="stepbtns">
+      <button class="btn ghost" id="prevBtn" disabled>‹ Prev turn</button>
+      <button class="btn primary" id="nextBtn">Begin turn 1 ›</button>
+      <button class="btn ghost" id="playBtn">▶ Auto‑play</button>
+      <button class="btn ghost" id="resetBtn">Reset</button>
+    </div>
+    <div class="progress-txt" id="prog">0 of 8 turns complete</div>
+  </div>
+
+  <div class="rail" id="rail"></div>
+  <div class="detail" id="detail"></div>
+  <p style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:12px;letter-spacing:.03em">▸ Click any turn to inspect it. Click a green <b style="color:#ffd1d1">●</b> to break it. The turn text adapts to the transport you selected.</p>
+
+  <!-- ROUTING (moved up) -->
+  <section class="block" id="sec-routing">
+    <div class="eyebrow">It isn't just an RF link</div>
+    <div class="h2">The full data path — baseband, call manager, encryptors, RHNs, data centers, edge compute</div>
+    <p class="lede">The antenna is only the bearer. Getting <em>Maven</em> or <em>Secure Voice</em> to the commander routes end‑to‑end through encryptors, accelerators, distributed ground stations and Starshield gateways, RHN/GAIT POPs, the DODIN‑A, overlays, data centers, and edge compute — each tier a different owner. Tap a component; switch services to see what's stressed.</p>
+    <div class="svcsel" id="svcSel"></div>
+    <p class="svcdesc" id="svcDesc"></p>
+    <div id="svcBW"></div>
+    <div class="arch" id="arch"></div>
+    <div class="compdesc" id="compDesc"></div>
+    <div class="ownct" id="ownCount"></div>
+    <div class="guardband" id="guardband"></div>
+  </section>
+
+  <!-- ENROUTE CONSIDERATIONS -->
+  <section class="block">
+    <div class="eyebrow">Enroute is its own animal</div>
+    <div class="h2">Low‑bandwidth, high‑latency, moving — the unique technical considerations</div>
+    <p class="lede">Enroute links are small, contended, high‑latency (GEO), and always handing off. Making a service usable is a craft of its own — a sample:</p>
+    <div class="emp">
+      <div class="empc"><div class="et">BTU &amp; terminal settings</div><p>Burst/timing and terminal parameters must match the network plan exactly, or the terminal never locks the carrier.</p></div>
+      <div class="empc"><div class="et">IP accelerators</div><p>WAN optimization and TCP/proxy acceleration to keep apps usable across a ½‑second GEO round trip and a thin pipe.</p></div>
+      <div class="empc"><div class="et">Packet tagging / QoS (DSCP)</div><p>Mark and queue so C2 and voice get the scarce bandwidth first; mis‑tagged bulk traffic starves the mission data.</p></div>
+      <div class="empc"><div class="et">Header / payload compression</div><p>Squeeze protocol overhead so the small pipe carries useful payload, not framing.</p></div>
+      <div class="empc"><div class="et">Dedicated routes / ports</div><p>Certain services or kits need specific routed paths or opened ports provisioned end‑to‑end — or they simply won't connect.</p></div>
+      <div class="empc"><div class="et">Latency‑aware app config</div><p>Disable chatty features, tune timeouts and retries for high‑latency / intermittent handoff so sessions survive a beam change.</p></div>
+    </div>
+    <div class="callout" style="border-color:#27506f;background:#0b1a2a"><div class="ic">✈️</div><p><b>Baseband airworthiness — not just the antenna.</b> Both earn the <b>Airworthiness Release (AWR)</b>. On USAF airframes (C‑17/C‑130) the <b>Technical Airworthiness Authority</b> (AFLCMC/EN‑EZ) assesses the config against <b>MIL‑HDBK‑516C</b> (per <b>DAFI 62‑601</b>) through the airframe <b>SPO</b>; on Army aircraft the Army airworthiness authority issues the AWR. Separately it needs <b>ATTLA air‑transportability certification</b> (MIL‑STD‑1791/209, USTRANSCOM DTR) — the letter in the cargo package. <b>SOAR</b> owns its rotary‑wing aircraft and a consolidated, specialized AWR process; the conventional force's is dispersed with joint dependencies. Doing this <em>once, by default</em> in NGC2 fielding removes the per‑DIV burden.</p></div>
+  </section>
+
+  <!-- RESOURCING STRATEGY (boxed key message) -->
+  <section class="block" id="sec-strategy">
+    <div style="border:2px solid var(--amber);border-radius:20px;background:radial-gradient(600px 300px at 80% 0%, #2a1d0788, transparent 70%),linear-gradient(180deg,#171108,#0d1018);padding:24px 26px;box-shadow:var(--shadow)">
+      <div class="eyebrow" style="color:var(--amber)">The resourcing strategy · get EMC to the warfighter at scale</div>
+      <div class="h2" style="margin-top:.2em">Make EMC the default — then it can actually be plug‑and‑play for the warfighter</div>
+      <p style="color:var(--ink);font-size:15.5px;line-height:1.6;max-width:880px;margin:14px 0 18px">Not plug‑and‑play today — that friction costs the warfighter time. It can be, with two deliberate moves:</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <div style="border:1px solid var(--line2);border-radius:14px;background:#0c1620;padding:16px"><div style="font-family:var(--mono);font-weight:700;font-size:11px;color:var(--amber);letter-spacing:.1em">1 · DEFAULT‑ON</div><div style="font-family:var(--disp);font-weight:800;font-size:16px;margin:7px 0 5px">EMC‑ready by default</div><p style="margin:0;font-size:13px;line-height:1.55;color:var(--mut)"><b style="color:var(--ink)">NGC2 &amp; ESB‑E</b> kits are EMC‑capable by default; non‑EMC configs go on a <b style="color:var(--ink)">black list</b>. Air‑/vessel‑worthiness is built into the requirement once.</p></div>
+        <div style="border:1px solid var(--line2);border-radius:14px;background:#0c1620;padding:16px"><div style="font-family:var(--mono);font-weight:700;font-size:11px;color:var(--amber);letter-spacing:.1em">2 · RESIDUAL = TRANSPORT</div><div style="font-family:var(--disp);font-weight:800;font-size:16px;margin:7px 0 5px">Transport is the enterprise's job</div><p style="margin:0;font-size:13px;line-height:1.55;color:var(--mut)">With EMC default‑on, the rest is <b style="color:var(--ink)">transport</b> — an enterprise problem owned by the Signal/Cyber forces that run the <b style="color:var(--ink)">DODIN‑A and Army Data</b> (DISA, ARCYBER, NETCOM, Data Ops, Signal Brigades) — <b style="color:var(--ink)">not the division</b>. That includes holding the recurring bandwidth accounts (Ka SIMOPS ≈ &gt;$1M/yr; SpaceX ≈ $300K/yr) at echelon, not per‑DIV.</p></div>
+        <div style="border:1px solid var(--go-dim);border-radius:14px;background:linear-gradient(180deg,#10241a,#0c1a14);padding:16px"><div style="font-family:var(--mono);font-weight:700;font-size:11px;color:var(--go);letter-spacing:.1em">3 · RESULT</div><div style="font-family:var(--disp);font-weight:800;font-size:16px;margin:7px 0 5px">Plug‑and‑play for the DIV</div><p style="margin:0;font-size:13px;line-height:1.55;color:#c6ffe0">From the division's seat, EMC becomes <b>plug‑and‑play</b>: bring the EMC‑ready kit, plug into enterprise‑owned transport. The complexity is <b>owned at echelon</b>, not gone.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAPABILITY GALLERY (moved up) -->
+  <section class="block">
+    <div class="eyebrow">The hardware</div>
+    <div class="h2">What these capabilities actually look like</div>
+    <p class="lede">The apertures and baseband chain a crew installs, connects, and tunes — the gear behind every turn.</p>
+    <div class="gallery" id="gallery"></div>
+  </section>
+
+  <!-- TRANSPORT -->
+  <section class="block">
+    <div class="eyebrow">Transport</div>
+    <div class="h2">GEO Ka/Ku (KAFMA) vs. Starlink / Starshield LEO — not interchangeable</div>
+    <p class="lede">Same mission, different physics, access, and certification maturity. Several turns change content entirely by which you fly.</p>
+    <div class="tcmp" id="tcmp"></div>
+  </section>
+
+  <!-- APERTURE -->
+  <section class="block">
+    <div class="eyebrow">Aperture &amp; setup time</div>
+    <div class="h2">Hatch‑mount · fixed‑fuselage Starshield · Starlink Mini</div>
+    <p class="lede">Watch the <em>per‑mission setup</em> row. With a fixed Starshield antenna installed — or a KAFMA tail provisioned — getting on the net is just connecting baseband to patch panel. Hatch pays an install‑and‑align tax every mission.</p>
+    <div class="cmp" id="cmp"></div>
+    <div class="callout"><div class="ic">⛔</div><p><b>C‑17 hatch‑mount is authorized for GEO Ka/Ku only.</b> USAF will not progress airworthiness certification for a Starlink/Starshield hatch‑mount on the C‑17 — the plan is fixed‑fuselage Starshield for the fleet, plus reliability concerns with the hatch and fit variance across C‑17 tails. On the C‑17, LEO means <b>fixed‑fuselage Starshield</b>; hatch‑mount LEO lives on the <b>C‑130 and rotary‑wing</b>.</p></div>
+  </section>
+
+  <!-- MATRIX -->
+  <section class="block">
+    <div class="eyebrow">The integration gap</div>
+    <div class="h2">What's certified to fly — today vs. the dual‑purpose end‑state</div>
+    <p class="lede">Every cell is a transport × airframe × aperture combo. Red/amber is where EMC fails before it starts. Toggle the end‑state to see what the NGC2 pipeline turns green — and the one cell it deliberately does <em>not</em>.</p>
+    <div class="matswitch" id="matSwitch"><button data-mode="today" class="on">Today</button><button data-mode="target">NGC2 dual‑purpose end‑state</button></div>
+    <div class="matwrap" id="matwrap"></div>
+    <p style="font-family:var(--mono);font-size:11px;color:var(--dim);margin:10px 0 0;line-height:1.6">▸ GEO <b>Fixed</b> = <b>KAFMA</b>, the C‑17's permanently installed fixed Ka antenna · GEO <b>Hatch</b> = the removable Ka/Ku dome (the alternative). LEO <b>Fixed</b> = fixed‑fuselage <b>Starshield</b>; LEO <b>Hatch</b> = Starshield panel (C‑130/rotary only).</p>
+    <div class="matlegend">
+      <span><i style="background:var(--go)"></i>Certified / available</span>
+      <span><i style="background:var(--amber)"></i>In certification — soon</span>
+      <span><i style="background:var(--no)"></i>Not yet certified</span>
+      <span><i style="background:#b13a3a"></i>Not authorized (USAF)</span>
+      <span><i style="background:var(--blue)"></i>Ad hoc — BW limited</span>
+      <span><i style="background:#3a4a57"></i>N/A</span>
+    </div>
+  </section>
+
+  <!-- CURRENT / FUTURE -->
+  <section class="block" id="sec-future">
+    <div class="eyebrow">Current state → future state</div>
+    <div class="h2">Where EMC works today, and where it has to go: robust LEO across every medium</div>
+    <p class="lede">Today capability is uneven across C‑17/C‑130/rotary and barely exists for land‑on‑the‑move and maritime. The objective: <em>robust LEO (Starshield) across air, land, and vessel</em>, fixed Starshield broad on the C‑17 fleet, and dual‑use NGC2/ESB‑E baseband EMC‑ready by default.</p>
+    <div class="matswitch" id="medSwitch"><button data-mode="today" class="on">Current state</button><button data-mode="future">Future state</button></div>
+    <div class="medgrid" id="medgrid"></div>
+    <div class="matlegend">
+      <span><i style="background:var(--go)"></i>Robust / fielded</span>
+      <span><i style="background:var(--amber)"></i>Limited / emerging</span>
+      <span><i style="background:var(--no)"></i>Gap / not authorized</span>
+      <span><i style="background:var(--blue)"></i>Ad hoc</span>
+      <span><i style="background:#3a4a57"></i>N/A</span>
+    </div>
+  </section>
+
+  <!-- PHASES -->
+  <section class="block">
+    <div class="eyebrow">Before · During · After</div>
+    <div class="h2">Coordination doesn't start at wheels‑up or end at wheels‑down</div>
+    <p class="lede">Every mission is wrapped in pre‑flight provisioning, in‑flight sustainment, and post‑flight recovery — synced across the Army EMC element, AMC/aircrew, DISA, ARCYBER/NETCOM, the SATCOM provider, and service PMs.</p>
+    <div class="phases" id="phases"></div>
+  </section>
+
+  <!-- THEATERS -->
+  <section class="block">
+    <div class="eyebrow">Theater reality · real organizations</div>
+    <div class="h2">Coverage, threat, and the brigade that owns it change by theater</div>
+    <p class="lede">Regional support puts EMC with the theater signal brigade that already owns the APODs/SPODs, the AMC/DISA relationships, and the RCC battle rhythm — airborne‑division assets as the spearhead. Pick a theater:</p>
+    <div class="thsel" id="thSel"></div>
+    <div class="thpanel"><div class="thmain" id="thMain"></div><div class="thmetrics" id="thMetrics"></div></div>
+  </section>
+
+  <!-- PROPOSAL -->
+  <section class="block" id="sec-proposal">
+    <div class="eyebrow">The proposal · takeaway 2 · the best lever</div>
+    <div class="h2">Flip the triangle — make NGC2 EMC‑ready by default</div>
+    <p class="lede">The single highest‑payoff move. Today <b>NGC2, ESB‑E, and EMC are separate basebands</b> — built by the <b>same vendors</b>. Only a few are EMC‑capable, on a <em>white list</em>; everything else is an exception that costs friction and delay. Flip it: make the <b>NGC2 baseband EMC‑capable and dual‑use by default</b>, and put the few non‑EMC configs on a <em>black list</em>.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px">
+      <div style="border:1px solid var(--no-dim);border-radius:16px;background:#140d12;padding:16px 18px">
+        <div style="font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:#ff8585;text-transform:uppercase;margin-bottom:8px">Today · white list</div>
+        <svg viewBox="0 0 260 150" style="display:block;width:100%;height:auto">
+          <path d="M30 22 L230 22 L130 132 Z" fill="#1a2330" stroke="#5b87a8" stroke-width="1.5"/>
+          <path d="M30 22 L230 22 L196 60 L64 60 Z" fill="#3fd07e" opacity=".85"/>
+          <text x="130" y="46" text-anchor="middle" font-family="'JetBrains Mono'" font-size="10" fill="#06160d" font-weight="700">FEW EMC‑CAPABLE</text>
+          <text x="130" y="98" text-anchor="middle" font-family="'JetBrains Mono'" font-size="10" fill="#9fbdd2">everything else =</text>
+          <text x="130" y="113" text-anchor="middle" font-family="'JetBrains Mono'" font-size="10" fill="#9fbdd2">an exception</text>
+        </svg>
+        <p style="margin:10px 0 0;font-size:12.5px;line-height:1.55;color:#f3c9c9">A few certified kits; every other mission is a one‑off. <b>Friction, delay, low capacity.</b></p>
+      </div>
+      <div style="border:1px solid var(--go-dim);border-radius:16px;background:#0c1a14;padding:16px 18px">
+        <div style="font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:#7be0a4;text-transform:uppercase;margin-bottom:8px">Proposed · black list</div>
+        <svg viewBox="0 0 260 150" style="display:block;width:100%;height:auto">
+          <path d="M30 128 L230 128 L130 18 Z" fill="#163a2a" stroke="#3fd07e" stroke-width="1.5"/>
+          <path d="M30 128 L230 128 L196 90 L64 90 Z" fill="#ff5d5d" opacity=".8"/>
+          <text x="130" y="118" text-anchor="middle" font-family="'JetBrains Mono'" font-size="9.5" fill="#2a0d0d" font-weight="700">FEW EXCEPTIONS</text>
+          <text x="130" y="62" text-anchor="middle" font-family="'JetBrains Mono'" font-size="10" fill="#7be0a4" font-weight="700">EMC‑READY</text>
+          <text x="130" y="77" text-anchor="middle" font-family="'JetBrains Mono'" font-size="10" fill="#7be0a4" font-weight="700">BY DEFAULT</text>
+        </svg>
+        <p style="margin:10px 0 0;font-size:12.5px;line-height:1.55;color:#c6ffe0">Most kits ready out of the box; only exceptions are black‑listed. <b>Speed, scale, low friction.</b></p>
+      </div>
+    </div>
+
+    <div style="margin-top:18px;border:1px solid var(--line2);border-radius:16px;background:#0c1620;padding:16px 18px">
+      <div style="font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--amber);text-transform:uppercase;margin-bottom:6px">Converge the kit</div>
+      <svg viewBox="0 0 640 150" style="display:block;width:100%;height:auto">
+        <text x="105" y="13" text-anchor="middle" font-family="'JetBrains Mono'" font-size="9.5" fill="#9fbdd2">TODAY · same vendors · separate kits</text>
+        <g font-family="'JetBrains Mono'" font-size="11" font-weight="700">
+          <rect x="30" y="24" width="150" height="28" rx="6" fill="#13212e" stroke="#6f9bbd" stroke-width="1.4"/><text x="105" y="42" text-anchor="middle" fill="#cfe0ee">NGC2</text>
+          <rect x="30" y="60" width="150" height="28" rx="6" fill="#13212e" stroke="#6f9bbd" stroke-width="1.4"/><text x="105" y="78" text-anchor="middle" fill="#cfe0ee">ESB‑E</text>
+          <rect x="30" y="96" width="150" height="28" rx="6" fill="#13212e" stroke="#6f9bbd" stroke-width="1.4"/><text x="105" y="114" text-anchor="middle" fill="#cfe0ee">EMC</text>
+        </g>
+        <path d="M198 74 L300 74" stroke="#ffb13c" stroke-width="3"/><path d="M300 68 l16 6 l-16 6 z" fill="#ffb13c"/>
+        <text x="249" y="64" text-anchor="middle" font-family="'JetBrains Mono'" font-size="9.5" fill="#ffd9a6">converge</text>
+        <text x="478" y="42" text-anchor="middle" font-family="'JetBrains Mono'" font-size="9.5" fill="#7be0a4">PROPOSED · one dual‑use baseband</text>
+        <rect x="340" y="52" width="276" height="50" rx="10" fill="#10241a" stroke="#3fd07e" stroke-width="2"/>
+        <text x="478" y="76" text-anchor="middle" font-family="'Bricolage Grotesque'" font-weight="800" font-size="15" fill="#e8f1f7">NGC2 BASEBAND</text>
+        <text x="478" y="92" text-anchor="middle" font-family="'JetBrains Mono'" font-size="9.5" fill="#7be0a4">EMC + dual‑use · by default</text>
+      </svg>
+      <p style="margin:10px 0 0;font-size:12.5px;line-height:1.5;color:var(--mut)"><em>T2COM / ASA(ALT)</em> bake EMC airworthiness/vessel‑worthiness into the requirement and fielding — capability inherited, not re‑earned each mission.</p>
+    </div>
+    <div class="flow">
+      <div class="fstep"><div class="fn">Step 1 · Requirement</div><div class="ft">NGC2 / ESB‑E FCD requirement</div><div class="fd">Dual‑use EMC (air/land/vessel) written into the NGC2 &amp; ESB‑E FCD as the <b>default</b> — black‑list, not white‑list.</div></div>
+      <div class="fstep"><div class="fn">Step 2 · Integration</div><div class="ft">T2COM process</div><div class="fd">Prove baseband + aperture + transport + crypto + routing together, once — every fielding inherits it.</div></div>
+      <div class="fstep"><div class="fn">Step 3 · Acq + worthiness cert</div><div class="ft">ASA(ALT) C2 CPE</div><div class="fd">C2 acquisition lead drives <b>air‑/vessel‑worthiness</b> certification into requirements and fieldings.</div></div>
+      <div class="fstep target"><div class="fn">Outcome</div><div class="ft">EMC‑ready by default</div><div class="fd">The kit is EMC‑capable out of the box — less friction, better supportability, fewer one‑off certs.</div></div>
+    </div>
+    <div class="oversight"><span class="tag">USAF AMC oversight</span><p>The <b>Airworthiness Release (AWR)</b> for the C‑17/C‑130 belongs to the USAF airframe authority — <b>AMC oversees</b> it throughout; maritime adds the vessel‑worthiness authority. The Army can't self‑certify onto USAF airframes, so worthiness must be designed into the NGC2/ESB‑E requirement up front — and AMC's posture (e.g., C‑17 Starshield‑hatch) shapes what "default" means per platform.</p></div>
+
+    <h3 style="font-family:var(--disp);font-weight:800;font-size:19px;margin:30px 0 0">Aperture employment strategy</h3>
+    <div class="emp">
+      <div class="empc"><div class="et">Fixed‑fuselage Starshield <span class="badge2" style="background:var(--blue);color:#06121f">C‑17 · PERSISTENT</span></div><p>Optimize robust availability of the C‑17 fleet fixed‑fuselage Starshield aperture as the <b>high‑capacity backbone</b>. Once installed, per‑mission setup is just the patch‑panel connection.</p></div>
+      <div class="empc"><div class="et">Starlink Mini <span class="badge2" style="background:var(--amber);color:#1a1206">AD HOC</span></div><p>Hold Mini for <b>no‑notice / bridge</b> links on any platform, accepting the bandwidth limits. The exception, not the plan.</p></div>
+      <div class="empc"><div class="et">Hatch‑mount <span class="badge2" style="background:var(--go-dim);color:#c6ffe0">AIRBORNE</span></div><p>Focus hatch on <b>airborne/rapid units</b> — GEO Ka/Ku on the C‑17, and Starshield on the C‑130/rotary. Removable, fast to swap, but pays the per‑mission install tax.</p></div>
+    </div>
+  </section>
+
+  <!-- FORCE DESIGN -->
+  <section class="block" id="sec-force">
+    <div class="eyebrow">Force design · takeaway 3 · ready at scale</div>
+    <div class="h2">Regionally consolidate readiness, O&amp;M, and expertise — ready for warfighters at scale</div>
+    <p class="lede">Consolidate EMC readiness, O&amp;M, and expertise in <em>Theater/Corps Signal units</em> — EMC Air/Land/Sea, <b>ready for warfighters at scale, affordably (As‑A‑Service)</b>. A company in each: <em>35th</em> (18th ABN/WHC), <em>2nd</em> (USAREUR‑AF), <em>160th</em> (ARCENT), <em>516th</em> (USARPAC/Alaska). The integration, logistics tail, config variants, APOD/SPOD relationships, and modernization are <b>not</b> a DIV additional duty — they belong with the Signal Brigades, Data Ops, and NETCOM. With EMC‑by‑default kits at the DIV, the mission works — airborne assets stay the spearhead.</p>
+    <div class="why-grid">
+      <div class="points" id="points"></div>
+      <div class="modelcard"><h4>Theater / Corps Signal unit · EMC Company</h4>
+        <svg class="diagram" viewBox="0 0 360 330" id="model"></svg>
+        <p class="modelnote">One company consolidates the readiness, O&amp;M, and expertise: the airworthiness (AWR)/vessel‑worthiness packages, the AMC / SATCOM / Starshield / DISA / Data Ops / ARCYBER‑NETCOM RCC relationships, the pre‑staged certified kits, and a current operator bench — working <b>familiar APODs/SPODs</b> with habitual partners. It owns the routing considerations beyond RHN/GAIT, BTU settings, and RCC dependencies, and feeds modernization. EMC as‑a‑service to the warfighter.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:18px;border:1px solid var(--line2);border-radius:16px;background:#0c1620;padding:16px 18px">
+      <div style="font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--amber);text-transform:uppercase;margin-bottom:10px">Proof of the model · the AWR process</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div style="border:1px solid var(--go-dim);border-radius:13px;background:#0c1a14;padding:13px 15px">
+          <div style="font-family:var(--disp);font-weight:800;font-size:15px;color:#7be0a4">SOAR — consolidated · fast</div>
+          <p style="margin:6px 0 0;font-size:12.5px;line-height:1.55;color:#c6ffe0"><b>Owns its rotary‑wing aircraft</b> and runs <b>specialized units just for AWR</b>. The process and expertise are concentrated in one place — so airworthiness moves fast.</p>
+        </div>
+        <div style="border:1px solid var(--no-dim);border-radius:13px;background:#140d12;padding:13px 15px">
+          <div style="font-family:var(--disp);font-weight:800;font-size:15px;color:#ff8585">Conventional — dispersed · slow</div>
+          <p style="margin:6px 0 0;font-size:12.5px;line-height:1.55;color:#f3c9c9">Rides <b>USAF airframes</b> (C‑17/C‑130): the AWR runs through the USAF airframe authority, AMC, and ATTLA — <b>joint dependencies</b>, distributed across commands. Far slower, far more complex.</p>
+        </div>
+      </div>
+      <p style="margin:12px 0 0;font-size:13px;line-height:1.55;color:var(--ink)"><b>The lesson:</b> SOAR is fast because it <em>concentrates</em> the process and expertise. The conventional force can't own the airframes — but it <b>can</b> concentrate the EMC AWR, integration, and expertise the same way: in <b>Theater/Corps Signal units</b>.</p>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="v">3×3</div><div class="k">airframes × apertures — plus land &amp; vessel — to certify <em>and</em> keep trained</div></div>
+      <div class="kpi"><div class="v">8</div><div class="k">coordination turns per mission — all green at once or NO‑GO</div></div>
+      <div class="kpi"><div class="v">20+</div><div class="k">components in the data path across Army, AMC, SATCOM/Starshield, DISA, ARCYBER/NETCOM &amp; PMs</div></div>
+      <div class="kpi"><div class="v">1 CO</div><div class="k">EMC company per Signal unit — consolidated readiness vs. a DIV additional duty</div></div>
+    </div>
+  </section>
+
+  <footer>
+    <p class="disc"><b>Briefing aid, not a configuration or certification authority.</b> Program/process/technical terms — NGC2, ESB‑E, FCD, T2COM, ASA(ALT) C2 CPE, KAFMA, GAIT/BTU, RHN, RCC, Starshield, fixed‑fuselage / hatch‑mount apertures, baseband / patch panel, IP accelerators, inline encryptors, SD‑WAN / Seeker / CloudJunction, DODIN gateways/POPs, GAIT POPs, fiber, edge compute (Maven Smart System), Secure Voice, DISA/DISN, Data Ops, NETCOM, Airworthiness Release (AWR) / vessel‑worthiness certification, SOAR — and the named organizations (18th ABN Corps/35th SIG BDE, USAREUR‑AF/2nd SIG BDE, ARCENT/160th SIG BDE, USARPAC/516th SIG BDE) are represented by their <b>function in the dependency chain, data path, and proposed pipeline</b> to communicate complexity to a non‑signal audience. Certification states (C‑17 hatch = GEO Ka/Ku only; USAF not progressing C‑17 Starshield hatch; fixed‑fuselage Starshield expanding across the C‑17 fleet; C‑130/rotary hatch available; Mini ad hoc) reflect the operator's stated current picture and will move over time. Encryptor types/settings and routing elements are shown by function, not configuration. Commercial‑bandwidth contract vehicles and costs (Ka SIMOPS token model / Altagrove ≈ &gt;$1M/yr; SpaceX/Starshield ≈ $300K/yr) reflect the operator's stated figures and are order‑of‑magnitude planning values, not quotes. Reference video is U.S. Army / 2d Theater Signal Brigade, public domain, via DVIDS. Confirm exact requirement vehicles, lead organizations, airworthiness/vessel‑worthiness authorities, data rates, routing dependencies, and theater coverage/threat against governing ASA(ALT)/AMC/DISA/NETCOM and theater guidance before operational use.</p>
+  </footer>
+</div>
+
+<script>
+/* ===== AVATARS (simple cartoon SVG) ===== */
+function avatar(k){
+  const m={
+    army:`<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#13241a" stroke="#3fd07e" stroke-width="1.5"/><path d="M10 24 q10 -9 20 0" fill="none" stroke="#7be0a4" stroke-width="2"/><rect x="17" y="9" width="6" height="9" rx="2" fill="#3fd07e"/><line x1="20" y1="9" x2="20" y2="4" stroke="#7be0a4" stroke-width="1.5"/><circle cx="20" cy="4" r="1.6" fill="#7be0a4"/></svg>`,
+    amc:`<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#0d1d2a" stroke="#5ab0ff" stroke-width="1.5"/><path d="M7 21 L33 21 L26 16 L14 16 Z" fill="#5ab0ff" opacity=".85"/><path d="M18 16 L22 16 L21 10 L19 10 Z" fill="#9fd6ff"/></svg>`,
+    disa:`<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#10202c" stroke="#9fb6c8" stroke-width="1.5"/><circle cx="20" cy="20" r="9" fill="none" stroke="#bcd2e2" stroke-width="1.4"/><ellipse cx="20" cy="20" rx="9" ry="4" fill="none" stroke="#bcd2e2" stroke-width="1.1"/><line x1="11" y1="20" x2="29" y2="20" stroke="#bcd2e2" stroke-width="1.1"/></svg>`,
+    cyber:`<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#160f24" stroke="#b48bff" stroke-width="1.5"/><path d="M20 9 L29 13 V21 q0 7 -9 10 q-9 -3 -9 -10 V13 Z" fill="none" stroke="#cdb4ff" stroke-width="1.6"/><circle cx="20" cy="19" r="2.2" fill="#cdb4ff"/><line x1="20" y1="21" x2="20" y2="25" stroke="#cdb4ff" stroke-width="1.6"/></svg>`,
+    satcom:`<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#1d160a" stroke="#ffd27a" stroke-width="1.5"/><path d="M12 26 A12 12 0 0 1 26 13" fill="none" stroke="#ffd27a" stroke-width="2"/><circle cx="13" cy="26" r="2.4" fill="#ffd27a"/><path d="M22 12 l5 -3 l0 8 z" fill="#ffd27a" opacity=".8"/></svg>`,
+    pm:`<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#0f1c2a" stroke="#7be0a4" stroke-width="1.5"/><rect x="12" y="13" width="16" height="14" rx="2" fill="none" stroke="#cfe0ee" stroke-width="1.5"/><line x1="12" y1="18" x2="28" y2="18" stroke="#cfe0ee" stroke-width="1.2"/><circle cx="15" cy="15.5" r="1" fill="#cfe0ee"/></svg>`
+  };
+  return m[k]||m.army;
+}
+const OWNER={army:"Army EMC element",amc:"AMC / aircrew",disa:"DISA / DISN",cyber:"ARCYBER / NETCOM",satcom:"SATCOM / Starshield",pm:"Service program office"};
+
+/* ===== PER-TURN CARTOONS ===== */
+const TURNCOL={access:"#ffb13c",stf:"#5ab0ff",ant:"#ff7ac0",baseband:"#3fd07e",bw:"#ff7a4d",settings:"#b48bff",beam:"#ffd27a",train:"#4fd4e0"};
+const RAILGLYPH={
+ access:`<svg viewBox="0 0 28 28"><rect x="4" y="3" width="14" height="18" rx="2" fill="none" stroke="#ffb13c" stroke-width="2"/><line x1="7" y1="8" x2="15" y2="8" stroke="#ffb13c" stroke-width="1.6"/><line x1="7" y1="12" x2="15" y2="12" stroke="#ffb13c" stroke-width="1.6"/><circle cx="19" cy="20" r="6" fill="#ffb13c"/><text x="19" y="24" text-anchor="middle" font-family="'JetBrains Mono'" font-weight="700" font-size="9" fill="#1a1206">$</text></svg>`,
+ stf:`<svg viewBox="0 0 28 28"><path d="M14 3 L23 7 V14 q0 8 -9 11 q-9 -3 -9 -11 V7 Z" fill="none" stroke="#5ab0ff" stroke-width="2"/><path d="M9.5 13 l3 3 l6 -7" fill="none" stroke="#5ab0ff" stroke-width="2.2"/></svg>`,
+ ant:`<svg viewBox="0 0 28 28"><line x1="14" y1="24" x2="14" y2="12" stroke="#ff7ac0" stroke-width="2"/><ellipse cx="14" cy="11" rx="9" ry="4" fill="none" stroke="#ff7ac0" stroke-width="2"/><line x1="14" y1="7" x2="14" y2="3" stroke="#ff7ac0" stroke-width="2"/><circle cx="14" cy="3" r="1.8" fill="#ff7ac0"/><line x1="6" y1="24" x2="22" y2="24" stroke="#ff7ac0" stroke-width="2"/></svg>`,
+ baseband:`<svg viewBox="0 0 28 28"><rect x="4" y="6" width="20" height="16" rx="2" fill="none" stroke="#3fd07e" stroke-width="2"/><line x1="7" y1="11" x2="21" y2="11" stroke="#3fd07e" stroke-width="1.6"/><line x1="7" y1="15" x2="21" y2="15" stroke="#3fd07e" stroke-width="1.6"/><circle cx="8" cy="19" r="1.4" fill="#3fd07e"/><circle cx="13" cy="19" r="1.4" fill="#3fd07e"/></svg>`,
+ bw:`<svg viewBox="0 0 28 28"><path d="M4 6 L24 6 L24 9 L11 9 L11 19 L24 19 L24 22 L4 22 Z" fill="none" stroke="#ff7a4d" stroke-width="2" stroke-linejoin="round"/></svg>`,
+ settings:`<svg viewBox="0 0 28 28"><line x1="5" y1="8" x2="23" y2="8" stroke="#b48bff" stroke-width="2"/><circle cx="11" cy="8" r="3" fill="#b48bff"/><line x1="5" y1="14" x2="23" y2="14" stroke="#b48bff" stroke-width="2"/><circle cx="18" cy="14" r="3" fill="#b48bff"/><line x1="5" y1="20" x2="23" y2="20" stroke="#b48bff" stroke-width="2"/><circle cx="9" cy="20" r="3" fill="#b48bff"/></svg>`,
+ beam:`<svg viewBox="0 0 28 28"><rect x="9" y="3" width="10" height="5" rx="1" fill="none" stroke="#ffd27a" stroke-width="1.8"/><path d="M14 8 L6 24 M14 8 L14 24 M14 8 L22 24" stroke="#ffd27a" stroke-width="1.8"/></svg>`,
+ train:`<svg viewBox="0 0 28 28"><path d="M22 9 a9 9 0 1 0 1.5 5" fill="none" stroke="#4fd4e0" stroke-width="2"/><path d="M24 5 l0 6 l-6 0" fill="none" stroke="#4fd4e0" stroke-width="2"/><circle cx="14" cy="14" r="2.6" fill="#4fd4e0"/></svg>`
+};
+const TURNART={
+ access:{c:"Contract + provisioned tail + KAFMA fixed Ka antenna",b:`<rect x="16" y="48" width="62" height="56" rx="6" fill="#1d160a" stroke="#ffb13c" stroke-width="2"/><line x1="26" y1="64" x2="68" y2="64" stroke="#7a5a2a" stroke-width="4"/><line x1="26" y1="76" x2="68" y2="76" stroke="#7a5a2a" stroke-width="4"/><circle cx="47" cy="93" r="9" fill="#ffb13c"/><text x="47" y="97" text-anchor="middle" font-family="'JetBrains Mono'" font-weight="700" font-size="11" fill="#1a1206">$</text><text x="47" y="42" text-anchor="middle" font-family="'JetBrains Mono'" font-size="8" fill="#ffd9a6">Ka SIMOPS / SpaceX</text><text x="92" y="80" font-family="'JetBrains Mono'" font-size="20" fill="#ffb13c">→</text><g transform="translate(152,74)"><path d="M-30 0 Q-36 0 -32 -6 Q-10 -11 22 -11 L34 -11 Q44 -10 44 -2 Q44 4 34 5 L-20 5 Q-34 5 -30 0Z" fill="#2a4a64" stroke="#6f9bbd" stroke-width="1.6"/><path d="M6 -10 L-4 -26 L10 -26 L24 -10 Z" fill="#22405a" stroke="#6f9bbd" stroke-width="1.3"/></g><text x="150" y="100" text-anchor="middle" font-family="'JetBrains Mono'" font-size="8" fill="#9fbdd2">PROVISIONED TAIL</text><text x="208" y="80" font-family="'JetBrains Mono'" font-size="20" fill="#ffb13c">→</text><g transform="translate(258,74)"><path d="M-26 8 Q-30 4 -22 0 Q-4 -4 14 -4 L26 -4 Q32 -2 30 6 L-22 6Z" fill="#2a4a64" stroke="#6f9bbd" stroke-width="1.4"/><path d="M-8 -4 Q4 -18 18 -4 Z" fill="#1f3a52" stroke="#ffd27a" stroke-width="1.8"/></g><text x="256" y="100" text-anchor="middle" font-family="'JetBrains Mono'" font-size="8" fill="#ffd9a6">KAFMA · Ka (fixed)</text>`},
+ stf:{c:"Airworthiness Release (AWR) — airframe, aperture + baseband",b:`<path d="M150 38 L206 60 V92 q0 34 -56 50 q-56 -16 -56 -50 V60 Z" fill="#0e1c2a" stroke="#5ab0ff" stroke-width="2.5"/><path d="M124 86 l16 17 l30 -38" fill="none" stroke="#5ab0ff" stroke-width="6"/><path d="M232 60 Q258 60 256 74 L210 74" fill="none" stroke="#3a5a72" stroke-width="2"/><path d="M232 56 l16 4 l-16 4 z" fill="#6f9bbd"/>`},
+ ant:{c:"Mount the aperture — or just connect it",b:`<path d="M40 96 Q28 96 34 86 Q90 76 160 76 L250 76 Q272 78 272 88 Q272 96 250 98 L60 98 Q44 98 40 96Z" fill="#2a4a64" stroke="#6f9bbd" stroke-width="2"/><rect x="120" y="68" width="60" height="10" rx="3" fill="#16293a" stroke="#5b87a8" stroke-width="1.4"/><line x1="150" y1="40" x2="150" y2="56" stroke="#ff7ac0" stroke-width="3" stroke-dasharray="4 4"/><path d="M142 40 l8 -8 l8 8 z" fill="#ff7ac0"/><ellipse cx="150" cy="60" rx="26" ry="11" fill="#1f3a52" stroke="#ff7ac0" stroke-width="2"/><ellipse cx="150" cy="56" rx="15" ry="6" fill="#3a2330"/>`},
+ baseband:{c:"Baseband → patch panel → users (Maven / voice)",b:`<rect x="22" y="48" width="92" height="60" rx="6" fill="#13212e" stroke="#6f9bbd" stroke-width="2"/><rect x="32" y="56" width="72" height="11" rx="2" fill="#3fd07e" opacity=".8"/><rect x="32" y="71" width="72" height="11" rx="2" fill="#3fd07e" opacity=".55"/><rect x="32" y="86" width="72" height="11" rx="2" fill="#3fd07e" opacity=".4"/><text x="68" y="44" text-anchor="middle" font-family="'JetBrains Mono'" font-size="9" fill="#7be0a4">BASEBAND</text><rect x="186" y="48" width="92" height="60" rx="6" fill="#0e1c2a" stroke="#6f9bbd" stroke-width="2"/><g fill="#16293a" stroke="#3fd07e" stroke-width="1.4">${[0,1,2,3,4,5].map(i=>`<circle cx="${202+(i%3)*30}" cy="${66+Math.floor(i/3)*24}" r="8"/>`).join('')}</g><text x="232" y="44" text-anchor="middle" font-family="'JetBrains Mono'" font-size="9" fill="#7be0a4">PATCH PANEL</text><path d="M114 70 C150 70 150 76 186 76" fill="none" stroke="#3fd07e" stroke-width="3"/><path d="M114 86 C150 90 150 90 186 90" fill="none" stroke="#3fd07e" stroke-width="3" opacity=".6"/>`},
+ bw:{c:"Plan the apps to a small, contended pipe",b:`<path d="M20 50 L150 50 L150 64 L60 64 L60 86 L150 86 L150 100 L20 100 Z" fill="#0e1c2a" stroke="#ff7a4d" stroke-width="2"/><rect x="30" y="56" width="13" height="13" rx="2" fill="#ff7a4d"/><rect x="46" y="56" width="13" height="13" rx="2" fill="#ff7a4d" opacity=".7"/><rect x="30" y="80" width="13" height="13" rx="2" fill="#ff7a4d" opacity=".5"/><rect x="46" y="80" width="13" height="13" rx="2" fill="#ff5d5d"/><path d="M150 75 L210 75" stroke="#ff7a4d" stroke-width="4" stroke-dasharray="6 6"><animate attributeName="stroke-dashoffset" values="0;-24" dur="1s" repeatCount="indefinite"/></path><path d="M232 54 a22 22 0 1 1 -0.1 0" fill="none" stroke="#22323f" stroke-width="6"/><path d="M232 54 a22 22 0 0 1 18 36" fill="none" stroke="#ff7a4d" stroke-width="6"/><text x="232" y="80" text-anchor="middle" font-family="'JetBrains Mono'" font-size="10" fill="#ffb59a">CAP</text>`},
+ settings:{c:"Terminal + gateway must match exactly",b:`<rect x="26" y="46" width="86" height="62" rx="6" fill="#0e1c2a" stroke="#b48bff" stroke-width="2"/><line x1="38" y1="62" x2="100" y2="62" stroke="#3a3354" stroke-width="4"/><circle cx="62" cy="62" r="6" fill="#b48bff"/><line x1="38" y1="78" x2="100" y2="78" stroke="#3a3354" stroke-width="4"/><circle cx="82" cy="78" r="6" fill="#b48bff"/><line x1="38" y1="94" x2="100" y2="94" stroke="#3a3354" stroke-width="4"/><circle cx="54" cy="94" r="6" fill="#b48bff"/><text x="150" y="82" text-anchor="middle" font-family="'JetBrains Mono'" font-size="26" fill="#cdb4ff">=</text><rect x="188" y="46" width="86" height="62" rx="6" fill="#0e1c2a" stroke="#b48bff" stroke-width="2"/><line x1="200" y1="62" x2="262" y2="62" stroke="#3a3354" stroke-width="4"/><circle cx="224" cy="62" r="6" fill="#b48bff"/><line x1="200" y1="78" x2="262" y2="78" stroke="#3a3354" stroke-width="4"/><circle cx="244" cy="78" r="6" fill="#b48bff"/><line x1="200" y1="94" x2="262" y2="94" stroke="#3a3354" stroke-width="4"/><circle cx="216" cy="94" r="6" fill="#b48bff"/>`},
+ beam:{c:"LEO = many narrow beams, constant handoff",b:`<rect x="132" y="36" width="36" height="14" rx="3" fill="#34536e" stroke="#ffd27a" stroke-width="1.6"/><rect x="118" y="39" width="12" height="8" fill="#23415a" stroke="#3b6488"/><rect x="170" y="39" width="12" height="8" fill="#23415a" stroke="#3b6488"/>${[0,1,2,3,4,5,6,7,8].map(i=>{const x=40+i*28;return `<path d="M150 50 L${x-8} 104 L${x+8} 104 Z" fill="#ffd27a" opacity="${i===4?'.55':'.20'}" stroke="#ffd27a" stroke-width=".6"/>`}).join('')}<path d="M40 94 Q34 94 38 88 Q70 82 110 82 L140 82" fill="#2a4a64" stroke="#6f9bbd" stroke-width="1.6"/><path d="M150 64 q14 6 28 0" fill="none" stroke="#ffb13c" stroke-width="2"><animate attributeName="opacity" values="0;1;0" dur="1.1s" repeatCount="indefinite"/></path>`},
+ train:{c:"Rehearse · repeat · sustain — across agencies",b:`<circle cx="150" cy="74" r="40" fill="none" stroke="#4fd4e0" stroke-width="2.5" stroke-dasharray="5 7"><animate attributeName="stroke-dashoffset" values="0;-48" dur="3s" repeatCount="indefinite"/></circle>${[['#7be0a4',150,38,'SIG'],['#5ab0ff',106,100,'AMC'],['#b48bff',194,100,'CYB']].map(([c,x,y,l])=>`<circle cx="${x}" cy="${y}" r="13" fill="#0e1c2a" stroke="${c}" stroke-width="2.5"/><circle cx="${x}" cy="${y-3}" r="4.5" fill="${c}"/><path d="M${x-7} ${y+8} q7 -7 14 0" fill="none" stroke="${c}" stroke-width="2.5"/><text x="${x}" y="${y+26}" text-anchor="middle" font-family="'JetBrains Mono'" font-size="8" fill="${c}">${l}</text>`).join('')}`}
+};
+function turnCartoon(i){const s=STAGES[i];const a=TURNART[s.key]||{b:'',c:''};const col=TURNCOL[s.key]||"#ffb13c";
+ return `<svg viewBox="0 0 300 156" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="300" height="156" rx="11" fill="#0b1620"/><rect x="0" y="0" width="300" height="28" fill="#13212e"/><rect x="0" y="0" width="5" height="156" fill="${col}"/><rect x="14" y="6" width="56" height="16" rx="8" fill="${col}"/><text x="42" y="18" text-anchor="middle" font-family="'JetBrains Mono'" font-weight="700" font-size="10" fill="#0b1118">TURN ${i+1}</text><text x="78" y="18" font-family="'Bricolage Grotesque'" font-weight="700" font-size="11.5" fill="#e8f1f7">${s.nm}</text>${a.b}<text x="150" y="146" text-anchor="middle" font-family="'JetBrains Mono'" font-size="9.5" fill="#9fbdd2">${a.c}</text></svg>`;}
+
+/* ===== TAKEAWAYS ===== */
+const TAKEAWAYS=[
+ {n:"Takeaway 1",target:"sec-turns",
+  art:`<svg viewBox="0 0 200 78"><path d="M20 50 q14 -22 30 0 t30 0" fill="none" stroke="#ff5d5d" stroke-width="3"/><circle cx="86" cy="40" r="5" fill="#ff5d5d"/><path d="M96 40 h14 m-3 -10 v6 m0 8 v6" stroke="#ff8585" stroke-width="2"/><rect x="120" y="22" width="58" height="36" rx="5" fill="#0e1c2a" stroke="#ffb13c" stroke-width="1.4"/><text x="149" y="44" text-anchor="middle" font-family="'JetBrains Mono'" font-size="9" fill="#ffd9a6">8 TURNS</text><text x="40" y="72" font-family="'JetBrains Mono'" font-size="8" fill="#f3a0a0">NOT PLUG‑AND‑PLAY</text></svg>`,
+  h:"Today it is not plug‑and‑play.",
+  p:"Putting a commander on the net in flight is complex <b>joint logistics, coordination, and data integration</b> — dedicated, persistent expertise. That friction slows the warfighter.",
+  more:"See the 8 turns ↓"},
+ {n:"Takeaway 2",target:"sec-proposal",
+  art:`<svg viewBox="0 0 200 78"><path d="M14 16 L74 16 L44 64 Z" fill="#1a2330" stroke="#5b87a8" stroke-width="1.3"/><path d="M14 16 L74 16 L62 35 L26 35 Z" fill="#3fd07e" opacity=".85"/><text x="44" y="74" text-anchor="middle" font-family="'JetBrains Mono'" font-size="7" fill="#9fbdd2">WHITE LIST</text><path d="M96 30 l16 0 l-8 12 z" fill="#ffb13c"/><path d="M126 64 L186 64 L156 16 Z" fill="#163a2a" stroke="#3fd07e" stroke-width="1.3"/><path d="M126 64 L186 64 L174 45 L138 45 Z" fill="#ff5d5d" opacity=".8"/><text x="156" y="74" text-anchor="middle" font-family="'JetBrains Mono'" font-size="7" fill="#7be0a4">BLACK LIST</text></svg>`,
+  h:"Flip the triangle: EMC‑ready by default.",
+  p:"Make the <b>NGC2 baseband EMC‑capable &amp; dual‑use by default</b>. Non‑EMC kits go on a <b>black list</b> — not today's <b>white list</b> of a few. The single best lever to cut friction and scale EMC.",
+  more:"See the flip ↓"},
+ {n:"Takeaway 3",target:"sec-force",
+  art:`<svg viewBox="0 0 200 78"><circle cx="100" cy="26" r="15" fill="#1a1206" stroke="#ffb13c" stroke-width="1.8"/><text x="100" y="24" text-anchor="middle" font-family="'JetBrains Mono'" font-size="7" fill="#ffd9a6">SIG BDE</text><text x="100" y="33" text-anchor="middle" font-family="'JetBrains Mono'" font-size="6.5" fill="#ffd9a6">EMC CO</text><g stroke="#3a5a72" stroke-width="1.5">${[34,100,166].map(x=>`<line x1="100" y1="41" x2="${x}" y2="60"/>`).join('')}</g>${[['AIR',34],['LAND',100],['SEA',166]].map(([l,x])=>`<rect x="${x-22}" y="60" width="44" height="13" rx="3" fill="#0e1c2a" stroke="#3fd07e" stroke-width="1.2"/><text x="${x}" y="69" text-anchor="middle" font-family="'JetBrains Mono'" font-size="7" fill="#7be0a4">${l}</text>`).join('')}</svg>`,
+  h:"Consolidate readiness in theater — at scale.",
+  p:"<b>Consolidate readiness, O&amp;M, and expertise</b> in Theater/Corps Signal units — EMC Air/Land/Sea, <b>ready for warfighters at scale</b>, affordably (As‑A‑Service). With EMC‑by‑default kits, the mission works.",
+  more:"See the force design ↓"}
+];
+
+/* ===== CAPABILITY GALLERY ===== */
+const GALLERY=[
+ {t:"Hatch‑Mount · GEO Ka/Ku (removable)",tag:["#ffd27a","#1d160a","GEO"],
+  art:`<svg viewBox="0 0 200 132"><path d="M14 96 Q6 96 12 88 Q70 80 140 80 L186 80 Q198 82 198 90 L14 90Z" fill="#2a4a64" stroke="#6f9bbd" stroke-width="1.6"/><rect x="60" y="70" width="80" height="12" rx="3" fill="#16293a" stroke="#5b87a8" stroke-width="1.3"/><text x="100" y="79" text-anchor="middle" font-family="'JetBrains Mono'" font-size="7" fill="#7fa6c0">HATCH RING</text><ellipse cx="100" cy="60" rx="40" ry="18" fill="#1f3a52" stroke="#ffd27a" stroke-width="2"/><ellipse cx="100" cy="52" rx="26" ry="12" fill="#2f5f86" stroke="#ffd27a" stroke-width="1.4"/><line x1="100" y1="40" x2="100" y2="24" stroke="#ffd27a" stroke-width="2"/><circle cx="100" cy="22" r="3" fill="#ffd27a"/><text x="100" y="118" text-anchor="middle" font-family="'JetBrains Mono'" font-size="8.5" fill="#ffd9a6">Ka/Ku DOME RADOME</text></svg>`,
+  d:"Removable Ka/Ku dome — the <b>alternative</b> to KAFMA. C‑17 (Ka/Ku) and C‑130; installed and aligned each mission."},
+ {t:"KAFMA · Fixed GEO Ka (C‑17)",tag:["#ffb13c","#1d160a","C‑17 · FIXED"],
+  art:`<svg viewBox="0 0 200 132"><path d="M10 92 Q4 86 14 80 Q60 70 110 70 L184 70 Q196 72 196 82 Q196 92 176 94 L30 94 Q14 94 10 92Z" fill="#2a4a64" stroke="#6f9bbd" stroke-width="1.8"/><path d="M64 70 Q100 48 138 70 Z" fill="#2a1f0a" stroke="#ffb13c" stroke-width="2.2"/><line x1="101" y1="55" x2="101" y2="44" stroke="#ffb13c" stroke-width="2"/><circle cx="101" cy="42" r="3" fill="#ffd27a"/><circle cx="34" cy="82" r="3" fill="#ffd9a6"/><text x="101" y="40" text-anchor="middle" font-family="'JetBrains Mono'" font-size="7" fill="#ffd9a6">Ka</text><text x="100" y="118" text-anchor="middle" font-family="'JetBrains Mono'" font-size="8.5" fill="#ffd9a6">PERMANENT FUSELAGE Ka ANTENNA</text></svg>`,
+  d:"<b>KAFMA</b> — the C‑17's permanent fixed‑fuselage GEO <b>Ka</b> antenna and primary GEO solution (pre‑wired); per‑mission work drops to the patch panel. Not the hatch, not the LEO array."},
+ {t:"Hatch‑Mount · Starshield (LEO)",tag:["#5ab0ff","#0d1d2a","LEO"],
+  art:`<svg viewBox="0 0 200 132"><path d="M14 96 Q6 96 12 88 Q70 80 140 80 L186 80 Q198 82 198 90 L14 90Z" fill="#2a4a64" stroke="#6f9bbd" stroke-width="1.6"/><rect x="60" y="70" width="80" height="12" rx="3" fill="#16293a" stroke="#5b87a8" stroke-width="1.3"/><rect x="58" y="46" width="84" height="22" rx="4" fill="#16334a" stroke="#5ab0ff" stroke-width="2"/><g stroke="#5ab0ff" stroke-width=".8" opacity=".6">${[0,1,2,3,4,5,6].map(i=>`<line x1="${64+i*11}" y1="48" x2="${64+i*11}" y2="66"/>`).join('')}</g><text x="100" y="118" text-anchor="middle" font-family="'JetBrains Mono'" font-size="8.5" fill="#9fd6ff">FLAT PHASED ARRAY</text><text x="100" y="40" text-anchor="middle" font-family="'JetBrains Mono'" font-size="7" fill="#9fd6ff">C‑130 / ROTARY</text></svg>`,
+  d:"Flat steered panel on the hatch. C‑130 and rotary — NOT authorized on the C‑17."},
+ {t:"Fixed‑Fuselage · Starshield (C‑17)",tag:["#3fd07e","#0e1f16","C‑17 · LEO"],
+  art:`<svg viewBox="0 0 200 132"><path d="M10 92 Q4 86 14 80 Q60 70 110 70 L184 70 Q196 72 196 82 Q196 92 176 94 L30 94 Q14 94 10 92Z" fill="#2a4a64" stroke="#6f9bbd" stroke-width="1.8"/><path d="M70 70 Q100 50 134 70 Z" fill="#16334a" stroke="#3fd07e" stroke-width="2"/><g stroke="#3fd07e" stroke-width=".7" opacity=".5">${[0,1,2,3,4].map(i=>`<line x1="${82+i*10}" y1="${68-i*1}" x2="${82+i*10}" y2="70"/>`).join('')}</g><circle cx="36" cy="82" r="3" fill="#aee6ff"/><text x="100" y="118" text-anchor="middle" font-family="'JetBrains Mono'" font-size="8.5" fill="#7be0a4">LOW‑PROFILE FUSELAGE RADOME</text></svg>`,
+  d:"Permanent low‑profile Starshield on the fuselage — the high‑capacity C‑17 LEO backbone; setup becomes the patch‑panel connection."},
+ {t:"Starlink Mini",tag:["#ffb13c","#1a1407","AD HOC"],
+  art:`<svg viewBox="0 0 200 132"><rect x="62" y="40" width="76" height="44" rx="5" fill="#16293a" stroke="#5ab0ff" stroke-width="2"/><g stroke="#5ab0ff" stroke-width=".8" opacity=".5">${[0,1,2,3,4].map(i=>`<line x1="70" y1="${48+i*7}" x2="130" y2="${48+i*7}"/>`).join('')}</g><line x1="100" y1="84" x2="100" y2="100" stroke="#6f9bbd" stroke-width="2"/><rect x="84" y="100" width="32" height="6" rx="2" fill="#3a5a72"/><text x="100" y="122" text-anchor="middle" font-family="'JetBrains Mono'" font-size="8.5" fill="#ffd9a6">PORTABLE FLAT PANEL</text></svg>`,
+  d:"Small portable LEO terminal for no‑notice/bridge links — expedient but bandwidth‑limited. The exception."},
+ {t:"NGC2 Baseband System",tag:["#7be0a4","#0f1c2a","DUAL‑USE"],
+  art:`<svg viewBox="0 0 200 132"><rect x="44" y="24" width="112" height="86" rx="6" fill="#13212e" stroke="#6f9bbd" stroke-width="2"/><rect x="54" y="34" width="92" height="14" rx="3" fill="#0e1c2a" stroke="#3a5a72"/><text x="100" y="44" text-anchor="middle" font-family="'JetBrains Mono'" font-size="7.5" fill="#7be0a4">MODEM / ROUTER</text><rect x="54" y="52" width="92" height="14" rx="3" fill="#0e1c2a" stroke="#3a5a72"/><text x="100" y="62" text-anchor="middle" font-family="'JetBrains Mono'" font-size="7.5" fill="#cdb4ff">INLINE ENCRYPTOR</text><rect x="54" y="70" width="92" height="14" rx="3" fill="#0e1c2a" stroke="#3a5a72"/><text x="100" y="80" text-anchor="middle" font-family="'JetBrains Mono'" font-size="7.5" fill="#9fd6ff">IP ACCELERATOR</text><g fill="#16293a" stroke="#3a5a72">${[0,1,2,3].map(i=>`<circle cx="${62+i*24}" cy="96" r="5"/>`).join('')}</g><text x="100" y="124" text-anchor="middle" font-family="'JetBrains Mono'" font-size="8.5" fill="#a8f0c6">RUGGED TRANSIT CASE</text></svg>`,
+  d:"C2 baseband stack — modem/router, inline encryptor, IP accelerator. The proposal makes it EMC‑ready by default."},
+ {t:"Patch Panel",tag:["#9fd6ff","#0d1925","CONNECT"],
+  art:`<svg viewBox="0 0 200 132"><rect x="30" y="34" width="140" height="64" rx="5" fill="#0e1c2a" stroke="#6f9bbd" stroke-width="2"/><g fill="#16293a" stroke="#3a5a72" stroke-width="1">${[0,1,2,3,4,5,6,7].map(i=>`<circle cx="${48+(i%4)*32}" cy="${54+Math.floor(i/4)*24}" r="7"/>`).join('')}</g><path d="M48 54 C80 54 80 78 112 78" fill="none" stroke="#3fd07e" stroke-width="2.5"/><path d="M80 54 C110 54 110 78 144 78" fill="none" stroke="#ffd27a" stroke-width="2.5"/><text x="100" y="118" text-anchor="middle" font-family="'JetBrains Mono'" font-size="8.5" fill="#bcd6ea">PORTS + PATCH CABLES</text></svg>`,
+  d:"Where baseband ties to aperture and user systems. On a fixed tail, this is essentially the whole per‑mission setup."}
+];
+
+/* ===== CURRENT / FUTURE MEDIUMS ===== */
+const MEDIUMS=[
+ {m:"C‑17",sub:"Air · strategic lift",
+   geo:{t:"cert",d:"Hatch Ka/Ku authorized"},leo:{t:"soon",d:"Fixed Starshield rolling out; hatch not auth"},
+   fgeo:{t:"cert",d:"Sustained GEO Ka/Ku"},fleo:{t:"cert",d:"Robust fixed‑fuselage Starshield across fleet"}},
+ {m:"C‑130",sub:"Air · tactical lift",
+   geo:{t:"cert",d:"Hatch Ka/Ku"},leo:{t:"cert",d:"Hatch Starshield available"},
+   fgeo:{t:"cert",d:"Hatch Ka/Ku"},fleo:{t:"cert",d:"Robust Starshield, EMC‑ready by default"}},
+ {m:"Rotary‑wing",sub:"Air · vertical lift",
+   geo:{t:"warn",d:"Limited / uncommon"},leo:{t:"cert",d:"Hatch Starshield available"},
+   fgeo:{t:"warn",d:"Limited"},fleo:{t:"cert",d:"Robust Starshield across rotary fleet"}},
+ {m:"Land · at‑the‑halt",sub:"Ground C2",
+   geo:{t:"cert",d:"Standard NGC2 at‑halt"},leo:{t:"warn",d:"Emerging"},
+   fgeo:{t:"cert",d:"NGC2 at‑halt"},fleo:{t:"cert",d:"Robust LEO; dual‑use baseband"}},
+ {m:"Land · on‑the‑move",sub:"Ground C2",
+   geo:{t:"warn",d:"Limited OTM"},leo:{t:"warn",d:"Emerging"},
+   fgeo:{t:"warn",d:"Limited"},fleo:{t:"cert",d:"Robust LEO OTM; EMC‑ready by default"}},
+ {m:"Vessel · maritime",sub:"On‑water C2",
+   geo:{t:"warn",d:"Limited / bespoke"},leo:{t:"no",d:"Gap — no worthiness cert"},
+   fgeo:{t:"warn",d:"Limited"},fleo:{t:"cert",d:"Robust LEO + vessel‑worthiness cert"}}
+];
+const MEDST={cert:{c:"#3fd07e",bg:"#0e1f16"},soon:{c:"#ffb13c",bg:"#1a1407"},warn:{c:"#ffb13c",bg:"#1a1407"},no:{c:"#ff5d5d",bg:"#1c0e0e"},adhoc:{c:"#5ab0ff",bg:"#0b1a2a"},na:{c:"#7c8d9a",bg:"#0e1925"}};
+
+/* ===== ROUTING TIERS ===== */
+const ROUTE_TIERS=[
+ {t:"Airborne node",s:"On the aircraft",comp:[
+   {l:"NGC2 baseband (EMC) — HW + SW",o:"army",d:"Dual‑use C2 baseband (HW+SW). Carries its own airworthiness obligation (MIL‑HDBK‑516C via the airframe SPO/TAA) plus ATTLA transportability. End‑state: EMC‑ready by default.",stress:["mss","voice","cop"]},
+   {l:"Call manager (voice)",o:"army",d:"Voice session control — registers endpoints, sets up/tears down calls, enforces precedence. Without it the bearer carries packets but no usable voice.",stress:["voice"]},
+   {l:"IP accelerator",o:"army",d:"WAN optimization vs. latency and small pipes — keeps apps like Maven usable over GEO.",stress:["mss","cop"]},
+   {l:"Inline encryptor (Type 1 / HAIPE‑class)",o:"cyber",d:"Encrypts for transport; must be paired with a matched far‑end encryptor (type, settings, keys).",stress:["mss","voice","cop"]},
+   {l:"Modem + BTU settings",o:"army",d:"Modulates onto the bearer. BTU/terminal settings must match the plan or the terminal never locks.",stress:["mss","voice","cop"]},
+   {l:"Aperture",o:"army",d:"The antenna — KAFMA/hatch GEO, fixed Starshield, or Mini. Sets data rate, AWR path, and setup burden.",stress:["mss","voice","cop"]}]},
+ {t:"Space",s:"The bearer",comp:[
+   {l:"GEO Ka/Ku — few wide beams",o:"satcom",d:"Geostationary: few wide fixed beams, high latency, scarce capacity. Hand off across beams on a plan.",stress:["voice"]},
+   {l:"Starshield / Starlink LEO — many beams",o:"satcom",d:"Proliferated LEO: many narrow beams, continuous rapid handoff managed by the constellation; low latency, high but contended capacity.",stress:["mss","cop"]}]},
+ {t:"Ground entry",s:"Into the ground",comp:[
+   {l:"Teleport / gateway (GEO)",o:"satcom",d:"Where GEO traffic re‑enters the ground; must match the terminal and feed the right transport.",stress:["voice"]},
+   {l:"Ground stations (many, distributed)",o:"satcom",d:"LEO uses many distributed ground stations — not all co‑located with Starshield gateways. Exit point changes latency/routing.",stress:["mss","cop"]},
+   {l:"Starshield gateway",o:"satcom",d:"Controlled government gateway for Starshield before Army/joint transport — distinct from every commercial ground station.",stress:["mss","cop"]}]},
+ {t:"Transport + security",s:"Army & joint network",comp:[
+   {l:"RHN / GAIT POP",o:"army",d:"Regional Hub Node / GAIT POP — the Army's reach‑in to enterprise transport. Multiple; which one matters.",stress:["mss","voice","cop"]},
+   {l:"Packet tagging / QoS (DSCP)",o:"cyber",d:"Marking/queuing so scarce bandwidth serves C2 and voice first. Mis‑tagged traffic starves mission data.",stress:["mss","voice","cop"]},
+   {l:"Dedicated routes / ports",o:"disa",d:"Some services/kits need specific routes or ports provisioned end‑to‑end — or they won't connect.",stress:["mss","voice"]},
+   {l:"Fiber backbone (DODIN‑A / DISN)",o:"disa",d:"Terrestrial DODIN‑A/DISN fiber between POPs, gateways, and data centers — the high‑capacity middle mile.",stress:["mss","cop"]},
+   {l:"Inline encryptor (paired)",o:"cyber",d:"Far end of the encrypted tunnel — matched type and keys to the airborne encryptor. A frequent break point.",stress:["mss","voice","cop"]},
+   {l:"IP accelerator (far)",o:"army",d:"The paired enterprise‑end optimizer — both ends must agree.",stress:["mss"]},
+   {l:"SD‑WAN / Seeker / CloudJunction",o:"pm",d:"Software‑defined routing/overlay and cloud on‑ramp — steers traffic across paths and into cloud.",stress:["mss","cop"]},
+   {l:"DODIN gateway / POP",o:"disa",d:"Boundary into the DoD network with its security stack — accreditation must be current.",stress:["mss","voice","cop"]},
+   {l:"Commercial routing",o:"satcom",d:"Commercial carrier segments that may sit in the path — performance and security vary.",stress:["mss"]}]},
+ {t:"Enterprise + compute",s:"Where data & apps live",comp:[
+   {l:"Army data centers",o:"disa",d:"Army cloud/data‑center regions on the DODIN‑A — enterprise services and authoritative data.",stress:["mss","cop"]},
+   {l:"Commercial data centers",o:"satcom",d:"Commercial cloud hosting back‑end services — performance, security, data‑location all matter.",stress:["mss"]},
+   {l:"Edge compute — Maven Smart System",o:"pm",d:"Forward/edge processing that builds the AI C2 and targeting picture — latency and routing make or break it.",stress:["mss"]},
+   {l:"Secure Voice infrastructure",o:"pm",d:"Enterprise voice core/key management the call manager registers to — where the call completes.",stress:["voice"]},
+   {l:"Reachback TOC / higher HQ",o:"army",d:"The home command post the airborne element connects to — the point of the whole path.",stress:["mss","voice","cop"]}]}
+];
+
+/* ===== TURNS ===== */
+const STAGES=[
+ {key:"access",ic:"🛩️",nm:"Access & Activation",role:"Get the right tail, the right service — and a paid account",
+  whyGEO:"C‑17 GEO Ka = the KAFMA fixed antenna: permanently installed, pre‑wired (per‑mission work is just the patch panel). Still need a Ka‑capable tail, an approved access + spot‑beam plan, and a contracted account — Ka SIMOPS, token model, >$1M/yr (e.g., Altagrove). Removable Ka hatch is the alternative.",
+  whySL:"No KAFMA — service activation under terms of service + NetOps accreditation, on a contracted SpaceX account (~$300K/yr). No funded, activated, accredited service + tail = nothing to integrate. ARCYBER/NETCOM RCC accreditation gates it onto the network.",
+  owns:["army","amc","satcom","cyber"],ownTxt:["Supported HQ G6/S6 + KO / RM","AMC / TACC","SATCOM authority / SpaceX / Starlink NetOps","ARCYBER‑NETCOM RCC"],
+  inputs:["Mission window & route","Provisioned tail","Contracted bandwidth account (Ka SIMOPS / SpaceX)","Access / activation approval"],time:"Days→weeks of lead time; the longest pole",
+  fail:"No access or no funded contract = no airplane and no pipe to attach to."},
+
+ {key:"stf",ic:"✅",nm:"Airworthiness Release (AWR)",role:"AWR for THIS airframe, aperture + baseband",
+  why:"Antenna AND baseband each earn an Airworthiness Release (AWR) for THIS airframe + aperture — EMI/EMC, structure, power, cooling. An AWR doesn't transfer: C‑17→C‑130 or hatch→fixed each needs its own. SOAR owns its rotary‑wing aircraft and runs a consolidated, specialized AWR process — fast. Conventional forces depend on the USAF airframe authority + AMC (a joint dependency) — slower, dispersed. This is where C‑17 Starlink‑hatch stops: USAF won't progress the AWR.",
+  owns:["amc","pm","army"],ownTxt:["AF airworthiness authority","ASA(ALT) C2 CPE","Test & evaluation"],
+  inputs:["EMI/EMC results","Structural / mount approval","Power & cooling approval"],time:"Long lead for new configs; fast for previously‑certified",
+  fail:"No valid AWR for this airframe + aperture and the kit legally can't fly."},
+
+ {key:"ant",ic:"📡",nm:"Aperture Install & Integration",role:"Mount it — or just connect it",
+  why:"Fixed/KAFMA tails are pre‑installed — per‑mission work is just connecting baseband to the patch panel. Hatch is mounted and aligned every mission: fast to swap, but a recurring tax. Mini is grab‑and‑go but bandwidth‑limited.",
+  owns:["army","amc"],ownTxt:["EMC operator crew","AF maintenance","Install team"],
+  inputs:["Validated mount kit / pre‑install","Trained crew","Aircraft down‑time (hatch)"],time:"Minutes (fixed/provisioned) → per‑mission (hatch)",
+  fail:"Bad install, wrong mount, or fit variance = no usable aperture, or an AWR discrepancy that grounds it."},
+
+ {key:"baseband",ic:"🔌",nm:"Baseband / Patch Panel",role:"Wire the kit to the aperture and the services",
+  why:"The patch panel ties modem and aperture to the user systems — the NGC2 baseband, Maven, Secure Voice, chat, data. On a fixed aperture this is most of the per‑mission setup. Wrong profile and the COP won't paint even with a perfect link.",
+  owns:["army","pm"],ownTxt:["EMC operator crew","Service program offices"],
+  inputs:["Correct patch diagram","Cabling & adapters","Validated service loadout (Maven/voice)"],time:"Minutes once provisioned; verify before push",
+  fail:"A mis‑patch is invisible until tested: looks installed, but no data reaches the commander."},
+
+ {key:"bw",ic:"📶",nm:"Bandwidth & Capacity",role:"Reserve the pipe — plan apps to it",
+  whyGEO:"GEO Ka/Ku is scarce and pre‑allocated — deterministic but small. Prioritize C2, chat, position; Maven and full‑motion video may not fit. Plan apps to the pipe.",
+  whySL:"Starlink bursts high but is shared/contended and governed by terms — great until users compete or you're at coverage edge. Don't promise office‑grade throughput airborne.",
+  owns:["satcom","disa"],ownTxt:["SATCOM authority / Starlink NetOps","DISA / DISN bandwidth & services"],
+  inputs:["Access / service plan","Prioritized data plan","Confirmed rate"],time:"Submitted with access; firm before flight",
+  fail:"Under‑provision and the link saturates; over‑promise and you've set a false expectation airborne."},
+
+ {key:"settings",ic:"🎚️",nm:"GAIT / BTU & Terminal Settings",role:"Make the terminal and network agree",
+  whyGEO:"Terminal and gateway must match the same plan — GAIT/BTU settings aligned both ends, coordinated with the teleport/gateway and satellite operator. One mismatched parameter and the terminal never locks.",
+  whySL:"Starlink hides much of this in the managed terminal, but you still coordinate NetOps profiles, routing, and security with the ground side. Failure shifts from carrier‑lock to mis‑routing/accreditation — still no comms.",
+  owns:["army","satcom","disa"],ownTxt:["EMC operator crew","Teleport/gateway or Starlink NetOps","DISN routing"],
+  inputs:["Network config plan","Matched terminal settings","Confirmed ground profile"],time:"Coordinated pre‑mission; re‑verified on ground",
+  fail:"Settings/routing mismatch = no usable link. Hardware perfect, comms never come up."},
+
+ {key:"beam",ic:"🛰️",nm:"Beam / Cell Plan & Handoffs",role:"Match the footprint to the route",
+  whyGEO:"GEO covers earth in fixed spot beams. As the aircraft flies it crosses beam boundaries — each a pre‑coordinated, timed hand‑off against the flight plan. Unapproved spot‑beam changes drop the link.",
+  whySL:"Starlink hands off continuously across LEO sats and cells — the constellation manages it, no manual plan. But coverage, cell capacity, and gateway visibility vary by geography (high latitude, mid‑ocean) — plan against the route.",
+  owns:["satcom","cyber"],ownTxt:["SATCOM / constellation NetOps","Theater beam/cell planners"],
+  inputs:["Route vs. coverage map","Hand‑off / capacity plan","Beam‑change approvals (GEO)"],time:"Built into mission planning; executed in flight",
+  fail:"An uncoordinated GEO beam change — or a LEO coverage gap — drops the link mid‑mission."},
+
+ {key:"train",ic:"🎯",nm:"NetOps Accreditation, Training & Rehearsal",role:"The perishable glue across every agency",
+  why:"None of it works without operators who've done it repeatedly and a current accreditation. Crews install, patch, lock, ride hand‑offs, and troubleshoot in a loud, vibrating aircraft — and Army, AMC aircrew, SATCOM/Starlink NetOps, DISA, and the RCC rehearse together. Highly perishable — the case for regional, habitual support.",
+  owns:["army","cyber","amc","disa"],ownTxt:["EMC element leadership","ARCYBER‑NETCOM RCC","AMC aircrew","DISA + service PMs"],
+  inputs:["Current accreditation","Qualified operators","Rehearsals & flight reps","Standing relationships"],time:"Continuous — degrades without sustained reps",
+  fail:"Untrained crews or lapsed accreditation fail at the worst time. Proficiency is the redundancy the airframe doesn't provide."}
+];
+
+/* ===== TRANSPORT COMPARE ===== */
+const TCMP=[
+ ["Orbit / geometry","~35,786 km — fixed slot, steady look angle","~550 km — proliferated constellation, always moving"],
+ ["Latency","High (~½‑second round trip)","Low (tens of ms) — near‑terrestrial feel"],
+ ["Handoff model","Cross fixed spot beams; pre‑coordinated beam changes","Continuous sat/cell handoff managed by the constellation"],
+ ["Access process","Satellite access request + Ka SIMOPS bandwidth + spot‑beam plan","Service activation + NetOps accreditation (no KAFMA)"],
+ ["C‑17 aperture","KAFMA — fixed Ka antenna (primary); removable Ka hatch (alt)","Fixed‑fuselage Starshield (hatch NOT authorized on C‑17)"],
+ ["Per‑mission setup (provisioned)","Minimal — connect baseband to patch panel","Minimal on fixed install; Mini is grab‑and‑go"],
+ ["Capacity","Allocated, scarce, deterministic","High burst but shared/contended; terms‑dependent"],
+ ["High latitude / polar","Poor look angles at high latitude — degrades in the High North","Improving polar/Arctic coverage — better fit up north"],
+ ["Threat / EW","Known orbital slot; jamming & ASAT; fixed geometry","Proliferated resilience but commercial dependency; EW evolving"],
+ ["C‑17 air‑cert posture","KAFMA fixed &amp; Ka/Ku hatch mature","Fixed‑fuselage Starshield expanding · hatch NOT authorized by USAF"]
+];
+
+/* ===== APERTURE ===== */
+const ANT={
+ hatch:{name:"Hatch‑Mount",sub:"Expedient · removable",rows:[
+   ["One‑time install","Per‑mission mount"],["Per‑mission setup","Heavy — install, mount, align each flight","hot"],
+   ["Data rate","Moderate"],["Aircraft tie‑up","Minimal — stays multi‑role"],
+   ["Transport","GEO Ka/Ku (incl. C‑17) · Starshield on C‑130/rotary"],["Best for","Airborne / rapid units"]]},
+ fixed:{name:"Fixed‑Fuselage — KAFMA / Starshield",sub:"Persistent · permanently installed",rows:[
+   ["GEO aperture","KAFMA — the C‑17 fixed Ka antenna","cool"],
+   ["LEO aperture","Fixed‑fuselage Starshield (C‑17 fleet)","cool"],
+   ["Per‑mission setup","Minimal — just connect to patch panel","cool"],
+   ["Data rate","Highest"],["Aircraft tie‑up","High — dedicates the tail"],
+   ["Best for","Sustained, scheduled EMC backbone"]]},
+ mini:{name:"Starlink Mini",sub:"Ad hoc · bandwidth‑limited",rows:[
+   ["One‑time install","None — portable"],["Per‑mission setup","Quick, but throughput‑limited","cool"],
+   ["Data rate","Lowest — real BW limits","hot"],["Aircraft tie‑up","None — grab‑and‑go"],
+   ["Transport","Starlink/Starshield LEO only"],["Best for","No‑notice / bridge capability"]]}
+};
+
+/* ===== SERVICE BLURBS + BANDWIDTH/CAPACITY ===== */
+const SERVICES={
+ mss:{name:"Maven Smart System",blurb:"The AI targeting/C2 picture, forward. Data‑heavy and cloud/edge‑hosted, so the bearer is easy — moving the data is hard. Watch the LEO bearer, SD‑WAN/CloudJunction, data centers, edge compute."},
+ voice:{name:"Secure Voice",blurb:"Secured, immediate, in motion. Small pipe but unforgiving on latency/jitter, and COMSEC‑keyed. Watch the call manager, the matched encryptor pair, and the DISN voice core."},
+ cop:{name:"NGC2 COP / Data",blurb:"The minimum airborne: COP and C2 data back to the reachback TOC. Steady, prioritized over bulk. Watch the baseband, LEO bearer, RHN/GAIT POP, DODIN‑A boundary."}
+};
+const SVCBW={
+ mss:{lvl:5,dem:"High &amp; bursty — multiple Mbps (imagery, tracks, FMV)",
+   geo:"KAFMA Ka: a shared, allocated slice of one wide spot beam — deterministic but scarce. Big Maven pulls compete with every other user in the beam.",
+   leo:"Starshield: Mbps inside a narrow cell. Capacity varies center‑vs‑edge of a spot beam and between beams by loading; rapid handoff constantly re‑homes you to a new beam's pool.",
+   flow:"Baseband → IP accel → encryptor → LEO cell → ground station → RHN/GAIT POP → SD‑WAN/CloudJunction → Army/commercial data center → edge compute (Maven) → COP"},
+ voice:{lvl:2,dem:"Low rate per call (tens of kbps) — but latency/jitter‑sensitive",
+   geo:"KAFMA Ka: easily fits the allocation, but the ½‑second GEO round trip stresses call timing and quality — plan precedence and expectations.",
+   leo:"Starshield: a low‑latency cell carries voice comfortably; jitter rises at beam edges and across rapid handoffs — protect it with QoS.",
+   flow:"Baseband → call manager → encryptor → bearer → teleport/ground station → DISN voice core → called party"},
+ cop:{lvl:3,dem:"Low–moderate — steady C2 data, chat, position reports",
+   geo:"KAFMA Ka: fits the allocation when QoS puts C2 ahead of bulk; within one wide spot beam.",
+   leo:"Starshield: comfortable inside a cell; plan for brief gaps as the link hands off between many narrow beams.",
+   flow:"Baseband → encryptor → bearer → ground entry → RHN/GAIT POP → DODIN‑A → reachback TOC"}
+};
+
+/* ===== PHASES ===== */
+const PHASES=[
+ {t:"BEFORE · Plan & Provision",items:[
+   ["Submit KAFMA / activate Starlink; reserve bandwidth","army"],
+   ["Confirm Airworthiness Release (AWR) for airframe+aperture; schedule tail","amc"],
+   ["Build spot‑beam / cell plan to the route","satcom"],
+   ["Provision DISN transport & services (Maven/voice)","disa"],
+   ["RCC accreditation; security posture; PACE plan","cyber"],
+   ["Validate kit, patch diagram, crew currency","army"]]},
+ {t:"DURING · Execute & Sustain",items:[
+   ["Establish & monitor link; ride beam/cell hand‑offs","army"],
+   ["Aircrew power/EMCON coordination; route adherence","amc"],
+   ["Manage bandwidth/capacity; reallocate as needed","satcom"],
+   ["Maintain service continuity; routing failover","disa"],
+   ["Active network defense; anomaly response","cyber"],
+   ["Troubleshoot baseband/app issues in flight","army"]]},
+ {t:"AFTER · Recover & Improve",items:[
+   ["De‑install/secure kit; account for COMSEC","army"],
+   ["Post‑flight airframe/aperture inspection","amc"],
+   ["Release bandwidth; reconcile usage","satcom"],
+   ["Tear down sessions/services; retain logs","disa"],
+   ["Accreditation review; incident reporting","cyber"],
+   ["Capture lessons learned; update TTP; feed training","army"]]}
+];
+
+/* ===== THEATERS (real orgs) ===== */
+const THEATERS={
+ WHC:{name:"Western Hemisphere",org:"18th ABN Corps · 35th Signal Brigade (WHC)",line:"Home‑station & global‑response launch",
+   desc:"Where the IRF launches. Organic airborne‑division signal assets (e.g., 82nd ABN) are the spearhead, with 35th Signal Brigade enablers working familiar APODs. GEO and Starlink both strong and the threat is low at home — but the whole point is projecting from here into the hard theaters.",
+   tags:["XVIII ABN Corps","82nd ABN / IRF","Familiar APODs (Green Ramp)"],
+   geo:[4,"Strong look angles, dense gateways"],sl:[5,"Excellent coverage & capacity"],threat:[1,"Permissive (home)"],dist:[5,"Services close — low latency"]},
+ EUR:{name:"Europe",org:"USAREUR‑AF · 2nd Theater Signal Brigade",line:"Contested forward edge — JFE focus",
+   desc:"The 2nd Theater Signal Brigade owns EMC here — and produced the reference video above. Good GEO/Starlink coverage and dense gateways, but the forward edge is actively contested with EW and GPS denial, and multi‑national accreditation adds friction.",
+   tags:["V Corps (fwd)","Rotational ABCTs","Mature APODs/SPODs","Reference video unit"],
+   geo:[3,"Good across most of theater"],sl:[4,"Strong coverage & capacity"],threat:[4,"Contested edge — EW/GPS denial"],dist:[4,"Gateways reasonably close"]},
+ CENT:{name:"CENTCOM",org:"ARCENT · 160th Signal Brigade",line:"Distance, austerity, mature APODs",
+   desc:"160th Signal Brigade supports ARCENT across great distances and austere conditions. Mature APODs/SPODs (e.g., Arifjan) and strong habitual relationships help, but heat, distance, and coverage seams stress both transports.",
+   tags:["ARCENT","Rotational forces","Mature APODs (Arifjan)","Strong habitual ties"],
+   geo:[3,"Good, some seams"],sl:[3,"Good; capacity varies"],threat:[3,"Episodically contested"],dist:[2,"Long haul to services"]},
+ PAC:{name:"Pacific & Alaska",org:"USARPAC · 516th Signal Brigade",line:"Vast distance + High‑North look angle",
+   desc:"516th Signal Brigade faces the hardest geometry: ocean‑sized distances put gateways far from the fight, GEO has spot‑beam seams over water, and Alaska/High‑North look angles degrade GEO badly — LEO/Starlink is the better polar fit but capacity is contended and the threat is high.",
+   tags:["I Corps (fwd)","11th ABN (Arctic)","Dispersed APODs/SPODs","Distance complicates habitual ties"],
+   geo:[2,"Seams over ocean; poor at high lat"],sl:[3,"Better polar fit; contended"],threat:[5,"Highly contested — EW/ASAT"],dist:[1,"Services very distant"]}
+};
+
+/* ===== POINTS ===== */
+const POINTS=[
+ ["1","Episodic demand, perishable skill","No single division flies EMC often enough to keep crews current. Concentrate the reps in one element and the proficiency actually stays hot."],
+ ["2","Habitual relationships live at echelon","35th, 2nd, 160th, and 516th already own their theater APODs/SPODs and the AMC / DISA / SATCOM / RCC ties. A division can't sustain those; a theater signal brigade already does."],
+ ["3","One standard, validated training","Centralizing means one validated TTP, one training standard, and certified kits — reliable across familiar APODs/SPODs by theater, not improvised unit by unit."],
+ ["4","Lessons learned promulgate fast","Tech‑dev, fixes, and hard‑won lessons flow from one place to the whole theater immediately — not relearned painfully by each unit."],
+ ["5","Surge, don't disperse","Keep organic assets in the airborne divisions as the spearhead, but the brigade element provides the depth, standard, and certified kits to surge wherever the mission lands."],
+ ["6","Dual‑use NGC2, one mission set","Once the NGC2 baseband is EMC dual‑use by default, the same element and kit support at‑the‑halt, on‑the‑move, air, land, and maritime — economy of force across the whole transport problem."]
+];
+
+/* ===== CERT LOGIC ===== */
+const ST={
+ cert:{c:"#3fd07e",bg:"#0e1f16",bd:"#1c6b44",label:"CERTIFIED / AVAILABLE",short:"OK"},
+ soon:{c:"#ffb13c",bg:"#1a1407",bd:"#5a4524",label:"IN CERTIFICATION — SOON",short:"SOON"},
+ uncert:{c:"#ff5d5d",bg:"#1c0e0e",bd:"#7a2727",label:"NOT YET CERTIFIED",short:"NOT YET"},
+ noauth:{c:"#ff8585",bg:"#220c0c",bd:"#b13a3a",label:"NO AWR — USAF WILL NOT CERTIFY",short:"NO · AWR"},
+ adhoc:{c:"#5ab0ff",bg:"#0b1a2a",bd:"#27506f",label:"AD HOC — BANDWIDTH LIMITED",short:"AD HOC"},
+ na:{c:"#7c8d9a",bg:"#0e1925",bd:"#26415a",label:"NOT APPLICABLE",short:"—"}
+};
+function statusFor(mode,t,a,ant){
+ if(t==="GEO"){
+   if(ant==="mini") return {s:"na",note:"Starlink Mini is a LEO terminal — not applicable to GEO Ka/Ku."};
+   if(ant==="hatch"){ if(a==="ROTARY") return {s:"na",note:"GEO Ka/Ku hatch on rotary‑wing is not a standard fielded EMC configuration."};
+     if(a==="C17") return {s:"cert",note:"Removable GEO Ka/Ku hatch‑mount — authorized on the C‑17 (Ka/Ku only). Note: the C‑17's primary fixed GEO Ka antenna is KAFMA; the hatch is the removable alternative and pays an install/align tax each mission."};
+     return {s:"cert",note:"Removable GEO Ka/Ku hatch‑mount on the C‑130 — installed and aligned each mission."};}
+   if(ant==="fixed"){ if(a==="ROTARY") return {s:"na",note:"A fixed‑fuselage GEO Ka antenna is not a rotary‑wing configuration."};
+     if(a==="C17") return {s:"cert",note:"KAFMA — the C‑17's fixed‑fuselage GEO Ka antenna. Permanently installed and pre‑wired, so per‑mission work is just the patch‑panel connection. This is the C‑17 GEO answer — distinct from the removable hatch‑mount."};
+     return {s:"cert",note:"Fixed GEO Ka aperture (KAFMA‑class) on the C‑130 — permanently installed; ties up the tail but minimizes per‑mission setup."};}
+ } else { // Starlink
+   if(ant==="mini") return {s:"adhoc",note:"Starlink Mini gives an expedient LEO link — but with real bandwidth limits. Ad hoc / bridge use only."};
+   if(ant==="fixed"){ if(a==="ROTARY") return {s:"na",note:"Fixed‑fuselage Starshield is not a rotary‑wing configuration."};
+     if(mode==="target") return {s:"cert",note:"Dual‑purpose end‑state: fixed‑fuselage Starshield certified and robust across the fleet — the C‑17's persistent high‑capacity path."};
+     return {s:"soon",note:"Fixed‑fuselage Starshield is expanding across the C‑17 fleet — installation in progress, not yet fielded everywhere."};}
+   if(ant==="hatch"){
+     if(a==="C17") return {s:"noauth",note:"C‑17 Starshield hatch‑mount is NOT authorized — USAF will not progress airworthiness (fielding fixed‑fuselage Starshield instead, plus hatch reliability concerns and fit variance across C‑17 tails). Stays red even in the end‑state; the C‑17 LEO answer is fixed‑fuselage."};
+     return {s:"cert",note:"Starshield hatch‑mount is available on the C‑130 and rotary‑wing — the rapid, removable airborne option."};
+   }
+ }
+ return {s:"na",note:"Not a standard fielded combination."};
+}
+
+/* ===== STATE ===== */
+let transport="GEO",air="C17",ant="hatch",matMode="today",theater="WHC",service="mss";
+let step=0,activeNode=0,playing=false,playTimer=null;
+const up=new Array(STAGES.length).fill(false), broken=new Array(STAGES.length).fill(false);
+const $=s=>document.querySelector(s);
+const ce=(t,a={})=>{const e=document.createElementNS("http://www.w3.org/2000/svg",t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+function whyText(s){ if(transport==="GEO"&&s.whyGEO)return s.whyGEO; if(transport==="SL"&&s.whySL)return s.whySL; return s.why||s.whyGEO; }
+
+/* ===== RAIL + DETAIL ===== */
+function buildRail(){const rail=$("#rail");rail.innerHTML="";
+ STAGES.forEach((s,i)=>{const n=document.createElement("div");n.className="node";n.dataset.i=i;const col=TURNCOL[s.key]||"#ffb13c";
+  n.innerHTML=`<span class="dot"></span><div class="num" style="color:${col}">TURN ${i+1}</div><div class="ic" style="width:30px;height:30px">${RAILGLYPH[s.key]||''}</div><div class="nm">${s.nm}</div>`;
+  n.addEventListener("click",e=>{
+   if(e.target.classList.contains("dot")&&up[i]&&!broken[i]){broken[i]=true;activeNode=i;refresh();return;}
+   if(e.target.classList.contains("dot")&&broken[i]){broken[i]=false;up[i]=true;refresh();return;}
+   activeNode=i;renderDetail();paintRail();});
+  rail.appendChild(n);});}
+function paintRail(){document.querySelectorAll(".node").forEach((n,i)=>{n.classList.toggle("active",i===activeNode);n.classList.toggle("up",up[i]&&!broken[i]);n.classList.toggle("down",broken[i]);});}
+function renderDetail(){const s=STAGES[activeNode];
+ const state=broken[activeNode]
+  ?`<div class="fail" style="background:#1c0e0e;border:1px solid #7a2727"><span class="x" style="color:#ff5d5d">▲ DOWN</span><p style="color:#f3c9c9"><b style="color:#ffdede">${s.nm} is broken.</b> ${s.fail}</p></div>`
+  :up[activeNode]
+   ?`<div class="fail" style="background:#0e1f16;border:1px solid #1c6b44"><span class="x" style="color:#3fd07e">● UP</span><p style="color:#c6ffe0"><b>Established.</b> Green only counts while the other seven are too.</p></div>`
+   :`<div class="fail" style="background:#1a1407;border:1px solid #5a4524"><span class="x" style="color:#ffb13c">○ PENDING</span><p style="color:#ffe6bd"><b>Not yet established.</b> ${s.fail}</p></div>`;
+ const chips=s.owns.map((o,j)=>`<span class="chip">${avatar(o)}${s.ownTxt[j]}</span>`).join("");
+ $("#detail").innerHTML=`<div class="detail-top"><div class="turnart">${turnCartoon(activeNode)}</div><div>
+   <div class="role">Turn ${activeNode+1} / 8 · ${s.ic} ${s.role}</div><h3>${s.nm}</h3><p class="why">${whyText(s)}</p></div></div>
+  <div class="grid3">
+   <div class="cell"><h4>◷ Lead time</h4><p style="margin:0;font-size:13px;line-height:1.5;color:var(--ink)">${s.time}</p>
+     <h4 style="margin-top:15px">⚙ Required inputs</h4><ul>${s.inputs.map(x=>`<li>${x}</li>`).join("")}</ul></div>
+   <div class="cell"><h4>◎ Who has to act</h4><div class="chips">${chips}</div></div>
+   <div class="cell"><h4>✕ If missing</h4><p style="margin:0;font-size:13px;line-height:1.5;color:#f0c9c9">${s.fail}</p></div>
+  </div>${state}`;}
+
+/* ===== SCENE ===== */
+function buildStars(){const g=$("#stars");g.innerHTML="";for(let i=0;i<46;i++)g.appendChild(ce("circle",{cx:Math.random()*1200,cy:Math.random()*220,r:Math.random()*1.3+.3,opacity:Math.random()*.6+.2}));}
+function planeX(){const m=/translate\(([\d.\-]+)/.exec($("#plane").getAttribute("transform"));return m?parseFloat(m[1]):190;}
+function apertureSVG(){const on=(up[2]&&!broken[2]);const op=on?1:.32;
+ if(ant==="hatch")return `<g opacity="${op}"><ellipse cx="6" cy="-15" rx="14" ry="9" fill="#1f3a52" stroke="#5b87a8" stroke-width="1.4"/><ellipse cx="6" cy="-17" rx="9" ry="5" fill="#2f5f86"/><text x="6" y="-30" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#bcd6ea">HATCH</text></g>`;
+ if(ant==="fixed"){const fl=transport==="GEO"?"KAFMA (Ka)":"STARSHIELD";return `<g opacity="${op}"><path d="M-10 -10 Q6 -34 30 -12 L30 -8 L-10 -8 Z" fill="#1f3a52" stroke="#5b87a8" stroke-width="1.4"/><text x="10" y="-30" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#bcd6ea">${fl}</text></g>`;}
+ return `<g opacity="${op}"><rect x="-2" y="-20" width="20" height="7" rx="2" fill="#1f3a52" stroke="#5ab0ff" stroke-width="1.3"/><text x="8" y="-26" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#9fd6ff">MINI</text></g>`;}
+function planeSVG(){const allGreen=up.every((v,i)=>v&&!broken[i]);const lit=allGreen?1:.25;
+ if(air==="ROTARY")return `<ellipse cx="0" cy="40" rx="80" ry="9" fill="#000" opacity=".18" filter="url(#soft)"/>
+   <ellipse cx="0" cy="0" rx="52" ry="17" fill="#2a4a64" stroke="#6f9bbd" stroke-width="2"/>
+   <path d="M40 0 Q86 -2 96 4 L96 9 Q70 12 44 9 Z" fill="#22405a" stroke="#6f9bbd" stroke-width="1.5"/>
+   <path d="M92 2 l16 -8 l0 18 Z" fill="#22405a" stroke="#6f9bbd" stroke-width="1.2"/>
+   <line x1="-30" y1="-20" x2="30" y2="-20" stroke="#9fc4dd" stroke-width="2.4"/><line x1="-2" y1="-18" x2="-2" y2="-6" stroke="#6f9bbd" stroke-width="2.4"/>
+   <ellipse cx="-44" cy="-14" rx="14" ry="3" fill="#9fc4dd" opacity=".35"/><rect x="-50" y="13" width="100" height="3" rx="1.5" fill="#1a3346"/>
+   <circle cx="-44" cy="-1" r="3" fill="#aee6ff"/><rect x="-4" y="-4" width="8" height="6" rx="1.5" fill="#3fd07e" opacity="${lit}"/>
+   ${apertureSVG()}<text x="-30" y="22" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#7fa6c0">ROTARY</text>`;
+ if(air==="C17")return `<ellipse cx="0" cy="58" rx="120" ry="12" fill="#000" opacity=".18" filter="url(#soft)"/>
+   <path d="M-110 6 Q-130 6 -120 -4 Q-90 -10 -40 -12 L120 -12 Q150 -10 150 4 Q150 14 120 16 L-90 16 Q-118 14 -110 6Z" fill="#2a4a64" stroke="#6f9bbd" stroke-width="2"/>
+   <path d="M40 -10 L18 -40 L46 -40 L74 -10 Z" fill="#22405a" stroke="#6f9bbd" stroke-width="1.5"/><path d="M-30 14 L-44 40 L-12 40 L8 14 Z" fill="#22405a" stroke="#6f9bbd" stroke-width="1.5"/>
+   <rect x="20" y="-6" width="16" height="9" rx="3" fill="#16293a"/><rect x="44" y="-6" width="16" height="9" rx="3" fill="#16293a"/><rect x="-22" y="-6" width="14" height="9" rx="3" fill="#16293a"/><rect x="-46" y="-6" width="14" height="9" rx="3" fill="#16293a"/>
+   <circle cx="-96" cy="3" r="3.4" fill="#aee6ff"/><circle cx="-84" cy="3" r="3.4" fill="#aee6ff"/><rect x="-2" y="-2" width="9" height="7" rx="1.5" fill="#3fd07e" opacity="${lit}"/>
+   ${apertureSVG()}<text x="-30" y="34" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#7fa6c0">C‑17</text>`;
+ return `<ellipse cx="0" cy="46" rx="96" ry="10" fill="#000" opacity=".18" filter="url(#soft)"/>
+   <path d="M-92 4 Q-104 4 -98 -4 Q-70 -9 -30 -10 L96 -10 Q120 -8 120 2 Q120 11 96 13 L-72 13 Q-96 11 -92 4Z" fill="#2a4a64" stroke="#6f9bbd" stroke-width="2"/>
+   <path d="M30 -8 L14 -32 L40 -32 L62 -8 Z" fill="#22405a" stroke="#6f9bbd" stroke-width="1.5"/><path d="M-22 11 L-34 32 L-8 32 L6 11 Z" fill="#22405a" stroke="#6f9bbd" stroke-width="1.5"/>
+   <g stroke="#6f9bbd" stroke-width="1.4" fill="#16293a"><rect x="6" y="-5" width="9" height="7" rx="2"/><rect x="24" y="-5" width="9" height="7" rx="2"/><rect x="-14" y="-5" width="9" height="7" rx="2"/><rect x="-32" y="-5" width="9" height="7" rx="2"/></g>
+   <circle cx="-80" cy="1" r="3" fill="#aee6ff"/><rect x="-2" y="-2" width="8" height="6" rx="1.5" fill="#3fd07e" opacity="${lit}"/>
+   ${apertureSVG()}<text x="-22" y="30" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="#7fa6c0">C‑130</text>`;}
+function drawSky(){const g=$("#sky");g.innerHTML="";const beamLive=up[6]&&!broken[6];const px=planeX();
+ if(transport==="GEO"){
+  const sat=ce("g",{transform:"translate(600,38)"});
+  sat.innerHTML=`<rect x="-46" y="-10" width="22" height="22" rx="3" fill="#23415a" stroke="#3b6488" stroke-width="1.5"/><rect x="24" y="-10" width="22" height="22" rx="3" fill="#23415a" stroke="#3b6488" stroke-width="1.5"/>
+   <line x1="-24" y1="1" x2="-2" y2="1" stroke="#2c4a63" stroke-width="3"/><line x1="2" y1="1" x2="24" y2="1" stroke="#2c4a63" stroke-width="3"/>
+   <rect x="-12" y="-12" width="24" height="26" rx="4" fill="#34536e" stroke="#5b87a8" stroke-width="1.5"/><rect x="-7" y="-7" width="14" height="6" rx="2" fill="#ffd27a"/>
+   <text x="0" y="-22" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="#bcd6ea" letter-spacing="2">GEO · Ka/Ku · FEW WIDE SPOT BEAMS</text>`;
+  g.appendChild(sat);
+  const apex={x:600,y:60},foot=[{x:230,w:170},{x:600,w:170},{x:970,w:170}];
+  foot.forEach((f,idx)=>{g.appendChild(ce("path",{d:`M${apex.x} ${apex.y} L${f.x-f.w} 388 L${f.x+f.w} 388 Z`,fill:beamLive?"url(#beamLive)":"url(#beamG)",stroke:beamLive?"#3fd07e":"#ffd27a","stroke-width":".8",opacity:idx===1?".95":".5"}));
+   const p=ce("line",{x1:apex.x,y1:apex.y,x2:f.x,y2:388,stroke:beamLive?"#3fd07e":"#ffd27a","stroke-width":"1.4",opacity:"0"});p.innerHTML=`<animate attributeName="opacity" values="0;.7;0" dur="${2.4+idx*.5}s" repeatCount="indefinite"/>`;g.appendChild(p);});
+ } else {
+  // many LEO satellites + many narrow beams + rapid handoff
+  const N=12; for(let i=0;i<N;i++){const x=70+i*92,y=40+(i%3)*12;const s=ce("g",{transform:`translate(${x},${y})`});
+   s.innerHTML=`<rect x="-6" y="-4" width="12" height="8" rx="1.5" fill="#2f5f86" stroke="#5ab0ff" stroke-width="1"/><line x1="-15" y1="0" x2="-7" y2="0" stroke="#3b6488" stroke-width="2"/><line x1="7" y1="0" x2="15" y2="0" stroke="#3b6488" stroke-width="2"/>`;g.appendChild(s);}
+  // narrow beams toward ground
+  for(let i=0;i<N;i++){const x=70+i*92,y=52+(i%3)*12;const fx=x; // mostly vertical narrow cones
+   g.appendChild(ce("path",{d:`M${x} ${y} L${fx-26} 388 L${fx+26} 388 Z`,fill:"url(#cellG)",stroke:"#5ab0ff","stroke-width":".5",opacity:".30"}));}
+  // active (handoff) beam near the aircraft — bright, and it hops as the plane moves
+  const nearI=Math.max(0,Math.min(N-1,Math.round((px-70)/92)));const ax=70+nearI*92,ay=52+(nearI%3)*12;
+  const act=ce("path",{d:`M${ax} ${ay} L${px-30} 388 L${px+30} 388 Z`,fill:beamLive?"url(#beamLive)":"url(#cellG)",stroke:beamLive?"#3fd07e":"#9fd6ff","stroke-width":"1.4",opacity:".9"});g.appendChild(act);
+  const hop=ce("text",{x:String(px),y:"96","text-anchor":"middle","font-family":"'JetBrains Mono',monospace","font-size":"9",fill:beamLive?"#7be0a4":"#9fd6ff"});hop.textContent="↻ HANDOFF";g.appendChild(hop);
+  const lbl=ce("text",{x:"600",y:"24","text-anchor":"middle","font-family":"'JetBrains Mono',monospace","font-size":"10.5",fill:"#9fd6ff","letter-spacing":"1.5"});lbl.textContent="STARLINK / STARSHIELD · LEO — MANY NARROW BEAMS · RAPID HANDOFF";g.appendChild(lbl);
+  g.appendChild(ce("ellipse",{cx:String(px),cy:"388",rx:"60",ry:"14",fill:"url(#cellG)",stroke:beamLive?"#3fd07e":"#5ab0ff","stroke-width":".8",opacity:".85"}));
+ }}
+function gnode(x,label,kind){
+ const colors={station:["#27506f","#5b87a8","#9fd6ff"],gw:["#163a2a","#3fd07e","#7be0a4"],rhn:["#1d160a","#ffb13c","#ffd9a6"],adc:["#10202c","#5ab0ff","#bcd2e2"],cdc:["#1a1326","#b48bff","#cdb4ff"],toc:["#16293a","#5b87a8","#9fbdd2"]};
+ const c=colors[kind]||colors.station;
+ if(kind==="station"||kind==="gw"){
+   return `<g transform="translate(${x},410)"><path d="M-13 14 A16 16 0 0 1 13 14 Z" fill="${c[0]}" stroke="${c[1]}" stroke-width="1.4"/><line x1="0" y1="6" x2="6" y2="-8" stroke="${c[1]}" stroke-width="2"/><circle cx="6" cy="-8" r="2.4" fill="${c[2]}"/><text x="0" y="34" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8" fill="${c[2]}">${label}</text></g>`;
+ }
+ // box-style (rhn, dc, toc)
+ const extra = kind==="toc"
+   ? `<rect x="-16" y="-2" width="9" height="8" rx="1.5" fill="#3fd07e"/><rect x="-5" y="-2" width="9" height="8" rx="1.5" fill="#ffd27a"/><rect x="6" y="-2" width="9" height="8" rx="1.5" fill="#5b87a8"/>`
+   : `<rect x="-15" y="-2" width="30" height="3" fill="${c[1]}" opacity=".5"/><rect x="-15" y="3" width="30" height="3" fill="${c[1]}" opacity=".5"/><rect x="-15" y="8" width="30" height="3" fill="${c[1]}" opacity=".5"/>`;
+ return `<g transform="translate(${x},406)"><rect x="-19" y="-6" width="38" height="22" rx="3" fill="${c[0]}" stroke="${c[1]}" stroke-width="1.4"/>${extra}<text x="0" y="32" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8" fill="${c[2]}">${label}</text></g>`;
+}
+function drawGround(){const g=$("#ground");const isGEO=transport==="GEO";
+ let html=`<path d="M150 420 L1050 420" stroke="#2c4a63" stroke-width="2" stroke-dasharray="2 5"/>`+
+   `<text x="600" y="462" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" fill="#5d7384" letter-spacing="1.5">DODIN‑A / DISN FIBER TRANSPORT</text>`;
+ if(isGEO){ html+=gnode(1030,"TELEPORT / GATEWAY","station"); }
+ else { html+=gnode(1055,"GROUND STN","station")+gnode(985,"GROUND STN","station")+gnode(905,"STARSHIELD GW","gw"); }
+ html+=gnode(770,"RHN / GAIT POP","rhn")+gnode(560,"ARMY DATA CTR","adc")+gnode(360,"COMMERCIAL DC","cdc")+gnode(150,"REACHBACK TOC","toc");
+ g.innerHTML=html;}
+function drawLinks(){const g=$("#links");g.innerHTML="";const allGreen=up.every((v,i)=>v&&!broken[i]);const pathUp=up[5]&&!broken[5]&&up[3]&&!broken[3];
+ const col=allGreen?"#3fd07e":(broken.some(b=>b)?"#ff5d5d":"#5d7384");const px=planeX(),py=250;
+ if(transport==="GEO"){
+  const l1=ce("path",{d:`M${px+6} ${py-15} Q ${(px+600)/2} ${py-200} 600 66`,fill:"none",stroke:col,"stroke-width":"2.2","stroke-dasharray":"4 7",opacity:pathUp?".95":".4"});if(pathUp)l1.innerHTML=`<animate attributeName="stroke-dashoffset" values="0;-44" dur="1.1s" repeatCount="indefinite"/>`;g.appendChild(l1);
+  const l2=ce("path",{d:`M600 66 Q 900 150 1030 402`,fill:"none",stroke:col,"stroke-width":"2.2","stroke-dasharray":"4 7",opacity:pathUp?".95":".4"});if(pathUp)l2.innerHTML=`<animate attributeName="stroke-dashoffset" values="0;-44" dur="1.1s" repeatCount="indefinite"/>`;g.appendChild(l2);
+ } else {
+  const N=12;const nearI=Math.max(0,Math.min(N-1,Math.round((px-70)/92)));const ax=70+nearI*92,ay=52+(nearI%3)*12;
+  const l1=ce("path",{d:`M${px+6} ${py-15} L ${ax} ${ay+6}`,fill:"none",stroke:col,"stroke-width":"2.2","stroke-dasharray":"3 6",opacity:pathUp?".95":".4"});if(pathUp)l1.innerHTML=`<animate attributeName="stroke-dashoffset" values="0;-30" dur=".5s" repeatCount="indefinite"/>`;g.appendChild(l1);
+  const l2=ce("path",{d:`M${ax} ${ay+6} Q 1000 200 1055 402`,fill:"none",stroke:col,"stroke-width":"2","stroke-dasharray":"3 6",opacity:pathUp?".9":".35"});if(pathUp)l2.innerHTML=`<animate attributeName="stroke-dashoffset" values="0;-30" dur=".7s" repeatCount="indefinite"/>`;g.appendChild(l2);
+ }
+ // fiber-carried path back along the enterprise chain to the TOC
+ const l3=ce("path",{d:`M${isGEOnow()?1030:1055} 420 L150 420`,fill:"none",stroke:col,"stroke-width":"1.8","stroke-dasharray":"3 6",opacity:pathUp?".85":".3"});if(pathUp)l3.innerHTML=`<animate attributeName="stroke-dashoffset" values="0;-30" dur="1.4s" repeatCount="indefinite"/>`;g.appendChild(l3);}
+function isGEOnow(){return transport==="GEO";}
+function drawScene(){$("#plane").innerHTML=planeSVG();drawSky();drawGround();
+ $("#legBeam").innerHTML=transport==="GEO"?`<i style="background:#ffd27a"></i>Spot beam`:`<i style="background:#5ab0ff"></i>LEO cell`;
+ const ov=$("#overlay");ov.innerHTML="";const cap=ce("text",{x:"600",y:"452","text-anchor":"middle","font-family":"'JetBrains Mono',monospace","font-size":"11",fill:"#7fa6c0","letter-spacing":"1.3"});
+ cap.textContent=up.every((v,i)=>v&&!broken[i])?"LINK ESTABLISHED · commander on the net at altitude":broken.some(b=>b)?"LINK DOWN · commander has lost the picture":"ASSEMBLING THE CHAIN …";ov.appendChild(cap);}
+let raf=null;
+function animate(){let t=0;cancelAnimationFrame(raf);(function loop(){t+=0.0015;if(t>1)t=0;const x=120+t*920,y=250-Math.sin(t*Math.PI)*18;$("#plane").setAttribute("transform",`translate(${x},${y})`);drawLinks();if(transport==="SL")drawSky();raf=requestAnimationFrame(loop);})();}
+
+/* ===== TRANSPORT / APERTURE / MATRIX ===== */
+function buildTcmp(){const w=$("#tcmp");w.innerHTML="";const head=document.createElement("div");head.className="trow head";
+ head.innerHTML=`<div class="th" style="background:#13212e;color:#5d7384">Dimension</div><div class="geo">GEO Ka/Ku · KAFMA fixed / Ka hatch</div><div class="sl">Starlink / Starshield · LEO</div>`;w.appendChild(head);
+ TCMP.forEach(r=>{const row=document.createElement("div");row.className="trow";row.innerHTML=`<div class="th">${r[0]}</div><div>${r[1]}</div><div>${r[2]}</div>`;w.appendChild(row);});}
+function buildCompare(){const c=$("#cmp");c.innerHTML="";
+ const gl={hatch:`<svg class="glyph" viewBox="0 0 42 42"><ellipse cx="21" cy="24" rx="15" ry="8" fill="#1f3a52" stroke="#5b87a8" stroke-width="1.5"/><ellipse cx="21" cy="21" rx="9" ry="4.5" fill="#2f5f86"/></svg>`,
+  fixed:`<svg class="glyph" viewBox="0 0 42 42"><path d="M5 28 Q21 4 37 28 L37 32 L5 32Z" fill="#1f3a52" stroke="#5b87a8" stroke-width="1.5"/></svg>`,
+  mini:`<svg class="glyph" viewBox="0 0 42 42"><rect x="8" y="16" width="26" height="9" rx="2" fill="#1f3a52" stroke="#5ab0ff" stroke-width="1.5"/><line x1="21" y1="25" x2="21" y2="34" stroke="#5ab0ff" stroke-width="1.5"/></svg>`};
+ ["hatch","fixed","mini"].forEach(k=>{const d=ANT[k];
+  const rows=d.rows.map(r=>`<div class="row"><span class="k">${r[0]}</span><span class="v ${r[2]||''}">${r[1]}</span></div>`).join("");
+  const card=document.createElement("div");card.className="card"+(ant===k?" sel":"");
+  card.innerHTML=`<div class="card-h">${gl[k]}<div><div class="t">${d.name}</div><div class="s">${d.sub}</div></div></div><div class="card-b">${rows}</div>`;
+  card.addEventListener("click",()=>setAnt(k));c.appendChild(card);});}
+function buildMatrix(){const wrap=$("#matwrap");wrap.innerHTML="";
+ const airs=[["C17","C‑17"],["C130","C‑130"],["ROTARY","Rotary"]],ants=[["hatch","Hatch"],["fixed","Fixed"],["mini","Mini"]];
+ [["GEO","GEO Ka/Ku","geo"],["SL","Starlink / Starshield","sl"]].forEach(([t,label,cls])=>{const m=document.createElement("div");m.className="mat";
+  let g=`<div class="mg"><div class="corner">APER \\ A/C</div>`;airs.forEach(a=>g+=`<div class="colh">${a[1]}</div>`);
+  ants.forEach(an=>{g+=`<div class="rowh">${an[1]}</div>`;airs.forEach(a=>{const r=statusFor(matMode,t,a[0],an[0]);const meta=ST[r.s];
+   g+=`<div class="mc" title="${r.note.replace(/"/g,'')}" style="background:${meta.bg};color:${meta.c};border-color:${meta.bd}">${meta.short}</div>`;});});
+  g+=`</div>`;m.innerHTML=`<div class="mat-h"><span class="${cls}">${label}</span></div>${g}`;wrap.appendChild(m);});}
+
+/* ===== ROUTING (tiered architecture) ===== */
+function buildSvcSel(){const s=$("#svcSel");s.innerHTML="";
+ [["mss","Maven Smart System"],["voice","Secure Voice"],["cop","NGC2 COP / Data"]].forEach(([k,l])=>{const b=document.createElement("button");b.textContent=l;if(k===service)b.className="on";b.addEventListener("click",()=>{service=k;renderRoute();});s.appendChild(b);});}
+let compSel=null;
+function showComp(c){compSel=c;$("#compDesc").innerHTML=`<div class="cd-o">${OWNER[c.o]}</div><div class="cd-t">${c.l}</div>${c.d}`;
+ document.querySelectorAll(".rcomp").forEach(el=>el.classList.toggle("sel",el.dataset.id===c.l));}
+function renderRoute(){document.querySelectorAll("#svcSel button").forEach(b=>b.classList.toggle("on",b.textContent===SERVICES[service].name));
+ $("#svcDesc").textContent=SERVICES[service].blurb;
+ const bw=SVCBW[service];let dots="";for(let i=0;i<5;i++)dots+=`<i style="display:inline-block;width:16px;height:9px;border-radius:2px;margin-right:3px;background:${i<bw.lvl?(bw.lvl>=4?'#ff5d5d':bw.lvl>=3?'#ffb13c':'#3fd07e'):'#22323f'}"></i>`;
+ $("#svcBW").innerHTML=`<div style="margin-top:14px;border:1px solid var(--line2);border-radius:14px;background:#0c1620;padding:15px 17px">
+   <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">
+     <div style="font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--amber);text-transform:uppercase">Bandwidth demand</div>
+     <div style="font-size:12.5px;color:var(--ink)">${bw.dem}</div></div>
+   <div style="margin-top:8px">${dots}</div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
+     <div style="border:1px solid #5a4524;background:#1a1407;border-radius:11px;padding:11px 13px"><div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--beam);text-transform:uppercase;margin-bottom:5px">GEO Ka — KAFMA · capacity</div><div style="font-size:12.5px;line-height:1.5;color:#ffe6bd">${bw.geo}</div></div>
+     <div style="border:1px solid #27506f;background:#0b1a2a;border-radius:11px;padding:11px 13px"><div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--blue);text-transform:uppercase;margin-bottom:5px">Starshield LEO · capacity</div><div style="font-size:12.5px;line-height:1.5;color:#cfe6ff">${bw.leo}</div></div>
+   </div>
+   <div style="margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--mut);line-height:1.6"><b style="color:var(--ink)">Signal flow:</b> ${bw.flow}</div>
+ </div>`;
+ const arch=$("#arch");arch.innerHTML="";let total=0;const owners=new Set();
+ ROUTE_TIERS.forEach((tier,ti)=>{const col=document.createElement("div");col.className="rtier";
+  let body="";tier.comp.forEach(c=>{total++;owners.add(c.o);const hot=c.stress&&c.stress.includes(service)?" hot":"";
+   body+=`<div class="rcomp${hot}" data-id="${c.l.replace(/"/g,'')}">${avatar(c.o)}<div><div class="rl">${c.l}</div><div class="ro">${OWNER[c.o]}</div></div></div>`;});
+  col.innerHTML=`<div class="rt-h"><div class="tt">${tier.t}</div><div class="ts">${tier.s}</div></div><div class="rt-b">${body}</div>${ti<ROUTE_TIERS.length-1?'<span class="tarrow">▶</span>':''}`;
+  arch.appendChild(col);});
+ arch.querySelectorAll(".rcomp").forEach(el=>{const tierObj=ROUTE_TIERS.find(t=>t.comp.some(c=>c.l.replace(/"/g,'')===el.dataset.id));const c=tierObj.comp.find(c=>c.l.replace(/"/g,'')===el.dataset.id);el.addEventListener("click",()=>showComp(c));});
+ if(!compSel)showComp(ROUTE_TIERS[0].comp[0]); else showComp(compSel);
+ $("#ownCount").textContent=`▸ ${total} components across ${owners.size} owner types — the bearer is the easy part. Every box is a coordination, integration, or accreditation dependency, and any one can break the service.`;
+ $("#guardband").innerHTML=`${avatar('cyber')}<p><b>Spanning the entire path:</b> ARCYBER/NETCOM accreditation, RCC battle rhythm, and active network defense — plus DISA enterprise services. The RF link can be perfect and the service still fails if accreditation lapses, encryptors are mismatched, or routing isn't provisioned.</p>`;}
+
+/* ===== TAKEAWAYS ===== */
+function buildTakeaways(){const w=$("#takeaways");w.innerHTML="";
+ TAKEAWAYS.forEach(t=>{const d=document.createElement("div");d.className="ta";
+  d.innerHTML=`<div class="tn">${t.n}</div><div class="tart">${t.art}</div><h3>${t.h}</h3><p>${t.p}</p><div class="more">${t.more}</div>`;
+  d.addEventListener("click",()=>{const el=document.getElementById(t.target);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});});
+  w.appendChild(d);});}
+
+/* ===== GALLERY ===== */
+function buildGallery(){const g=$("#gallery");g.innerHTML="";
+ GALLERY.forEach(it=>{const d=document.createElement("div");d.className="gcard";
+  d.innerHTML=`<div class="gimg">${it.art}</div><div class="gb"><div class="gt">${it.t}<span class="gtag" style="color:${it.tag[0]};background:${it.tag[1]}">${it.tag[2]}</span></div><p>${it.d}</p></div>`;
+  g.appendChild(d);});}
+
+/* ===== CURRENT / FUTURE ===== */
+let medMode="today";
+function buildMedgrid(){const w=$("#medgrid");w.innerHTML="";
+ const head=document.createElement("div");head.className="medrow head";
+ head.innerHTML=`<div class="mlab" style="background:#13212e">Medium</div><div class="geo-col">GEO Ka/Ku</div><div class="leo-col">LEO · Starshield</div>`;w.appendChild(head);
+ MEDIUMS.forEach(m=>{const geo=medMode==="today"?m.geo:m.fgeo, leo=medMode==="today"?m.leo:m.fleo;
+  const gm=MEDST[geo.t],lm=MEDST[leo.t];
+  const row=document.createElement("div");row.className="medrow";
+  row.innerHTML=`<div class="mlab"><div><b>${m.m}</b><br><span style="color:var(--dim);font-size:10px">${m.sub}</span></div></div>
+   <div class="mcell geo-col"><span class="badge3" style="background:${gm.bg};color:${gm.c}">${geo.d}</span></div>
+   <div class="mcell leo-col"><span class="badge3" style="background:${lm.bg};color:${lm.c}">${leo.d}</span></div>`;
+  w.appendChild(row);});}
+
+/* ===== PHASES ===== */
+function buildPhases(){const p=$("#phases");p.innerHTML="";
+ PHASES.forEach(ph=>{const d=document.createElement("div");d.className="phase";
+  d.innerHTML=`<div class="ph-h">${ph.t}</div><ul>${ph.items.map(it=>`<li>${avatar(it[1])}<span>${it[0]}</span></li>`).join("")}</ul>`;p.appendChild(d);});}
+
+/* ===== THEATERS ===== */
+function buildThSel(){const s=$("#thSel");s.innerHTML="";
+ Object.entries(THEATERS).forEach(([k,v])=>{const b=document.createElement("button");if(k===theater)b.className="on";
+  b.innerHTML=`${v.name}<span>${v.org}</span>`;b.addEventListener("click",()=>{theater=k;renderTheater();});s.appendChild(b);});}
+function barRow(label,arr,invert){const [val,txt]=arr;const cls=invert?(val>=4?"bad":val>=3?"warn":""):(val<=2?"bad":val<=3?"warn":"");
+ let bars="";for(let i=0;i<5;i++)bars+=`<i class="${i<val?'f':''}"></i>`;return `<div class="tm"><div class="k">${label}</div><div class="bars ${cls}">${bars}</div><div class="vtxt">${txt}</div></div>`;}
+function renderTheater(){document.querySelectorAll("#thSel button").forEach(b=>b.classList.toggle("on",b.querySelector("span")&&b.querySelector("span").textContent===THEATERS[theater].org));
+ const v=THEATERS[theater];
+ $("#thMain").innerHTML=`<div class="org">${v.org}</div><h3>${v.name}</h3><div class="geo-line">${v.line}</div><p>${v.desc}</p>
+   <div class="thtags">${v.tags.map(t=>`<span class="thtag">${t}</span>`).join("")}</div>`;
+ $("#thMetrics").innerHTML=barRow("GEO Ka/Ku suitability",v.geo)+barRow("Starlink LEO suitability",v.sl)+barRow("Threat / EW (more bars = worse)",v.threat,true)+barRow("Proximity to services",v.dist);}
+
+/* ===== POINTS + MODEL ===== */
+function buildPoints(){const p=$("#points");p.innerHTML="";POINTS.forEach(([n,h,t])=>{const d=document.createElement("div");d.className="pt";d.innerHTML=`<div class="n">${n}</div><div><h5>${h}</h5><p>${t}</p></div>`;p.appendChild(d);});}
+function buildModel(){const svg=$("#model");svg.innerHTML="";const cx=180,cy=175;
+ const sup=[{x:62,y:64,l:"Corps"},{x:298,y:64,l:"Div"},{x:50,y:286,l:"Airborne"},{x:310,y:286,l:"Maritime"}];
+ const ext=[{x:180,y:42,l:"AMC"},{x:332,y:175,l:"RCC"},{x:28,y:175,l:"DISA"}];
+ sup.concat(ext).forEach(s=>{const ln=ce("line",{x1:cx,y1:cy,x2:s.x,y2:s.y,stroke:"#2c4a63","stroke-width":"2","stroke-dasharray":"3 5"});ln.innerHTML=`<animate attributeName="stroke-dashoffset" values="0;-24" dur="2.2s" repeatCount="indefinite"/>`;svg.appendChild(ln);});
+ ext.forEach(s=>{svg.appendChild(ce("rect",{x:s.x-26,y:s.y-13,width:"52",height:"26",rx:"6",fill:"#0c1925",stroke:"#3a8fd6","stroke-width":"1.3"}));const t=ce("text",{x:s.x,y:s.y+4,"text-anchor":"middle","font-family":"'JetBrains Mono',monospace","font-size":"10",fill:"#9fd6ff"});t.textContent=s.l;svg.appendChild(t);});
+ sup.forEach(s=>{svg.appendChild(ce("circle",{cx:s.x,cy:s.y,r:"26",fill:"#13212e",stroke:"#2c4a63","stroke-width":"1.6"}));const t=ce("text",{x:s.x,y:s.y+4,"text-anchor":"middle","font-family":"'JetBrains Mono',monospace","font-size":"9",fill:"#bcd2e2"});t.textContent=s.l;svg.appendChild(t);});
+ svg.appendChild(ce("circle",{cx:cx,cy:cy,r:"47",fill:"#1a1206",stroke:"#ffb13c","stroke-width":"2"}));svg.appendChild(ce("circle",{cx:cx,cy:cy,r:"57",fill:"none",stroke:"#ffb13c","stroke-width":"1",opacity:".3"}));
+ const t1=ce("text",{x:cx,y:cy-6,"text-anchor":"middle","font-family":"'Bricolage Grotesque',sans-serif","font-size":"13","font-weight":"800",fill:"#ffb13c"});t1.textContent="EMC";svg.appendChild(t1);
+ const t2=ce("text",{x:cx,y:cy+8,"text-anchor":"middle","font-family":"'JetBrains Mono',monospace","font-size":"8",fill:"#ffd9a6"});t2.textContent="CO / PLT";svg.appendChild(t2);
+ const t3=ce("text",{x:cx,y:cy+19,"text-anchor":"middle","font-family":"'JetBrains Mono',monospace","font-size":"7","letter-spacing":"1",fill:"#ffd9a6"});t3.textContent="AIR/LAND/SEA";svg.appendChild(t3);}
+
+/* ===== CERT BANNER + GAUGE ===== */
+function refreshCert(){const r=statusFor("today",transport,air,ant);const meta=ST[r.s];const b=$("#certBanner");
+ b.style.background=meta.bg;b.style.borderColor=meta.bd;
+ const apName = ant==='fixed' ? (transport==='GEO'?'KAFMA (fixed GEO Ka)':'Fixed‑Fuselage Starshield') : ANT[ant].name;
+ const cfg=`${transport==="GEO"?"GEO Ka/Ku":"Starlink/Starshield"} · ${air==="C17"?"C‑17":air==="C130"?"C‑130":"Rotary"} · ${apName}`;
+ b.innerHTML=`<span class="badge" style="background:${meta.c};color:#06121f">${meta.label}</span>
+  <div class="ctxt"><div class="cfg">SELECTED CONFIG · ${cfg}</div><b style="color:${meta.c}">${r.note}</b>
+  &nbsp;— and a valid certification is necessary but <b style="color:var(--ink)">not sufficient</b>: all 8 turns must still be GO to fly.</div>`;}
+function refresh(){const live=up.reduce((a,v,i)=>a+(v&&!broken[i]?1:0),0);const pct=Math.round(live/STAGES.length*100);const C=138.2;
+ const arc=$("#gaugeArc");arc.setAttribute("stroke-dashoffset",C-C*pct/100);const anyBroken=broken.some(b=>b);
+ arc.setAttribute("stroke",live===STAGES.length?"#3fd07e":(anyBroken?"#ff5d5d":"#ffb13c"));$("#gaugePct").textContent=pct+"%";
+ const pill=$("#goPill");if(live===STAGES.length){pill.className="pill go";pill.textContent="GO";}else{pill.className="pill no";pill.textContent="NO‑GO";}
+ $("#prog").textContent=`${live} of ${STAGES.length} turns complete`;
+ $("#prevBtn").disabled=step===0;$("#nextBtn").disabled=step>=STAGES.length;
+ $("#nextBtn").textContent=step>=STAGES.length?"Walkthrough complete ✓":(step===0?"Begin turn 1 ›":`Establish turn ${step+1} ›`);
+ paintRail();drawScene();renderDetail();buildCompare();buildMatrix();refreshCert();}
+
+/* ===== CONTROLS ===== */
+function setTransport(v){transport=v;document.querySelectorAll("#trSeg button").forEach(b=>b.classList.toggle("on",b.dataset.tr===v));
+ $("#sceneTag").textContent=(v==="GEO"?"GEO Ka/Ku via KAFMA":"Starlink / Starshield LEO")+" · wheels‑up → objective";refresh();}
+function setAir(v){air=v;document.querySelectorAll("#airSeg button").forEach(b=>b.classList.toggle("on",b.dataset.air===v));refresh();}
+function setAnt(v){ant=v;document.querySelectorAll("#antSeg button").forEach(b=>b.classList.toggle("on",b.dataset.ant===v));if(v==="mini"&&transport!=="SL")setTransport("SL");else refresh();}
+function advance(){if(step<STAGES.length){up[step]=true;broken[step]=false;activeNode=step;step++;refresh();}else stopPlay();}
+function stopPlay(){playing=false;clearInterval(playTimer);$("#playBtn").textContent="▶ Auto‑play";}
+function startPlay(){if(step>=STAGES.length){step=0;up.fill(false);broken.fill(false);activeNode=0;refresh();}playing=true;$("#playBtn").textContent="⏸ Pause";advance();playTimer=setInterval(()=>{if(step>=STAGES.length)stopPlay();else advance();},2100);}
+
+function init(){buildStars();buildRail();buildTakeaways();buildGallery();buildMedgrid();buildTcmp();buildSvcSel();renderRoute();buildPhases();buildThSel();renderTheater();buildPoints();buildModel();
+ document.querySelectorAll("#trSeg button").forEach(b=>b.addEventListener("click",()=>setTransport(b.dataset.tr)));
+ document.querySelectorAll("#airSeg button").forEach(b=>b.addEventListener("click",()=>setAir(b.dataset.air)));
+ document.querySelectorAll("#antSeg button").forEach(b=>b.addEventListener("click",()=>setAnt(b.dataset.ant)));
+ document.querySelectorAll("#matSwitch button").forEach(b=>b.addEventListener("click",()=>{matMode=b.dataset.mode;document.querySelectorAll("#matSwitch button").forEach(x=>x.classList.toggle("on",x===b));buildMatrix();}));
+ document.querySelectorAll("#medSwitch button").forEach(b=>b.addEventListener("click",()=>{medMode=b.dataset.mode;document.querySelectorAll("#medSwitch button").forEach(x=>x.classList.toggle("on",x===b));buildMedgrid();}));
+ $("#nextBtn").addEventListener("click",()=>{stopPlay();advance();});
+ $("#prevBtn").addEventListener("click",()=>{stopPlay();if(step>0){step--;up[step]=false;broken[step]=false;activeNode=Math.max(0,step-1);refresh();}});
+ $("#playBtn").addEventListener("click",()=>{playing?stopPlay():startPlay();});
+ $("#resetBtn").addEventListener("click",()=>{stopPlay();step=0;up.fill(false);broken.fill(false);activeNode=0;refresh();});
+ refresh();animate();}
+window.addEventListener("DOMContentLoaded",init);
+</script>
+</body>
+</html>
